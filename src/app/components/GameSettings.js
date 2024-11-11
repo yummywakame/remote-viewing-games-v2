@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 
-export default function ColorGameSettings({ onClose }) {
+export default function GameSettings({ title, children, onClose, onSave }) {
   const [isVisible, setIsVisible] = useState(false)
   const contentRef = useRef(null)
 
@@ -43,13 +43,16 @@ export default function ColorGameSettings({ onClose }) {
           >
             <X size={24} />
           </button>
-          <h2 className="text-2xl font-bold mb-4">Color Game Settings</h2>
+          <h2 className="text-2xl font-bold mb-4">{title} Settings</h2>
           <div className="flex-grow">
-            <p>Content goes here</p>
+            {children}
           </div>
           <button 
             className="neon-button mt-4 self-end"
-            onClick={handleClose}
+            onClick={() => {
+              onSave();
+              handleClose();
+            }}
           >
             <span className="neon-button-background"></span>
             <span className="neon-button-gradient"></span>

@@ -2,10 +2,15 @@
 
 import React, { useState } from 'react'
 import { Settings } from 'lucide-react'
-import ColorGameSettings from './ColorGameSettings'
+import GameSettings from './GameSettings'
 
 export default function ColorGame() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+  const handleSaveSettings = () => {
+    // Implement color game specific save logic here
+    console.log('Saving Color Game settings')
+  }
 
   return (
     <div className="game-container relative">
@@ -25,7 +30,16 @@ export default function ColorGame() {
         <Settings size={24} />
       </button>
       {isSettingsOpen && (
-        <ColorGameSettings onClose={() => setIsSettingsOpen(false)} />
+        <GameSettings 
+          title="Color Game" 
+          onClose={() => setIsSettingsOpen(false)}
+          onSave={handleSaveSettings}
+        >
+          <div>
+            <p>Color Game specific settings go here</p>
+            {/* Add color selection table or other specific settings */}
+          </div>
+        </GameSettings>
       )}
     </div>
   )
