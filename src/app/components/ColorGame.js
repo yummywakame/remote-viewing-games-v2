@@ -25,6 +25,16 @@ export default function ColorGame() {
   const speechUtterance = useRef(null)
   const recognition = useRef(null)
   const lastCommandTime = useRef(0)
+  const restartTimeout = useRef(null)
+
+  const logGameState = useCallback((action) => {
+    console.log(`Game state (${action}):`, gameState)
+  }, [gameState])
+
+  const setAndLogGameState = useCallback((newState, action) => {
+    setGameState(newState)
+    console.log(`Game state changed to ${newState} (${action})`)
+  }, [])
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -51,7 +61,7 @@ export default function ColorGame() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (SpeechRecognition) {
       recognition.current = new SpeechRecognition()
-      recognition.current.continuous = false
+      recognition.current.continuous = true
       recognition.current.interimResults = false
       recognition.current.lang = 'en-US'
     }
@@ -62,9 +72,13 @@ export default function ColorGame() {
   }, [])
 
   const stopListening = useCallback(() => {
+    if (restartTimeout.current) {
+      clearTimeout(restartTimeout.current)
+      restartTimeout.current = null
+    }
     if (recognition.current) {
       try {
-        recognition.current.stop()
+        recognition.current.abort()
       } catch (error) {
         console.error('Error stopping recognition:', error)
       }
@@ -77,14 +91,40 @@ export default function ColorGame() {
     }
   }, [])
 
+  const handleVoiceCommand = useCallback((command) => {
+    console.log('Processing command:', command)
+    const lowerCommand = command.toLowerCase()
+
+    if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
+      console.log('Next command detected')
+      handleNextColor()
+    } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
+      console.log('Stop command detected')
+      endGame()
+    } else {
+      console.log('No valid command detected - continuing to listen')
+    }
+  }, [])
+
   const startListening = useCallback(() => {
-    if (!recognition.current || isListening || isSpeaking || gameState !== 'playing') {
+    if (gameState !== 'playing') {
+      console.log('Cannot start listening: game state is not playing', { gameState })
+      return
+    }
+
+    if (isListening) {
+      console.log('Already listening, skipping start')
+      return
+    }
+
+    logGameState('before start listening')
+    console.log('Attempting to start listening:', { isListening, isSpeaking })
+    if (!recognition.current || isSpeaking) {
       console.log('Cannot start listening:', { isListening, isSpeaking, gameState })
       return
     }
 
     try {
-      recognition.current.continuous = true // Make recognition continuous
       recognition.current.onresult = (event) => {
         const last = event.results.length - 1
         const transcript = event.results[last][0].transcript.trim().toLowerCase()
@@ -96,38 +136,48 @@ export default function ColorGame() {
       recognition.current.onstart = () => {
         console.log('Recognition started')
         setIsListening(true)
+        logGameState('after recognition start')
       }
 
       recognition.current.onend = () => {
         console.log('Recognition ended')
         setIsListening(false)
-        
+        logGameState('after recognition end')
+
+        // Clear any existing restart timeout
+        if (restartTimeout.current) {
+          clearTimeout(restartTimeout.current)
+        }
+
         // Only restart if we're still playing and not speaking
         if (gameState === 'playing' && !isSpeaking) {
-          console.log('Restarting recognition')
-          setTimeout(() => {
+          console.log('Scheduling recognition restart in 3 minutes')
+          restartTimeout.current = setTimeout(() => {
             if (gameState === 'playing' && !isListening && !isSpeaking) {
+              console.log('Attempting scheduled recognition restart')
               startListening()
             }
-          }, 100)
+          }, 180000) // 3 minutes
         }
       }
 
       recognition.current.onerror = (event) => {
-        // Ignore no-speech errors completely
+        // Ignore no-speech errors
         if (event.error === 'no-speech') {
+          console.log('No speech detected, continuing to listen')
           return
         }
-        
+
         console.error('Recognition error:', event.error)
         setIsListening(false)
-        
+        logGameState('after recognition error')
+
         if (event.error !== 'aborted' && gameState === 'playing') {
-          setTimeout(() => {
+          restartTimeout.current = setTimeout(() => {
             if (gameState === 'playing' && !isListening && !isSpeaking) {
               startListening()
             }
-          }, 1000)
+          }, 180000) // 3 minutes
         }
       }
 
@@ -136,15 +186,16 @@ export default function ColorGame() {
     } catch (error) {
       console.error('Recognition start error:', error)
       setIsListening(false)
+      logGameState('after recognition start error')
       if (gameState === 'playing') {
-        setTimeout(() => {
+        restartTimeout.current = setTimeout(() => {
           if (gameState === 'playing' && !isListening && !isSpeaking) {
             startListening()
           }
-        }, 1000)
+        }, 180000) // 3 minutes
       }
     }
-  }, [gameState, isListening, isSpeaking, handleVoiceCommand])
+  }, [gameState, isListening, isSpeaking, handleVoiceCommand, logGameState])
 
   const speak = useCallback((text) => {
     return new Promise((resolve, reject) => {
@@ -158,19 +209,14 @@ export default function ColorGame() {
 
       speechSynthesis.current.cancel()
       speechUtterance.current.text = text
-      
+
       speechUtterance.current.onend = () => {
         console.log('Speech ended')
         setIsSpeaking(false)
         resolve()
-        // Only restart listening if we're still playing AND not already listening
-        if (gameState === 'playing' && !isListening && text !== "Thank you for playing!") {
-          console.log('Starting listening after speech')
-          setTimeout(() => {
-            if (gameState === 'playing' && !isListening && !isSpeaking) {
-              startListening()
-            }
-          }, 500)
+
+        if (text === "What color is this?") {
+          setAndLogGameState('playing', 'after color prompt')
         }
       }
 
@@ -182,7 +228,7 @@ export default function ColorGame() {
 
       speechSynthesis.current.speak(speechUtterance.current)
     })
-  }, [gameState, stopListening, startListening])
+  }, [stopListening, setAndLogGameState])
 
   const askForColor = useCallback(async () => {
     try {
@@ -200,7 +246,7 @@ export default function ColorGame() {
     do {
       newColor = colors[Math.floor(Math.random() * colors.length)]
     } while (newColor === currentColor && colors.length > 1)
-    
+
     setCurrentColor(newColor)
     await askForColor()
   }, [currentColor, askForColor])
@@ -220,7 +266,7 @@ export default function ColorGame() {
       if (speechSynthesis.current) {
         speechSynthesis.current.cancel()
       }
-      setGameState('initial')
+      setAndLogGameState('initial', 'end game')
       setCurrentColor(null)
       setRecognizedWords([])
       setIsListening(false)
@@ -230,39 +276,23 @@ export default function ColorGame() {
 
     cleanup()
     speak("Thank you for playing!")
-  }, [stopListening, speak])
-
-  const handleVoiceCommand = useCallback((command) => {
-    console.log('Processing command:', command)
-    const lowerCommand = command.toLowerCase()
-
-    if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
-      console.log('Next command detected')
-      handleNextColor()
-    } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
-      console.log('Stop command detected')
-      endGame()
-    } else {
-      console.log('No valid command detected - continuing to listen')
-    }
-  }, [handleNextColor, endGame])
+  }, [stopListening, speak, setAndLogGameState])
 
   const startGame = useCallback(async () => {
     try {
-      setGameState('intro')
-      await speak("Welcome to the Color Game! Say 'next' to proceed to the next color and 'stop' to end the game.")
-      setGameState('playing')
+      setAndLogGameState('intro', 'start game')
+      await speak("Welcome to the Color Game! Say 'next' to proceed to the next color, or 'stop' to end the game.")
       await selectNewColor()
     } catch (error) {
       console.error('Error starting game:', error)
       endGame()
     }
-  }, [speak, selectNewColor, endGame])
+  }, [speak, selectNewColor, endGame, setAndLogGameState])
 
   const handleBackgroundClick = useCallback((e) => {
-    if (gameState === 'playing' && 
-        !e.target.closest('button') && 
-        !e.target.closest('.top-menu')) {
+    if (gameState === 'playing' &&
+      !e.target.closest('button') &&
+      !e.target.closest('.top-menu')) {
       handleNextColor()
     }
   }, [gameState, handleNextColor])
@@ -270,6 +300,17 @@ export default function ColorGame() {
   const handleSaveSettings = () => {
     console.log('Saving Color Game settings')
   }
+
+  useEffect(() => {
+    console.log('Game state changed:', gameState)
+  }, [gameState])
+
+  useEffect(() => {
+    if (gameState === 'playing' && !isListening && !isSpeaking) {
+      console.log('Starting listening due to game state change to playing')
+      startListening()
+    }
+  }, [gameState, isListening, isSpeaking, startListening])
 
   return (
     <div className="relative min-h-screen">
@@ -283,7 +324,7 @@ export default function ColorGame() {
               ) : (
                 <MicOff className="text-red-500" size={24} />
               )}
-              <button 
+              <button
                 className="text-white hover:animate-spin-slow transition-all duration-300"
                 onClick={() => setIsSettingsOpen(true)}
               >
@@ -293,9 +334,9 @@ export default function ColorGame() {
           </div>
         </div>
       </div>
-      <div 
+      <div
         className="fixed inset-0 pt-16"
-        style={{ 
+        style={{
           backgroundColor: gameState === 'playing' || gameState === 'intro' ? colorTable[currentColor] : 'rgb(17, 24, 39)',
           transition: 'background-color 0.5s ease'
         }}
@@ -319,8 +360,8 @@ export default function ColorGame() {
                 {gameState === 'intro' && (
                   <p className="game-description text-white mb-8">Game is starting...</p>
                 )}
-                <button 
-                  className="neon-button" 
+                <button
+                  className="neon-button"
                   onClick={endGame}
                 >
                   <span className="neon-button-background"></span>
@@ -333,8 +374,8 @@ export default function ColorGame() {
         </div>
       </div>
       {isSettingsOpen && (
-        <GameSettings 
-          title="Color Game" 
+        <GameSettings
+          title="Color Game"
           onClose={() => setIsSettingsOpen(false)}
           onSave={handleSaveSettings}
         >
