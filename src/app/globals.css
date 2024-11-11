@@ -35,11 +35,14 @@ body {
   }
 
   .neon-button-background {
-    @apply absolute w-0 h-0 transition-all duration-500 ease-out bg-red-500 rounded-full;
+    @apply absolute inset-0 w-0 h-0 transition-all duration-500 ease-out bg-red-500 rounded-full;
+    transform: translate(-50%, -50%);
+    left: 50%;
+    top: 50%;
   }
 
   .neon-button:hover .neon-button-background {
-    @apply w-full h-full;
+    @apply w-[300%] h-[300%];
   }
 
   .neon-button-gradient {
@@ -68,5 +71,20 @@ body {
 
   .game-description {
     @apply mb-8 text-lg;
+  }
+}
+
+@layer utilities {
+  .animate-spin-slow {
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 }
