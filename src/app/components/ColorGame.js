@@ -104,9 +104,18 @@ export default function ColorGame() {
     } else if (/\b(what|which)(?:\s+(?:color|is|it))?\b/.test(lowerCommand)) {
       console.log('Color hint requested')
       speak(`The current color is ${currentColor}.`)
+    } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
+      const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
+      const requestedColor = match[2]
+      if (colorTable.hasOwnProperty(requestedColor)) {
+        console.log(`Showing requested color: ${requestedColor}`)
+        setCurrentColor(requestedColor)
+        speak(`Showing ${requestedColor}.`)
+      } else {
+        speak(`Sorry, ${requestedColor} is not in my color list.`)
+      }
     } else {
-      // Check for color hint request
-      console.log('Color hint requested')
+      // Check for color guess
       const colorGuess = Object.keys(colorTable).find(color => lowerCommand.includes(color))
       if (colorGuess) {
         if (colorGuess === currentColor) {
@@ -297,7 +306,7 @@ export default function ColorGame() {
   const startGame = useCallback(async () => {
     try {
       setAndLogGameState('intro', 'start game')
-      await speak("Welcome to the Color Game! Say a color to guess, 'next' to proceed to the next color, or 'stop' to end the game. You can also ask 'what color is it?' to get a hint.")
+      await speak("Welcome to the Color Game! Say the color you perceive out aloud to find out if you are correct. Say, 'next', to proceed to the next color, or click anywhere on the screen. To end the game say, 'stop'. For a hint you can ask, 'what color is it?' at any time, or to display any color say, 'show me', followed by the color you want to see.")
       await selectNewColor()
     } catch (error) {
       console.error('Error starting game:', error)
@@ -378,7 +387,7 @@ export default function ColorGame() {
                 )}
                 <button
                   className="neon-button"
-                  onClick={endGame}
+                onClick={endGame}
                 >
                   <span className="neon-button-background"></span>
                   <span className="neon-button-gradient"></span>
