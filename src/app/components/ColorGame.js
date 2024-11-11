@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Settings, Mic, MicOff } from 'lucide-react'
 import GameSettings from './GameSettings'
+import { useRouter } from 'next/navigation'
 
 const colorTable = {
   yellow: '#FFD700',
@@ -135,8 +136,8 @@ export default function ColorGame() {
       return
     }
 
-    if (isListening) {
-      console.log('Already listening, skipping start')
+    if (isListening || isSpeaking) {
+      console.log('Already listening or speaking, skipping start', { isListening, isSpeaking })
       return
     }
 
@@ -238,22 +239,25 @@ export default function ColorGame() {
         setIsSpeaking(false)
         resolve()
 
-        if (text === "What color is this?") {
+        if (text === "What color is this?" && gameState === 'playing') {
           setAndLogGameState('playing', 'after color prompt')
+          startListening()
         }
-        // Restart listening after speaking
-        startListening()
       }
 
       speechUtterance.current.onerror = (event) => {
         console.error('Speech synthesis error:', event)
         setIsSpeaking(false)
-        reject(event)
+        if (event.error !== 'interrupted' && gameState === 'playing') {
+          reject(event)
+        } else {
+          resolve() // Resolve promise if speech was interrupted due to navigation
+        }
       }
 
       speechSynthesis.current.speak(speechUtterance.current)
     })
-  }, [stopListening, setAndLogGameState, startListening])
+  }, [stopListening, setAndLogGameState, startListening, gameState])
 
   const askForColor = useCallback(async () => {
     try {
@@ -333,16 +337,46 @@ export default function ColorGame() {
   useEffect(() => {
     if (gameState === 'playing' && !isListening && !isSpeaking) {
       console.log('Starting listening due to game state change to playing')
-      startListening()
+      const timer = setTimeout(() => {
+        if (gameState === 'playing' && !isListening && !isSpeaking) {
+          startListening()
+        }
+      }, 1000) // Add a small delay to ensure all state updates have propagated
+      return () => clearTimeout(timer)
     }
   }, [gameState, isListening, isSpeaking, startListening])
+
+  const router = useRouter()
+
+  const handleNavigateHome = useCallback(() => {
+    const cleanup = () => {
+      stopListening()
+      if (speechSynthesis.current) {
+        speechSynthesis.current.cancel()
+      }
+      setAndLogGameState('initial', 'navigate home')
+      setCurrentColor(null)
+      setRecognizedWords([])
+      setIsListening(false)
+      setIsSpeaking(false)
+      console.log('Game cleaned up for navigation')
+    }
+
+    cleanup()
+    router.push('/')
+  }, [stopListening, setAndLogGameState, router])
 
   return (
     <div className="relative min-h-screen">
       <div className="fixed top-0 left-0 right-0 bg-gray-800 z-10 top-menu">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-white text-xl font-bold">Remote Viewing Games</h1>
+            <h1 
+              className="text-white text-xl font-bold cursor-pointer hover:text-gray-300 transition-colors"
+              onClick={handleNavigateHome}
+            >
+              Remote Viewing Games
+            </h1>
             <div className="flex items-center space-x-4">
               {isListening && !isSpeaking ? (
                 <Mic className="text-green-500" size={24} />
@@ -387,7 +421,7 @@ export default function ColorGame() {
                 )}
                 <button
                   className="neon-button"
-                onClick={endGame}
+                  onClick={endGame}
                 >
                   <span className="neon-button-background"></span>
                   <span className="neon-button-gradient"></span>
