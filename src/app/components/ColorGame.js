@@ -25,7 +25,6 @@ export default function ColorGame() {
   const speechUtterance = useRef(null)
   const recognition = useRef(null)
   const lastCommandTime = useRef(0)
-  const shouldRestartRecognition = useRef(true)
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -62,63 +61,30 @@ export default function ColorGame() {
     }
   }, [])
 
-  const speak = useCallback((text) => {
-    return new Promise((resolve, reject) => {
-      if (!speechSynthesis.current || !speechUtterance.current) {
-        reject(new Error('Speech synthesis not initialized'))
-        return
-      }
-
-      stopListening()
-      setIsSpeaking(true)
-      shouldRestartRecognition.current = true
-
-      speechSynthesis.current.cancel()
-      speechUtterance.current.text = text
-      
-      speechUtterance.current.onend = () => {
-        console.log('Speech ended')
-        setIsSpeaking(false)  // Ensure this happens before resolve
-        resolve()
-        // Remove the startListening call from here
-      }
-
-      speechUtterance.current.onerror = (event) => {
-        console.error('Speech synthesis error:', event)
-        setIsSpeaking(false)
-        reject(event)
-      }
-
-      speechSynthesis.current.speak(speechUtterance.current)
-    })
-  }, [gameState])
-
   const stopListening = useCallback(() => {
     if (recognition.current) {
-      shouldRestartRecognition.current = false
       try {
         recognition.current.stop()
       } catch (error) {
         console.error('Error stopping recognition:', error)
       }
+      recognition.current.onend = null
+      recognition.current.onstart = null
+      recognition.current.onerror = null
+      recognition.current.onresult = null
       setIsListening(false)
       console.log('Stopped listening')
     }
   }, [])
 
   const startListening = useCallback(() => {
-    if (!recognition.current || isListening) {
-      console.log('Cannot start listening:', { isListening, isSpeaking })
+    if (!recognition.current || isListening || isSpeaking || gameState !== 'playing') {
+      console.log('Cannot start listening:', { isListening, isSpeaking, gameState })
       return
-    }
-    
-    // Force reset speaking state if it's stuck
-    if (isSpeaking) {
-      console.log('Resetting stuck speaking state')
-      setIsSpeaking(false)
     }
 
     try {
+      recognition.current.continuous = true // Make recognition continuous
       recognition.current.onresult = (event) => {
         const last = event.results.length - 1
         const transcript = event.results[last][0].transcript.trim().toLowerCase()
@@ -130,37 +96,103 @@ export default function ColorGame() {
       recognition.current.onstart = () => {
         console.log('Recognition started')
         setIsListening(true)
-        shouldRestartRecognition.current = true
       }
 
       recognition.current.onend = () => {
         console.log('Recognition ended')
         setIsListening(false)
-        if (gameState === 'playing' && shouldRestartRecognition.current && !isSpeaking) {
+        
+        // Only restart if we're still playing and not speaking
+        if (gameState === 'playing' && !isSpeaking) {
           console.log('Restarting recognition')
           setTimeout(() => {
-            recognition.current.start()
+            if (gameState === 'playing' && !isListening && !isSpeaking) {
+              startListening()
+            }
           }, 100)
         }
       }
 
       recognition.current.onerror = (event) => {
+        // Ignore no-speech errors completely
+        if (event.error === 'no-speech') {
+          return
+        }
+        
         console.error('Recognition error:', event.error)
         setIsListening(false)
-        if (event.error !== 'aborted' && gameState === 'playing' && shouldRestartRecognition.current) {
+        
+        if (event.error !== 'aborted' && gameState === 'playing') {
           setTimeout(() => {
-            startListening()
-          }, 100)
+            if (gameState === 'playing' && !isListening && !isSpeaking) {
+              startListening()
+            }
+          }, 1000)
         }
       }
-      
+
       recognition.current.start()
       console.log('Started listening')
     } catch (error) {
       console.error('Recognition start error:', error)
       setIsListening(false)
+      if (gameState === 'playing') {
+        setTimeout(() => {
+          if (gameState === 'playing' && !isListening && !isSpeaking) {
+            startListening()
+          }
+        }, 1000)
+      }
     }
-  }, [gameState, isListening, isSpeaking])
+  }, [gameState, isListening, isSpeaking, handleVoiceCommand])
+
+  const speak = useCallback((text) => {
+    return new Promise((resolve, reject) => {
+      if (!speechSynthesis.current || !speechUtterance.current) {
+        reject(new Error('Speech synthesis not initialized'))
+        return
+      }
+
+      stopListening()
+      setIsSpeaking(true)
+
+      speechSynthesis.current.cancel()
+      speechUtterance.current.text = text
+      
+      speechUtterance.current.onend = () => {
+        console.log('Speech ended')
+        setIsSpeaking(false)
+        resolve()
+        // Only restart listening if we're still playing AND not already listening
+        if (gameState === 'playing' && !isListening && text !== "Thank you for playing!") {
+          console.log('Starting listening after speech')
+          setTimeout(() => {
+            if (gameState === 'playing' && !isListening && !isSpeaking) {
+              startListening()
+            }
+          }, 500)
+        }
+      }
+
+      speechUtterance.current.onerror = (event) => {
+        console.error('Speech synthesis error:', event)
+        setIsSpeaking(false)
+        reject(event)
+      }
+
+      speechSynthesis.current.speak(speechUtterance.current)
+    })
+  }, [gameState, stopListening, startListening])
+
+  const askForColor = useCallback(async () => {
+    try {
+      console.log('Speaking color prompt')
+      await speak("What color is this?")
+      console.log('Color prompt completed')
+    } catch (error) {
+      console.error('Error in askForColor:', error)
+    }
+  }, [speak])
 
   const selectNewColor = useCallback(async () => {
     const colors = Object.keys(colorTable)
@@ -170,28 +202,8 @@ export default function ColorGame() {
     } while (newColor === currentColor && colors.length > 1)
     
     setCurrentColor(newColor)
-    try {
-      console.log('Speaking new color prompt')
-      await speak("What color is this?")
-      console.log('Speech completed')
-      // Start listening after the initial prompt
-      startListening()
-    } catch (error) {
-      console.error('Error in selectNewColor:', error)
-    }
-  }, [currentColor, speak, startListening])
-
-  const endGame = useCallback(() => {
-    shouldRestartRecognition.current = false
-    stopListening()
-    if (speechSynthesis.current) {
-      speechSynthesis.current.cancel()
-    }
-    setGameState('initial')
-    setCurrentColor(null)
-    setRecognizedWords([])
-    console.log('Game ended')
-  }, [stopListening])
+    await askForColor()
+  }, [currentColor, askForColor])
 
   const handleNextColor = useCallback(() => {
     const now = Date.now()
@@ -202,12 +214,36 @@ export default function ColorGame() {
     selectNewColor()
   }, [selectNewColor])
 
+  const endGame = useCallback(() => {
+    const cleanup = () => {
+      stopListening()
+      if (speechSynthesis.current) {
+        speechSynthesis.current.cancel()
+      }
+      setGameState('initial')
+      setCurrentColor(null)
+      setRecognizedWords([])
+      setIsListening(false)
+      setIsSpeaking(false)
+      console.log('Game ended')
+    }
+
+    cleanup()
+    speak("Thank you for playing!")
+  }, [stopListening, speak])
+
   const handleVoiceCommand = useCallback((command) => {
     console.log('Processing command:', command)
-    if (command.includes('next')) {
+    const lowerCommand = command.toLowerCase()
+
+    if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
+      console.log('Next command detected')
       handleNextColor()
-    } else if (command.includes('stop')) {
+    } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
+      console.log('Stop command detected')
       endGame()
+    } else {
+      console.log('No valid command detected - continuing to listen')
     }
   }, [handleNextColor, endGame])
 
@@ -289,7 +325,7 @@ export default function ColorGame() {
                 >
                   <span className="neon-button-background"></span>
                   <span className="neon-button-gradient"></span>
-                  <span className="neon-button-text">End Game</span>
+                  <span className="neon-button-text">Stop Game</span>
                 </button>
               </>
             )}
