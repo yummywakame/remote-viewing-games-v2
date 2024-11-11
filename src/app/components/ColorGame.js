@@ -19,7 +19,7 @@ export default function ColorGame() {
         </button>
       </div>
       <button 
-        className="fixed bottom-4 right-4 text-white hover:animate-spin-slow"
+        className="fixed bottom-4 right-4 text-white hover:animate-spin-slow transition-all duration-300"
         onClick={() => setIsSettingsOpen(true)}
       >
         <Settings size={24} />
