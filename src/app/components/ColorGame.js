@@ -27,6 +27,7 @@ export default function ColorGame() {
   const recognition = useRef(null)
   const lastCommandTime = useRef(0)
   const restartTimeout = useRef(null)
+  const router = useRouter()
 
   const logGameState = useCallback((action) => {
     console.log(`Game state (${action}):`, gameState)
@@ -136,8 +137,8 @@ export default function ColorGame() {
       return
     }
 
-    if (isListening || isSpeaking) {
-      console.log('Already listening or speaking, skipping start', { isListening, isSpeaking })
+    if (isListening) {
+      console.log('Already listening, skipping start')
       return
     }
 
@@ -239,25 +240,22 @@ export default function ColorGame() {
         setIsSpeaking(false)
         resolve()
 
-        if (text === "What color is this?" && gameState === 'playing') {
+        if (text === "What color is this?") {
           setAndLogGameState('playing', 'after color prompt')
-          startListening()
         }
+        // Restart listening after speaking
+        startListening()
       }
 
       speechUtterance.current.onerror = (event) => {
         console.error('Speech synthesis error:', event)
         setIsSpeaking(false)
-        if (event.error !== 'interrupted' && gameState === 'playing') {
-          reject(event)
-        } else {
-          resolve() // Resolve promise if speech was interrupted due to navigation
-        }
+        reject(event)
       }
 
       speechSynthesis.current.speak(speechUtterance.current)
     })
-  }, [stopListening, setAndLogGameState, startListening, gameState])
+  }, [stopListening, setAndLogGameState, startListening])
 
   const askForColor = useCallback(async () => {
     try {
@@ -289,7 +287,7 @@ export default function ColorGame() {
     selectNewColor()
   }, [selectNewColor])
 
-  const endGame = useCallback(() => {
+  const endGame = useCallback(async () => {
     const cleanup = () => {
       stopListening()
       if (speechSynthesis.current) {
@@ -304,13 +302,14 @@ export default function ColorGame() {
     }
 
     cleanup()
-    speak("Thank you for playing!")
-  }, [stopListening, speak, setAndLogGameState])
+    await speak("Thank you for playing!")
+    router.push('/') // Navigate to the homepage
+  }, [stopListening, speak, setAndLogGameState, router])
 
   const startGame = useCallback(async () => {
     try {
       setAndLogGameState('intro', 'start game')
-      await speak("Welcome to the Color Game! Say the color you perceive out aloud to find out if you are correct. Say, 'next', to proceed to the next color, or click anywhere on the screen. To end the game say, 'stop'. For a hint you can ask, 'what color is it?' at any time, or to display any color say, 'show me', followed by the color you want to see.")
+      await speak("Welcome to the Color Game! Say each color you think it is out aloud. To proceed to the next color say, 'next', or click anywhere on the screen. Say, 'stop', at any time to end the game. You can ask, 'what color is it?', for a hint, or say 'show me' followed by a color name to display that color.")
       await selectNewColor()
     } catch (error) {
       console.error('Error starting game:', error)
@@ -337,46 +336,16 @@ export default function ColorGame() {
   useEffect(() => {
     if (gameState === 'playing' && !isListening && !isSpeaking) {
       console.log('Starting listening due to game state change to playing')
-      const timer = setTimeout(() => {
-        if (gameState === 'playing' && !isListening && !isSpeaking) {
-          startListening()
-        }
-      }, 1000) // Add a small delay to ensure all state updates have propagated
-      return () => clearTimeout(timer)
+      startListening()
     }
   }, [gameState, isListening, isSpeaking, startListening])
-
-  const router = useRouter()
-
-  const handleNavigateHome = useCallback(() => {
-    const cleanup = () => {
-      stopListening()
-      if (speechSynthesis.current) {
-        speechSynthesis.current.cancel()
-      }
-      setAndLogGameState('initial', 'navigate home')
-      setCurrentColor(null)
-      setRecognizedWords([])
-      setIsListening(false)
-      setIsSpeaking(false)
-      console.log('Game cleaned up for navigation')
-    }
-
-    cleanup()
-    router.push('/')
-  }, [stopListening, setAndLogGameState, router])
 
   return (
     <div className="relative min-h-screen">
       <div className="fixed top-0 left-0 right-0 bg-gray-800 z-10 top-menu">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <h1 
-              className="text-white text-xl font-bold cursor-pointer hover:text-gray-300 transition-colors"
-              onClick={handleNavigateHome}
-            >
-              Remote Viewing Games
-            </h1>
+            <h1 className="text-white text-xl font-bold">Remote Viewing Games</h1>
             <div className="flex items-center space-x-4">
               {isListening && !isSpeaking ? (
                 <Mic className="text-green-500" size={24} />
