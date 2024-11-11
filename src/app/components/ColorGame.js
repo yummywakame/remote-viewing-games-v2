@@ -101,8 +101,12 @@ export default function ColorGame() {
     } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
       console.log('Stop command detected')
       endGame()
+    } else if (/\b(what|which)(?:\s+(?:color|is|it))?\b/.test(lowerCommand)) {
+      console.log('Color hint requested')
+      speak(`The current color is ${currentColor}.`)
     } else {
-      // Check for color guesses
+      // Check for color hint request
+      console.log('Color hint requested')
       const colorGuess = Object.keys(colorTable).find(color => lowerCommand.includes(color))
       if (colorGuess) {
         if (colorGuess === currentColor) {
@@ -293,7 +297,7 @@ export default function ColorGame() {
   const startGame = useCallback(async () => {
     try {
       setAndLogGameState('intro', 'start game')
-      await speak("Welcome to the Color Game! Say a color to guess, 'next' to proceed to the next color, or 'stop' to end the game.")
+      await speak("Welcome to the Color Game! Say a color to guess, 'next' to proceed to the next color, or 'stop' to end the game. You can also ask 'what color is it?' to get a hint.")
       await selectNewColor()
     } catch (error) {
       console.error('Error starting game:', error)
