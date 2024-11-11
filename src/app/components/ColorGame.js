@@ -102,9 +102,19 @@ export default function ColorGame() {
       console.log('Stop command detected')
       endGame()
     } else {
-      console.log('No valid command detected - continuing to listen')
+      // Check for color guesses
+      const colorGuess = Object.keys(colorTable).find(color => lowerCommand.includes(color))
+      if (colorGuess) {
+        if (colorGuess === currentColor) {
+          speak(`Well done! The color is ${currentColor}.`)
+        } else {
+          speak("Try again!")
+        }
+      } else {
+        console.log('No valid command or color guess detected - continuing to listen')
+      }
     }
-  }, [])
+  }, [currentColor])
 
   const startListening = useCallback(() => {
     if (gameState !== 'playing') {
@@ -218,6 +228,8 @@ export default function ColorGame() {
         if (text === "What color is this?") {
           setAndLogGameState('playing', 'after color prompt')
         }
+        // Restart listening after speaking
+        startListening()
       }
 
       speechUtterance.current.onerror = (event) => {
@@ -228,7 +240,7 @@ export default function ColorGame() {
 
       speechSynthesis.current.speak(speechUtterance.current)
     })
-  }, [stopListening, setAndLogGameState])
+  }, [stopListening, setAndLogGameState, startListening])
 
   const askForColor = useCallback(async () => {
     try {
@@ -281,7 +293,7 @@ export default function ColorGame() {
   const startGame = useCallback(async () => {
     try {
       setAndLogGameState('intro', 'start game')
-      await speak("Welcome to the Color Game! Say 'next' to proceed to the next color, or 'stop' to end the game.")
+      await speak("Welcome to the Color Game! Say a color to guess, 'next' to proceed to the next color, or 'stop' to end the game.")
       await selectNewColor()
     } catch (error) {
       console.error('Error starting game:', error)
