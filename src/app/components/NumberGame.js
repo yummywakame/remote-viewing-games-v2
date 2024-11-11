@@ -1,14 +1,19 @@
 'use client'
 
 import React from 'react'
-import VoiceControls from './VoiceControls'
 
 export default function NumberGame() {
   return (
-    <div className="number-game">
-      <h2 className="text-xl font-bold mb-4">Number Game</h2>
-      <p className="mb-4">Coming soon...</p>
-      <VoiceControls onCommand={(command) => console.log('Received command:', command)} />
+    <div className="game-container">
+      <div className="game-content">
+        <h2 className="game-title">Number Game</h2>
+        <p className="game-description">Coming soon...</p>
+        <button className="neon-button">
+          <span className="neon-button-background"></span>
+          <span className="neon-button-gradient"></span>
+          <span className="neon-button-text">Start Listening</span>
+        </button>
+      </div>
     </div>
   )
 }

@@ -3,19 +3,70 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+@layer components {
+  .neon-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    overflow: hidden;
+    font-family: ui-monospace, monospace;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    color: white;
+    background-color: rgb(31, 41, 55);
+    border-radius: 9999px;
+  }
+
+  .neon-button-background {
+    @apply absolute w-0 h-0 transition-all duration-500 ease-out bg-red-500 rounded-full;
+  }
+
+  .neon-button:hover .neon-button-background {
+    @apply w-full h-full;
+  }
+
+  .neon-button-gradient {
+    @apply absolute inset-0 w-full h-full rounded-full opacity-30 bg-gradient-to-b from-transparent via-transparent to-black;
+  }
+
+  .neon-button-text {
+    @apply relative z-10 transition-colors duration-300;
+  }
+
+  .neon-button:hover .neon-button-text {
+    @apply text-white;
+  }
+
+  .game-container {
+    @apply min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-900 text-white;
+  }
+
+  .game-content {
+    @apply text-center;
+  }
+
+  .game-title {
+    @apply text-3xl font-bold mb-6;
+  }
+
+  .game-description {
+    @apply mb-8 text-lg;
+  }
 }
