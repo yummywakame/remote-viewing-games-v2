@@ -5,20 +5,20 @@ import NavMenu from './components/NavMenu'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Remote Viewing Games v2',
+  title: 'Remote Viewing Games',
   description: 'Practice remote viewing while blindfolded',
 }
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100`}>
-        <div className="min-h-screen">
-          <NavMenu />
-          <main className="max-w-7xl mx-auto p-4">
+    <html lang="en">
+      <body className={`${inter.className} h-screen overflow-hidden`}>
+        <NavMenu />
+        <main className="h-[calc(100vh-4rem)] mt-16">
+          <div className="max-w-[600px] px-5 mx-auto h-full">
             {children}
-          </main>
-        </div>
+          </div>
+        </main>
       </body>
     </html>
   )

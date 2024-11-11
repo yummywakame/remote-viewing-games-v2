@@ -4,18 +4,18 @@
 
 :root {
   --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 0, 0, 0;
+  --background-rgb: 17, 24, 39;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: rgb(var(--background-rgb));
 }
 
 @layer components {
@@ -55,11 +55,11 @@ body {
   }
 
   .game-container {
-    @apply min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-900 text-white;
+    @apply h-full flex items-center justify-center;
   }
 
   .game-content {
-    @apply text-center;
+    @apply text-center w-full;
   }
 
   .game-title {

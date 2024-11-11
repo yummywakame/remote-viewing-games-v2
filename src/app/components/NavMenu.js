@@ -11,7 +11,7 @@ export default function NavMenu() {
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <header className="bg-gray-800 text-white">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-gray-800 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link 
@@ -38,7 +38,7 @@ export default function NavMenu() {
       </div>
 
       <div 
-        className={`overflow-hidden transition-all duration-300 px-4 bg-gray-900/90 ${
+        className={`absolute left-0 right-0 overflow-hidden transition-all duration-300 px-4 bg-gray-900/90 ${
           isOpen ? 'max-h-64' : 'max-h-0'
         }`}
       >
