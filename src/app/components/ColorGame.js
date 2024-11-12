@@ -220,9 +220,9 @@ export default function ColorGame() {
 
           if (text === "What color is this?") {
             setAndLogGameState('playing', 'after color prompt')
-            setTimeout(() => startListening(), 1000) // Delay start listening
+            setTimeout(() => startListening(), 500) // Reduced to 0.5 seconds
           } else if (gameState === 'playing' && text !== "Thank you for playing!") {
-            setTimeout(() => startListening(), 1000) // Delay start listening
+            setTimeout(() => startListening(), 500) // Reduced to 0.5 seconds
           }
         }
 
@@ -415,7 +415,7 @@ export default function ColorGame() {
         if (!isListening && !isSpeaking) {
           startListening();
         }
-      }, 1500); // Delay slightly longer than the speak function's delay
+      }, 500); // Reduced to 0.5 seconds
       return () => clearTimeout(timeoutId);
     }
   }, [gameState, isListening, isSpeaking, startListening]);
