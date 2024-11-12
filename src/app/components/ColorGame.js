@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Settings, Mic, MicOff } from 'lucide-react'
 import GameSettings from './GameSettings'
 import { useRouter } from 'next/navigation'
+import FloatingBubble from './FloatingBubble'
 
 const colorTable = {
   yellow: '#FFD700',
@@ -20,7 +21,7 @@ export default function ColorGame() {
   const [gameState, setGameState] = useState('initial')
   const [currentColor, setCurrentColor] = useState(null)
   const [isListening, setIsListening] = useState(false)
-  const [recognizedWords, setRecognizedWords] = useState([])
+  const [lastRecognizedWord, setLastRecognizedWord] = useState('')
   const [isSpeaking, setIsSpeaking] = useState(false)
   const speechSynthesis = useRef(null)
   const speechUtterance = useRef(null)
@@ -111,10 +112,10 @@ export default function ColorGame() {
       // Set up event handlers
       recognition.current.onresult = (event) => {
         const last = event.results.length - 1
-        const transcript = event.results[last][0].transcript.trim().toLowerCase()
+        const transcript = event.results[last][0].transcript.trim()
         console.log('Recognized words:', transcript)
-        setRecognizedWords(prevWords => [...prevWords, transcript])
-        handleVoiceCommand(transcript)
+        setLastRecognizedWord(transcript)
+        handleVoiceCommand(transcript.toLowerCase())
       }
 
       recognition.current.onstart = () => {
@@ -281,7 +282,7 @@ export default function ColorGame() {
       }
       setAndLogGameState('initial', 'end game')
       setCurrentColor(null)
-      setRecognizedWords([])
+      setLastRecognizedWord('')
       setIsListening(false)
       setIsSpeaking(false)
       console.log('Game ended')
@@ -491,14 +492,9 @@ export default function ColorGame() {
           </div>
         </GameSettings>
       )}
-      <div className="fixed bottom-4 left-4 bg-black bg-opacity-50 text-white p-2 rounded">
-        <h3>Recognized Words:</h3>
-        <ul>
-          {recognizedWords.slice(-5).map((word, index) => (
-            <li key={index}>{word}</li>
-          ))}
-        </ul>
-      </div>
+      {gameState !== 'initial' && (
+        <FloatingBubble word={lastRecognizedWord} />
+      )}
     </div>
   )
 }
