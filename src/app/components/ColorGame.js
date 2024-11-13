@@ -5,6 +5,7 @@ import { Settings, Mic, MicOff } from 'lucide-react'
 import GameSettings from './GameSettings'
 import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
+import Link from 'next/link'
 
 const debounce = (func, delay) => {
   let timeoutId;
@@ -138,7 +139,7 @@ export default function ColorGame() {
               if (gameState === 'playing' && !isListening && !isSpeaking) {
                 startListening()
               }
-            }, 5000) // Increased to 5 seconds to match the initial cycle
+            }, 5000)
           }
         }
 
@@ -164,7 +165,7 @@ export default function ColorGame() {
               if (gameState === 'playing' && !isListening && !isSpeaking) {
                 startListening()
               }
-            }, 5000) // Increased to 5 seconds to match the initial cycle
+            }, 5000)
           }
         }
 
@@ -179,7 +180,7 @@ export default function ColorGame() {
             if (gameState === 'playing' && !isListening && !isSpeaking) {
               startListening()
             }
-          }, 5000) // Increased to 5 seconds to match the initial cycle
+          }, 5000)
         }
       }
     },
@@ -220,9 +221,9 @@ export default function ColorGame() {
 
           if (text === "What color is this?") {
             setAndLogGameState('playing', 'after color prompt')
-            setTimeout(() => startListening(), 500) // Reduced to 0.5 seconds
+            setTimeout(() => startListening(), 500)
           } else if (gameState === 'playing' && text !== "Thank you for playing!") {
-            setTimeout(() => startListening(), 500) // Reduced to 0.5 seconds
+            setTimeout(() => startListening(), 500)
           }
         }
 
@@ -415,7 +416,7 @@ export default function ColorGame() {
         if (!isListening && !isSpeaking) {
           startListening();
         }
-      }, 500); // Reduced to 0.5 seconds
+      }, 500);
       return () => clearTimeout(timeoutId);
     }
   }, [gameState, isListening, isSpeaking, startListening]);
@@ -425,7 +426,7 @@ export default function ColorGame() {
       <div className="fixed top-0 left-0 right-0 bg-gray-800 z-10 top-menu">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-white text-xl font-bold">Remote Viewing Games</h1>
+            <Link href="/" className="text-white text-xl font-bold">MindSight Games</Link>
             <div className="flex items-center space-x-4">
               {isListening && !isSpeaking ? (
                 <Mic className="text-green-500" size={24} />
