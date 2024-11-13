@@ -6,9 +6,9 @@ import Link from 'next/link'
 export default function NavMenu() {
   const [isOpen, setIsOpen] = useState(false)
 
-  const toggleMenu = () => setIsOpen(!isOpen);
+  const toggleMenu = () => setIsOpen(!isOpen)
 
-  const closeMenu = () => setIsOpen(false);
+  const closeMenu = () => setIsOpen(false)
 
   return (
     <header className="bg-gray-800 text-white">
@@ -19,7 +19,7 @@ export default function NavMenu() {
             className="text-xl font-bold"
             onClick={() => closeMenu()}
           >
-            Remote Viewing Games
+            MindSight Games
           </Link>
           <button
             onClick={toggleMenu}

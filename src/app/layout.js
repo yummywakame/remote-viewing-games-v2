@@ -5,7 +5,7 @@ import NavMenu from './components/NavMenu'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Remote Viewing Games',
+  title: 'MindSight Games',
   description: 'Practice remote viewing while blindfolded',
 }
 
