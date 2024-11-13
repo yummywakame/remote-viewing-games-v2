@@ -423,7 +423,7 @@ export default function ColorGame() {
 
   return (
     <div className="relative min-h-screen">
-      <div className="fixed top-0 left-0 right-0 bg-gray-800 z-10 top-menu">
+      <div className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-10 top-menu">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button
@@ -432,7 +432,9 @@ export default function ColorGame() {
             >
               <Settings size={24} />
             </button>
-            <Link href="/" className="text-white text-xl font-bold absolute left-1/2 transform -translate-x-1/2">MindSight Games</Link>
+            <Link href="/" className="text-white text-xl font-bold absolute left-1/2 transform -translate-x-1/2">
+              MindSight Games
+            </Link>
             <div className="flex items-center space-x-4">
               {isListening && !isSpeaking ? (
                 <Mic className="text-green-500" size={24} />
@@ -446,7 +448,7 @@ export default function ColorGame() {
       <div
         className="fixed inset-0 pt-16"
         style={{
-          backgroundColor: gameState === 'playing' || gameState === 'intro' ? colorTable[currentColor] : 'rgb(17, 24, 39)',
+          backgroundColor: gameState === 'playing' || gameState === 'intro' ? colorTable[currentColor] : 'transparent',
           transition: 'background-color 0.5s ease'
         }}
         onClick={handleBackgroundClick}
@@ -457,10 +459,11 @@ export default function ColorGame() {
               <>
                 <h2 className="game-title text-white text-3xl font-bold mb-6">Color Game</h2>
                 <p className="game-description text-white mb-8">Get your blindfold ready and select "Start Game" to begin!</p>
-                <button className="neon-button" onClick={startGame}>
-                  <span className="neon-button-background"></span>
-                  <span className="neon-button-gradient"></span>
-                  <span className="neon-button-text">Start Game</span>
+                <button
+                  onClick={startGame}
+                  className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                >
+                  Start Game
                 </button>
               </>
             )}
@@ -470,12 +473,10 @@ export default function ColorGame() {
                   <p className="game-description text-white mb-8">Game is starting...</p>
                 )}
                 <button
-                  className="neon-button"
                   onClick={endGame}
+                  className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                 >
-                  <span className="neon-button-background"></span>
-                  <span className="neon-button-gradient"></span>
-                  <span className="neon-button-text">Stop Game</span>
+                  Stop Game
                 </button>
               </>
             )}
