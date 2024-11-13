@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -6,13 +8,13 @@ const FloatingBubble = ({ word }) => {
     <AnimatePresence>
       {word && (
         <motion.div
-          key={word}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.5 }}
-          className="absolute bottom-8 right-8 bg-white rounded-full shadow-lg px-6 py-3"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          transition={{ duration: 0.5 }}
+          className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-80 text-black px-4 py-2 rounded-full shadow-lg"
         >
-          <p className="text-lg font-semibold text-gray-800">{word}</p>
+          {word}
         </motion.div>
       )}
     </AnimatePresence>
