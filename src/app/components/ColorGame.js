@@ -30,7 +30,7 @@ export default function ColorGame() {
   const [gameState, setGameState] = useState('initial')
   const [currentColor, setCurrentColor] = useState(null)
   const [isListening, setIsListening] = useState(false)
-  const [lastRecognizedWord, setLastRecognizedWord] = useState('')
+  const [lastHeardWord, setLastHeardWord] = useState('')
   const [isSpeaking, setIsSpeaking] = useState(false)
   const speechSynthesis = useRef(null)
   const speechUtterance = useRef(null)
@@ -117,7 +117,7 @@ export default function ColorGame() {
           const last = event.results.length - 1
           const transcript = event.results[last][0].transcript.trim()
           console.log('Recognized words:', transcript)
-          setLastRecognizedWord(transcript)
+          setLastHeardWord(transcript)
           handleVoiceCommand(transcript.toLowerCase())
         }
 
@@ -284,7 +284,7 @@ export default function ColorGame() {
       }
       setAndLogGameState('initial', 'end game')
       setCurrentColor(null)
-      setLastRecognizedWord('')
+      setLastHeardWord('')
       setIsListening(false)
       setIsSpeaking(false)
       console.log('Game ended')
@@ -426,19 +426,19 @@ export default function ColorGame() {
       <div className="fixed top-0 left-0 right-0 bg-gray-800 z-10 top-menu">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link href="/" className="text-white text-xl font-bold">MindSight Games</Link>
+            <button
+              className="text-white hover:animate-spin-slow transition-all duration-300"
+              onClick={() => setIsSettingsOpen(true)}
+            >
+              <Settings size={24} />
+            </button>
+            <Link href="/" className="text-white text-xl font-bold absolute left-1/2 transform -translate-x-1/2">MindSight Games</Link>
             <div className="flex items-center space-x-4">
               {isListening && !isSpeaking ? (
                 <Mic className="text-green-500" size={24} />
               ) : (
                 <MicOff className="text-red-500" size={24} />
               )}
-              <button
-                className="text-white hover:animate-spin-slow transition-all duration-300"
-                onClick={() => setIsSettingsOpen(true)}
-              >
-                <Settings size={24} />
-              </button>
             </div>
           </div>
         </div>
@@ -494,7 +494,7 @@ export default function ColorGame() {
         </GameSettings>
       )}
       {gameState !== 'initial' && (
-        <FloatingBubble word={lastRecognizedWord} />
+        <FloatingBubble word={lastHeardWord} />
       )}
     </div>
   )

@@ -14,13 +14,6 @@ export default function NavMenu() {
     <header className="bg-gray-800 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link 
-            href="/" 
-            className="text-xl font-bold"
-            onClick={() => closeMenu()}
-          >
-            MindSight Games
-          </Link>
           <button
             onClick={toggleMenu}
             className="p-2 focus:outline-none"
@@ -34,6 +27,13 @@ export default function NavMenu() {
               <span className={`h-0.5 w-full bg-white transition-all duration-300 ${isOpen ? '-rotate-45 -translate-y-2.5' : ''}`} />
             </div>
           </button>
+          <Link 
+            href="/" 
+            className="text-xl font-bold flex items-center absolute left-1/2 transform -translate-x-1/2"
+            onClick={() => closeMenu()}
+          >
+            MindSight Games
+          </Link>
         </div>
       </div>
 
@@ -43,6 +43,7 @@ export default function NavMenu() {
         }`}
       >
         <nav className="py-2 space-y-2 max-w-7xl mx-auto">
+          <Link href="/" className="block py-2 pl-2.5 text-white hover:text-gray-300 transition-colors" onClick={closeMenu}>Home</Link>
           <Link href="/color-game" className="block py-2 pl-2.5 text-white hover:text-gray-300 transition-colors" onClick={closeMenu}>Color Game</Link>
           <Link href="/shape-game" className="block py-2 pl-2.5 text-white hover:text-gray-300 transition-colors" onClick={closeMenu}>Shape Game</Link>
           <Link href="/number-game" className="block py-2 pl-2.5 text-white hover:text-gray-300 transition-colors" onClick={closeMenu}>Number Game</Link>
