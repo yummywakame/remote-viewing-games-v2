@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Mic, MicOff } from 'lucide-react'
+import { Settings, Mic, MicOff, Eye } from 'lucide-react'
 import GameSettings from './GameSettings'
 import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'

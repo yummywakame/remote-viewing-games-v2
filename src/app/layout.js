@@ -2,10 +2,11 @@ import './globals.css'
 import { Andika } from 'next/font/google'
 
 const andika = Andika({
-  weight: ['400', '700'],
   subsets: ['latin'],
+  weight: ['400', '700'],
   display: 'swap',
   variable: '--font-andika',
+  adjustFontFallback: false // Add this line to prevent font manifest issues
 })
 
 export const metadata = {
