@@ -34,6 +34,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
   const [lastHeardWord, setLastHeardWord] = useState('')
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [selectedColors, setSelectedColors] = useState(Object.keys(colorTable))
+  const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const speechSynthesis = useRef(null)
   const speechUtterance = useRef(null)
   const recognition = useRef(null)
@@ -49,6 +50,11 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     setGameState(newState)
     onGameStateChange(newState)
     console.log(`Game state changed to ${newState} (${action})`)
+    if (newState === 'intro' || newState === 'playing') {
+      setIsButtonAnimated(true)
+    } else {
+      setIsButtonAnimated(false)
+    }
   }, [onGameStateChange])
 
   const cleanupRecognition = () => {
@@ -513,32 +519,29 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
                 </motion.button>
               </motion.div>
             )}
-            {(gameState === 'intro' || gameState === 'playing') && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                {gameState === 'intro' && (
-                  <motion.p 
-                    className="game-description text-white mb-8"
-                    initial={{ y: 20 }}
-                    animate={{ y: 0 }}
-                    transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
-                  >
-                    Game is starting...
-                  </motion.p>
-                )}
-                <motion.button
-                  onClick={endGame}
-                  className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+            <AnimatePresence>
+              {(gameState === 'intro' || gameState === 'playing') && (
+                <motion.div
+                  key="game-button"
+                  initial={{ opacity: 0, y: 0 }}
+                  animate={{ 
+                    opacity: 1, 
+                    y: isButtonAnimated ? '30vh' : 0
+                  }}
+                  exit={{ opacity: 0, y: 100 }}
+                  transition={{ duration: 0.5, type: "spring", stiffness: 120 }}
                 >
-                  Stop Game
-                </motion.button>
-              </motion.div>
-            )}
+                  <motion.button
+                    onClick={endGame}
+                    className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Stop Game
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
