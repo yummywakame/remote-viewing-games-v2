@@ -1,23 +1,22 @@
-import React from 'react'
+'use client'
+
 import { motion, AnimatePresence } from 'framer-motion'
 
-const FloatingBubble = ({ word }) => {
+export default function FloatingBubble({ word = '' }) {
   return (
     <AnimatePresence>
       {word && (
         <motion.div
-          key={word}
-          initial={{ opacity: 0, y: -50 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -50 }}
-          transition={{ duration: 0.3 }}
-          className="fixed top-16 right-4 bg-white bg-opacity-80 text-black px-4 py-2 rounded-full shadow-lg z-50"
+          exit={{ opacity: 0, y: -20 }}
+          className="fixed top-[50px] right-[50px] z-50"
         >
-          {word}
+          <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-lg">
+            <p className="text-xl font-bold text-gray-900">{word}</p>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
   )
 }
-
-export default FloatingBubble

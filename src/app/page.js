@@ -6,7 +6,7 @@ import Link from 'next/link'
 
 export default function Home() {
   return (
-    <>
+    <div className="h-screen overflow-auto">
       {/* Full viewport background */}
       <div className="fixed inset-0 w-full h-full">
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
@@ -46,9 +46,9 @@ export default function Home() {
       </motion.div>
 
       {/* Main content */}
-      <div className="relative min-h-screen flex flex-col items-center justify-center px-4">
+      <div className="relative h-screen flex items-center justify-center px-4">
         <motion.div
-          className="text-center"
+          className="text-center max-w-4xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -97,6 +97,6 @@ export default function Home() {
 
       {/* Decorative bottom gradient */}
       <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
-    </>
+    </div>
   )
 }
