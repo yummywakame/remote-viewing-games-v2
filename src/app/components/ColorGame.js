@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Settings, Mic, MicOff, Eye } from 'lucide-react'
 import GameSettings from './GameSettings'
 import { useRouter } from 'next/navigation'
@@ -33,6 +33,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
   const [isListening, setIsListening] = useState(false)
   const [lastHeardWord, setLastHeardWord] = useState('')
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [selectedColors, setSelectedColors] = useState(Object.keys(colorTable))
   const speechSynthesis = useRef(null)
   const speechUtterance = useRef(null)
   const recognition = useRef(null)
@@ -259,15 +260,14 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
   }, [speak])
 
   const selectNewColor = useCallback(async () => {
-    const colors = Object.keys(colorTable)
     let newColor
     do {
-      newColor = colors[Math.floor(Math.random() * colors.length)]
-    } while (newColor === currentColor && colors.length > 1)
+      newColor = selectedColors[Math.floor(Math.random() * selectedColors.length)]
+    } while (newColor === currentColor && selectedColors.length > 1)
 
     setCurrentColor(newColor)
     await askForColor()
-  }, [currentColor, askForColor])
+  }, [currentColor, askForColor, selectedColors])
 
   const handleNextColor = useCallback(() => {
     const now = Date.now()
@@ -368,8 +368,10 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     }
   }, [gameState, handleNextColor])
 
-  const handleSaveSettings = () => {
-    console.log('Saving Color Game settings')
+  const handleSaveSettings = (newSelectedColors) => {
+    setSelectedColors(newSelectedColors)
+    localStorage.setItem('colorGameSelectedColors', JSON.stringify(newSelectedColors))
+    console.log('Saving Color Game settings', newSelectedColors)
   }
 
   useEffect(() => {
@@ -423,6 +425,27 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     }
   }, [gameState, isListening, isSpeaking, startListening]);
 
+  useEffect(() => {
+    const savedColors = localStorage.getItem('colorGameSelectedColors')
+    if (savedColors) {
+      try {
+        const parsedColors = JSON.parse(savedColors)
+        if (Array.isArray(parsedColors) && parsedColors.length >= 2) {
+          setSelectedColors(parsedColors)
+        } else {
+          setSelectedColors(Object.keys(colorTable))
+          localStorage.setItem('colorGameSelectedColors', JSON.stringify(Object.keys(colorTable)))
+        }
+      } catch (error) {
+        console.error('Error parsing saved colors:', error)
+        setSelectedColors(Object.keys(colorTable))
+        localStorage.setItem('colorGameSelectedColors', JSON.stringify(Object.keys(colorTable)))
+      }
+    } else {
+      localStorage.setItem('colorGameSelectedColors', JSON.stringify(Object.keys(colorTable)))
+    }
+  }, [])
+
   return (
     <div className="relative h-screen overflow-auto">
       <div className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-10 top-menu">
@@ -463,14 +486,14 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
               >
-<motion.h2 
-  className="game-title text-white text-5xl md:text-6xl font-bold mb-6"
-  initial={{ y: -20 }}
-  animate={{ y: 0 }}
-  transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
->
-  Color Game
-</motion.h2>
+                <motion.h2 
+                  className="game-title text-white text-5xl md:text-6xl font-bold mb-6"
+                  initial={{ y: -20 }}
+                  animate={{ y: 0 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
+                >
+                  Color Game
+                </motion.h2>
                 <motion.p 
                   className="game-description text-white mb-8"
                   initial={{ y: 20 }}
@@ -519,17 +542,18 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
           </div>
         </div>
       </div>
-      {isSettingsOpen && (
-        <GameSettings
-          title="Color Game"
-          onClose={() => setIsSettingsOpen(false)}
-          onSave={handleSaveSettings}
-        >
-          <div>
-            <p>Color Game specific settings go here</p>
-          </div>
-        </GameSettings>
-      )}
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <GameSettings
+            key="settings"
+            title="Color Game"
+            onClose={() => setIsSettingsOpen(false)}
+            onSave={handleSaveSettings}
+            colorTable={colorTable}
+            selectedColors={selectedColors}
+          />
+        )}
+      </AnimatePresence>
       {gameState !== 'initial' && (
         <FloatingBubble word={lastHeardWord} />
       )}
