@@ -463,21 +463,21 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <motion.h2 
-                  className="game-title text-white text-3xl font-bold mb-6"
-                  initial={{ y: -20 }}
-                  animate={{ y: 0 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
-                >
-                  Color Game
-                </motion.h2>
+<motion.h2 
+  className="game-title text-white text-5xl md:text-6xl font-bold mb-6"
+  initial={{ y: -20 }}
+  animate={{ y: 0 }}
+  transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
+>
+  Color Game
+</motion.h2>
                 <motion.p 
                   className="game-description text-white mb-8"
                   initial={{ y: 20 }}
                   animate={{ y: 0 }}
                   transition={{ delay: 0.4, type: "spring", stiffness: 120 }}
                 >
-                  Get your blindfold ready and select "Start Game" to begin!
+                  Get your blindfold ready and let's begin!
                 </motion.p>
                 <motion.button
                   onClick={startGame}
