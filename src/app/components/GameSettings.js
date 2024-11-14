@@ -2,20 +2,15 @@
 
 import * as React from 'react'
 import { X } from 'lucide-react'
-import { motion, usePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function GameSettings({ title, onClose, onSave, colorTable, selectedColors }) {
   const [localSelectedColors, setLocalSelectedColors] = React.useState(selectedColors)
   const modalRef = React.useRef(null)
-  const [isPresent, safeToRemove] = usePresence()
 
   React.useEffect(() => {
     setLocalSelectedColors(selectedColors)
   }, [selectedColors])
-
-  React.useEffect(() => {
-    !isPresent && setTimeout(safeToRemove, 300)
-  }, [isPresent, safeToRemove])
 
   const handleCheckboxChange = (color) => {
     setLocalSelectedColors((prev) => {
@@ -73,20 +68,40 @@ export default function GameSettings({ title, onClose, onSave, colorTable, selec
           
           <div className="grid grid-cols-2 gap-4 mb-6">
             {Object.entries(colorTable).map(([color, hex]) => (
-              <label key={color} className="flex items-center space-x-3 cursor-pointer">
+              <label
+                key={color}
+                className={`
+                  relative p-4 rounded-lg cursor-pointer
+                  transition-all duration-200
+                  ${localSelectedColors.includes(color) ? 'ring-2 ring-offset-2 ring-offset-gray-800' : 'ring-1 ring-gray-600'}
+                  hover:ring-2 hover:ring-offset-2 hover:ring-offset-gray-800
+                `}
+                style={{ backgroundColor: hex + '20' }}
+              >
                 <input
                   type="checkbox"
+                  className="sr-only"
                   checked={localSelectedColors.includes(color)}
                   onChange={() => handleCheckboxChange(color)}
                   disabled={localSelectedColors.length <= 2 && localSelectedColors.includes(color)}
-                  className="w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700"
                 />
-                <span 
-                  className="capitalize font-medium"
-                  style={{ color: hex }}
-                >
-                  {color}
-                </span>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-6 h-6 rounded-full shadow-inner"
+                    style={{ backgroundColor: hex }}
+                  />
+                  <span className="capitalize font-medium" style={{ color: hex }}>
+                    {color}
+                  </span>
+                </div>
+                {localSelectedColors.includes(color) && (
+                  <motion.div
+                    className="absolute inset-0 rounded-lg bg-white/10"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  />
+                )}
               </label>
             ))}
           </div>
