@@ -249,17 +249,19 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         return
       }
   
-      if (restartTimeout.current) {
-        clearTimeout(restartTimeout.current)
-        restartTimeout.current = null
-      }
-  
       try {
         cleanupRecognition()
         recognition.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)()
         recognition.current.continuous = true
         recognition.current.interimResults = false
+        recognition.current.maxAlternatives = 1
         recognition.current.lang = 'en-US'
+  
+        // Prevent the recognition from ending automatically
+        recognition.current.onnomatch = () => {
+          console.log('No match found, continuing to listen')
+          // Do nothing, let it continue listening
+        }
   
         recognition.current.onresult = (event) => {
           const last = event.results.length - 1
@@ -275,25 +277,32 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         }
   
         recognition.current.onend = () => {
-          console.log('Recognition ended')
-          setIsListening(false)
-  
-          if (restartTimeout.current) {
-            clearTimeout(restartTimeout.current)
-          }
-  
+          console.log('Recognition ended naturally')
+          
+          // Only restart if it wasn't manually stopped
           if (gameState === 'playing' && !isSpeaking) {
-            restartTimeout.current = setTimeout(() => {
-              if (gameState === 'playing' && !isListening && !isSpeaking) {
-                startListening()
-              }
-            }, 120000) // 2 minutes
+            console.log('Restarting recognition immediately')
+            // Start recognition again immediately instead of waiting
+            try {
+              recognition.current.start()
+            } catch (error) {
+              console.error('Error restarting recognition:', error)
+              // If immediate restart fails, try again after a short delay
+              setTimeout(() => {
+                if (gameState === 'playing' && !isListening && !isSpeaking) {
+                  startListening()
+                }
+              }, 1000)
+            }
           }
         }
   
         recognition.current.onerror = (event) => {
+          console.log('Recognition error:', event.error)
+          
           if (event.error === 'no-speech') {
             console.log('No speech detected, continuing to listen')
+            // Don't do anything, let it continue listening
             return
           }
           
@@ -301,16 +310,27 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
             console.log('Recognition aborted')
             return
           }
-          
-          console.error('Recognition error:', event.error)
-          setIsListening(false)
-          
-          if (gameState === 'playing') {
-            restartTimeout.current = setTimeout(() => {
+  
+          if (event.error === 'network') {
+            console.log('Network error, attempting to restart')
+            setTimeout(() => {
               if (gameState === 'playing' && !isListening && !isSpeaking) {
                 startListening()
               }
-            }, 120000) // 2 minutes
+            }, 1000)
+            return
+          }
+          
+          console.error('Other recognition error:', event.error)
+          setIsListening(false)
+          
+          // For any other errors, try to restart after a short delay
+          if (gameState === 'playing') {
+            setTimeout(() => {
+              if (gameState === 'playing' && !isListening && !isSpeaking) {
+                startListening()
+              }
+            }, 1000)
           }
         }
   
@@ -321,11 +341,11 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         setIsListening(false)
         
         if (gameState === 'playing') {
-          restartTimeout.current = setTimeout(() => {
+          setTimeout(() => {
             if (gameState === 'playing' && !isListening && !isSpeaking) {
               startListening()
             }
-          }, 120000) // 2 minutes
+          }, 1000)
         }
       }
     }, 300),
@@ -411,7 +431,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         if (!isListening && !isSpeaking) {
           startListening()
         }
-      }, 500)
+      }, 0)
       return () => clearTimeout(timeoutId)
     }
   }, [gameState, isListening, isSpeaking, startListening])
