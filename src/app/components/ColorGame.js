@@ -431,7 +431,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         if (!isListening && !isSpeaking) {
           startListening()
         }
-      }, 500)
+      }, 0)
       return () => clearTimeout(timeoutId)
     }
   }, [gameState, isListening, isSpeaking, startListening])
