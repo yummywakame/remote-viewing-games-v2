@@ -19,12 +19,12 @@ const colorTable = {
 }
 
 const debounce = (func, delay) => {
-  let timeoutId;
+  let timeoutId
   return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
-};
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => func(...args), delay)
+  }
+}
 
 export default function ColorGame({ onGameStateChange = () => {} }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -42,10 +42,6 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
   const restartTimeout = useRef(null)
   const router = useRouter()
 
-  const logGameState = useCallback((action) => {
-    console.log(`Game state (${action}):`, gameState)
-  }, [gameState])
-
   const setAndLogGameState = useCallback((newState, action) => {
     setGameState(newState)
     onGameStateChange(newState)
@@ -57,7 +53,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     }
   }, [onGameStateChange])
 
-  const cleanupRecognition = () => {
+  const cleanupRecognition = useCallback(() => {
     if (recognition.current) {
       recognition.current.onend = null
       recognition.current.onstart = null
@@ -69,7 +65,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         console.error('Error aborting recognition:', error)
       }
     }
-  }
+  }, [])
 
   const stopListening = useCallback(() => {
     if (restartTimeout.current) {
@@ -80,123 +76,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     cleanupRecognition()
     setIsListening(false)
     console.log('Stopped listening')
-  }, [])
-
-  const startListening = useCallback(
-    debounce(() => {
-      if (recognition.current?.state === 'running') {
-        console.log('Recognition is already running, skipping start')
-        return
-      }
-
-      if (gameState !== 'playing') {
-        console.log('Cannot start listening: game state is not playing', { gameState })
-        return
-      }
-
-      if (isListening) {
-        console.log('Already listening flag is set, skipping start')
-        return
-      }
-
-      if (isSpeaking) {
-        console.log('Currently speaking, cannot start listening')
-        return
-      }
-
-      if (restartTimeout.current) {
-        clearTimeout(restartTimeout.current)
-        restartTimeout.current = null
-      }
-
-      if (Date.now() - lastCommandTime.current < 1000) {
-        console.log('Too soon after last command, delaying start')
-        setTimeout(startListening, 1000)
-        return
-      }
-
-      try {
-        cleanupRecognition()
-        recognition.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)()
-        recognition.current.continuous = false
-        recognition.current.interimResults = false
-        recognition.current.lang = 'en-US'
-
-        recognition.current.onresult = (event) => {
-          const last = event.results.length - 1
-          const transcript = event.results[last][0].transcript.trim()
-          console.log('Recognized words:', transcript)
-          setLastHeardWord(transcript)
-          handleVoiceCommand(transcript.toLowerCase())
-        }
-
-        recognition.current.onstart = () => {
-          console.log('Recognition started')
-          setIsListening(true)
-        }
-
-        recognition.current.onend = () => {
-          console.log('Recognition ended')
-          setIsListening(false)
-
-          if (restartTimeout.current) {
-            clearTimeout(restartTimeout.current)
-          }
-
-          if (gameState === 'playing' && !isSpeaking) {
-            restartTimeout.current = setTimeout(() => {
-              if (gameState === 'playing' && !isListening && !isSpeaking) {
-                startListening()
-              }
-            }, 5000)
-          }
-        }
-
-        recognition.current.onerror = (event) => {
-          if (event.error === 'no-speech') {
-            console.log('No speech detected, continuing to listen')
-            if (recognition.current) {
-              recognition.current.stop()
-            }
-            return
-          }
-          
-          if (event.error === 'aborted') {
-            console.log('Recognition aborted')
-            return
-          }
-          
-          console.error('Recognition error:', event.error)
-          setIsListening(false)
-          
-          if (gameState === 'playing') {
-            restartTimeout.current = setTimeout(() => {
-              if (gameState === 'playing' && !isListening && !isSpeaking) {
-                startListening()
-              }
-            }, 5000)
-          }
-        }
-
-        recognition.current.start()
-        console.log('Started listening')
-      } catch (error) {
-        console.error('Recognition start error:', error)
-        setIsListening(false)
-        
-        if (gameState === 'playing') {
-          restartTimeout.current = setTimeout(() => {
-            if (gameState === 'playing' && !isListening && !isSpeaking) {
-              startListening()
-            }
-          }, 5000)
-        }
-      }
-    },
-    300
-  ),
-  [gameState, isListening, isSpeaking]
-  )
+  }, [cleanupRecognition])
 
   const speak = useCallback((text) => {
     return new Promise((resolve, reject) => {
@@ -220,7 +100,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
 
         const utterance = new SpeechSynthesisUtterance('... ' + text)
         utterance.voice = speechUtterance.current.voice
-        utterance.rate = 0.9
+        utterance.rate = 1.2
         utterance.pitch = 1.0
 
         utterance.onend = () => {
@@ -253,7 +133,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         }, 100)
       }
     })
-  }, [stopListening, setAndLogGameState, startListening, gameState])
+  }, [stopListening, setAndLogGameState, gameState])
 
   const askForColor = useCallback(async () => {
     try {
@@ -304,9 +184,9 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
   }, [stopListening, speak, setAndLogGameState, router])
 
   const handleVoiceCommand = useCallback((command) => {
-    console.log('Voice command received:', command);
-    console.log('Current game state:', gameState);
-    console.log('Current color:', currentColor);
+    console.log('Voice command received:', command)
+    console.log('Current game state:', gameState)
+    console.log('Current color:', currentColor)
     console.log('Processing command:', command)
     const lowerCommand = command.toLowerCase()
 
@@ -318,7 +198,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       endGame()
     } else if (/\b(help|instructions)\b/.test(lowerCommand)) {
       console.log('Help requested')
-      speak("To proceed to the next color say, 'next', or click anywhere on the screen. To end the game say, 'stop'. For a hint you can ask, 'what color is it?' . To display any color say, 'show me', followed by the color you want to see.")
+      speak("To proceed to the next color say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what color is it?'. To display any color say 'show me', followed by the color you want to see.")
     } else if (/\b(what|which)(?:\s+(?:color|is|it))?\b/.test(lowerCommand)) {
       console.log('Color hint requested')
       speak(`The current color is ${currentColor}.`)
@@ -345,7 +225,112 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         startListening()
       }
     }
-  }, [currentColor, handleNextColor, endGame, speak, gameState, startListening])
+  }, [currentColor, gameState, speak, setCurrentColor, handleNextColor, endGame])
+
+  const startListening = useCallback(
+    debounce(() => {
+      if (recognition.current?.state === 'running') {
+        console.log('Recognition is already running, skipping start')
+        return
+      }
+  
+      if (gameState !== 'playing') {
+        console.log('Cannot start listening: game state is not playing', { gameState })
+        return
+      }
+  
+      if (isListening) {
+        console.log('Already listening flag is set, skipping start')
+        return
+      }
+  
+      if (isSpeaking) {
+        console.log('Currently speaking, cannot start listening')
+        return
+      }
+  
+      if (restartTimeout.current) {
+        clearTimeout(restartTimeout.current)
+        restartTimeout.current = null
+      }
+  
+      try {
+        cleanupRecognition()
+        recognition.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)()
+        recognition.current.continuous = true
+        recognition.current.interimResults = false
+        recognition.current.lang = 'en-US'
+  
+        recognition.current.onresult = (event) => {
+          const last = event.results.length - 1
+          const transcript = event.results[last][0].transcript.trim()
+          console.log('Recognized words:', transcript)
+          setLastHeardWord(transcript)
+          handleVoiceCommand(transcript.toLowerCase())
+        }
+  
+        recognition.current.onstart = () => {
+          console.log('Recognition started')
+          setIsListening(true)
+        }
+  
+        recognition.current.onend = () => {
+          console.log('Recognition ended')
+          setIsListening(false)
+  
+          if (restartTimeout.current) {
+            clearTimeout(restartTimeout.current)
+          }
+  
+          if (gameState === 'playing' && !isSpeaking) {
+            restartTimeout.current = setTimeout(() => {
+              if (gameState === 'playing' && !isListening && !isSpeaking) {
+                startListening()
+              }
+            }, 120000) // 2 minutes
+          }
+        }
+  
+        recognition.current.onerror = (event) => {
+          if (event.error === 'no-speech') {
+            console.log('No speech detected, continuing to listen')
+            return
+          }
+          
+          if (event.error === 'aborted') {
+            console.log('Recognition aborted')
+            return
+          }
+          
+          console.error('Recognition error:', event.error)
+          setIsListening(false)
+          
+          if (gameState === 'playing') {
+            restartTimeout.current = setTimeout(() => {
+              if (gameState === 'playing' && !isListening && !isSpeaking) {
+                startListening()
+              }
+            }, 120000) // 2 minutes
+          }
+        }
+  
+        recognition.current.start()
+        console.log('Started listening')
+      } catch (error) {
+        console.error('Recognition start error:', error)
+        setIsListening(false)
+        
+        if (gameState === 'playing') {
+          restartTimeout.current = setTimeout(() => {
+            if (gameState === 'playing' && !isListening && !isSpeaking) {
+              startListening()
+            }
+          }, 120000) // 2 minutes
+        }
+      }
+    }, 300),
+    [gameState, isListening, isSpeaking, cleanupRecognition, handleVoiceCommand]
+  )
 
   const startGame = useCallback(async () => {
     try {
@@ -374,11 +359,11 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     }
   }, [gameState, handleNextColor])
 
-  const handleSaveSettings = (newSelectedColors) => {
+  const handleSaveSettings = useCallback((newSelectedColors) => {
     setSelectedColors(newSelectedColors)
     localStorage.setItem('colorGameSelectedColors', JSON.stringify(newSelectedColors))
     console.log('Saving Color Game settings', newSelectedColors)
-  }
+  }, [])
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -421,15 +406,15 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
 
   useEffect(() => {
     if (gameState === 'playing' && !isListening && !isSpeaking) {
-      console.log('Starting listening due to game state change to playing');
+      console.log('Starting listening due to game state change to playing')
       const timeoutId = setTimeout(() => {
         if (!isListening && !isSpeaking) {
-          startListening();
+          startListening()
         }
-      }, 500);
-      return () => clearTimeout(timeoutId);
+      }, 500)
+      return () => clearTimeout(timeoutId)
     }
-  }, [gameState, isListening, isSpeaking, startListening]);
+  }, [gameState, isListening, isSpeaking, startListening])
 
   useEffect(() => {
     const savedColors = localStorage.getItem('colorGameSelectedColors')
@@ -506,7 +491,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
                   animate={{ y: 0 }}
                   transition={{ delay: 0.4, type: "spring", stiffness: 120 }}
                 >
-                  Get your blindfold ready and let's begin!
+                  Get your blindfold ready and let&apos;s begin!
                 </motion.p>
                 <motion.button
                   onClick={startGame}
@@ -559,9 +544,6 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       </AnimatePresence>
       {gameState !== 'initial' && (
         <FloatingBubble word={lastHeardWord} />
-      )}
-      {gameState === 'initial' && (
-        <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
       )}
     </div>
   )
