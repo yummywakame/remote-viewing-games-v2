@@ -18,14 +18,6 @@ const colorTable = {
   orange: '#FF7F50',
 }
 
-const debounce = (func, delay) => {
-  let timeoutId
-  return (...args) => {
-    clearTimeout(timeoutId)
-    timeoutId = setTimeout(() => func(...args), delay)
-  }
-}
-
 export default function ColorGame({ onGameStateChange = () => {} }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [gameState, setGameState] = useState('initial')
@@ -145,20 +137,21 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     }
   }, [speak])
 
+  const currentColorRef = useRef(null)
+
   const selectNewColor = useCallback(async () => {
     let newColor
     do {
       newColor = selectedColors[Math.floor(Math.random() * selectedColors.length)]
-    } while (newColor === currentColor && selectedColors.length > 1)
+    } while (newColor === currentColorRef.current && selectedColors.length > 1)
   
     console.log('Selecting new color:', newColor)
-    setCurrentColor(prevColor => {
-      console.log('Previous color:', prevColor, 'New color:', newColor)
-      return newColor
-    })
-    console.log('Current color state after setCurrentColor:', currentColor)
+    currentColorRef.current = newColor
+    
+    setCurrentColor(newColor)
+    console.log('Current color state after setCurrentColor:', newColor)
     await askForColor()
-  }, [currentColor, askForColor, selectedColors])
+  }, [selectedColors, askForColor])
   
   const handleNextColor = useCallback(() => {
     const now = Date.now()
@@ -197,46 +190,49 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
   
     if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
       console.log('Next command detected')
-      console.log('Current color before next:', currentColor)
+      console.log('Current color before next:', currentColorRef.current)
+      stopListening()
       await selectNewColor()
-      console.log('Current color after next:', currentColor)
+      console.log('Current color after next:', currentColorRef.current)
     } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
       console.log('Stop command detected')
-      endGame()
+      await endGame()
     } else if (/\b(help|instructions)\b/.test(lowerCommand)) {
       console.log('Help requested')
-      speak("To proceed to the next color say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what color is it?'. To display any color say 'show me', followed by the color you want to see.")
+      await speak("To proceed to the next color say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what color is it?'. To display any color say 'show me', followed by the color you want to see.")
     } else if (/\b(what|which)(?:\s+(?:color|is|it))?\b/.test(lowerCommand)) {
       console.log('Color hint requested')
-      speak(`The current color is ${currentColor}.`)
+      await speak(`The current color is ${currentColorRef.current}.`)
     } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
       const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
       const requestedColor = match[2]
       if (colorTable.hasOwnProperty(requestedColor)) {
         console.log(`Showing requested color: ${requestedColor}`)
-        setCurrentColor(prevColor => {
-          console.log('Previous color:', prevColor, 'New color:', requestedColor)
-          return requestedColor
+        await new Promise(resolve => {
+          setCurrentColor(prevColor => {
+            console.log('Previous color:', prevColor, 'New color:', requestedColor)
+            resolve()
+            return requestedColor
+          })
         })
-        speak(`Showing ${requestedColor}.`)
+        await speak(`Showing ${requestedColor}.`)
       } else {
-        speak(`Sorry, ${requestedColor} is not in my color list.`)
+        await speak(`Sorry, ${requestedColor} is not in my color list.`)
       }
     } else {
       const colorGuess = Object.keys(colorTable).find(color => lowerCommand.includes(color))
       if (colorGuess) {
-        if (colorGuess === currentColor) {
-          speak(`Well done! The color is ${currentColor}.`)
+        if (colorGuess === currentColorRef.current) {
+          await speak(`Well done! The color is ${currentColorRef.current}.`)
         } else {
-          speak("Try again!")
+          await speak("Try again!")
         }
       } else {
         console.log('No valid command or color guess detected')
-        // Instead of calling startListening directly, we'll let the useEffect handle it
       }
     }
-  }, [currentColor, gameState, speak, setCurrentColor, selectNewColor, endGame, colorTable])
-   
+  }, [currentColor, gameState, speak, setCurrentColor, selectNewColor, endGame, colorTable, stopListening])
+  
   const startListening = useCallback(() => {
     if (recognition.current?.state === 'running') {
       console.log('Recognition is already running, skipping start')
@@ -269,6 +265,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         const last = event.results.length - 1
         const transcript = event.results[last][0].transcript.trim()
         console.log('Recognized words:', transcript)
+        console.log('Current color when recognizing:', currentColorRef.current)
         setLastHeardWord(transcript)
         handleVoiceCommand(transcript.toLowerCase())
       }
@@ -280,9 +277,8 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
   
       recognition.current.onend = () => {
         console.log('Recognition ended')
-        // Instead of setting isListening to false, we immediately restart recognition
         if (gameState === 'playing' && !isSpeaking) {
-          console.log('Restarting recognition')
+          console.log('Restarting recognition with color:', currentColorRef.current)
           recognition.current.start()
         } else {
           setIsListening(false)
@@ -305,7 +301,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         }
       }
   
-      console.log('Starting speech recognition, current color:', currentColor)
+      console.log('Starting speech recognition, current color:', currentColorRef.current)
       recognition.current.start()
       console.log('Started listening')
     } catch (error) {
@@ -317,7 +313,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         setTimeout(() => startListening(), 1000)
       }
     }
-  }, [gameState, isListening, isSpeaking, cleanupRecognition, currentColor]) // Remove handleVoiceCommand from dependencies
+  }, [gameState, isListening, isSpeaking, cleanupRecognition, handleVoiceCommand, currentColorRef])
   
   const startGame = useCallback(async () => {
     try {
@@ -395,13 +391,14 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     if (gameState === 'playing' && !isListening && !isSpeaking) {
       console.log('Starting listening due to game state change to playing')
       const timeoutId = setTimeout(() => {
-        if (!isListening && !isSpeaking) {
+        if (!isListening && !isSpeaking && gameState === 'playing') {
+          console.log('Current color before starting to listen:', currentColor)
           startListening()
         }
-      }, 0)
+      }, 100)
       return () => clearTimeout(timeoutId)
     }
-  }, [gameState, isListening, isSpeaking, startListening])
+  }, [gameState, isListening, isSpeaking, startListening, currentColor])
 
   useEffect(() => {
     const savedColors = localStorage.getItem('colorGameSelectedColors')
