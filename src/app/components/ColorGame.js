@@ -150,11 +150,16 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     do {
       newColor = selectedColors[Math.floor(Math.random() * selectedColors.length)]
     } while (newColor === currentColor && selectedColors.length > 1)
-
-    setCurrentColor(newColor)
+  
+    console.log('Selecting new color:', newColor)
+    setCurrentColor(prevColor => {
+      console.log('Previous color:', prevColor, 'New color:', newColor)
+      return newColor
+    })
+    console.log('Current color state after setCurrentColor:', currentColor)
     await askForColor()
   }, [currentColor, askForColor, selectedColors])
-
+  
   const handleNextColor = useCallback(() => {
     const now = Date.now()
     if (now - lastCommandTime.current < 1000) {
@@ -183,16 +188,18 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     router.push('/')
   }, [stopListening, speak, setAndLogGameState, router])
 
-  const handleVoiceCommand = useCallback((command) => {
+  const handleVoiceCommand = useCallback(async (command) => {
     console.log('Voice command received:', command)
     console.log('Current game state:', gameState)
     console.log('Current color:', currentColor)
     console.log('Processing command:', command)
     const lowerCommand = command.toLowerCase()
-
+  
     if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
       console.log('Next command detected')
-      handleNextColor()
+      console.log('Current color before next:', currentColor)
+      await selectNewColor()
+      console.log('Current color after next:', currentColor)
     } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
       console.log('Stop command detected')
       endGame()
@@ -207,7 +214,10 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       const requestedColor = match[2]
       if (colorTable.hasOwnProperty(requestedColor)) {
         console.log(`Showing requested color: ${requestedColor}`)
-        setCurrentColor(requestedColor)
+        setCurrentColor(prevColor => {
+          console.log('Previous color:', prevColor, 'New color:', requestedColor)
+          return requestedColor
+        })
         speak(`Showing ${requestedColor}.`)
       } else {
         speak(`Sorry, ${requestedColor} is not in my color list.`)
@@ -221,117 +231,94 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
           speak("Try again!")
         }
       } else {
-        console.log('No valid command or color guess detected - continuing to listen')
-        startListening()
+        console.log('No valid command or color guess detected')
+        // Instead of calling startListening directly, we'll let the useEffect handle it
       }
     }
-  }, [currentColor, gameState, speak, setCurrentColor, handleNextColor, endGame])
-
-  const startListening = useCallback(
-    debounce(() => {
-      if (recognition.current?.state === 'running') {
-        console.log('Recognition is already running, skipping start')
-        return
+  }, [currentColor, gameState, speak, setCurrentColor, selectNewColor, endGame, colorTable])
+   
+  const startListening = useCallback(() => {
+    if (recognition.current?.state === 'running') {
+      console.log('Recognition is already running, skipping start')
+      return
+    }
+  
+    if (gameState !== 'playing') {
+      console.log('Cannot start listening: game state is not playing', { gameState })
+      return
+    }
+  
+    if (isListening) {
+      console.log('Already listening flag is set, skipping start')
+      return
+    }
+  
+    if (isSpeaking) {
+      console.log('Currently speaking, cannot start listening')
+      return
+    }
+  
+    try {
+      cleanupRecognition()
+      recognition.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)()
+      recognition.current.continuous = true
+      recognition.current.interimResults = false
+      recognition.current.lang = 'en-US'
+  
+      recognition.current.onresult = (event) => {
+        const last = event.results.length - 1
+        const transcript = event.results[last][0].transcript.trim()
+        console.log('Recognized words:', transcript)
+        setLastHeardWord(transcript)
+        handleVoiceCommand(transcript.toLowerCase())
       }
   
-      if (gameState !== 'playing') {
-        console.log('Cannot start listening: game state is not playing', { gameState })
-        return
+      recognition.current.onstart = () => {
+        console.log('Recognition started')
+        setIsListening(true)
       }
   
-      if (isListening) {
-        console.log('Already listening flag is set, skipping start')
-        return
-      }
-  
-      if (isSpeaking) {
-        console.log('Currently speaking, cannot start listening')
-        return
-      }
-  
-      if (restartTimeout.current) {
-        clearTimeout(restartTimeout.current)
-        restartTimeout.current = null
-      }
-  
-      try {
-        cleanupRecognition()
-        recognition.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)()
-        recognition.current.continuous = true
-        recognition.current.interimResults = false
-        recognition.current.lang = 'en-US'
-  
-        recognition.current.onresult = (event) => {
-          const last = event.results.length - 1
-          const transcript = event.results[last][0].transcript.trim()
-          console.log('Recognized words:', transcript)
-          setLastHeardWord(transcript)
-          handleVoiceCommand(transcript.toLowerCase())
-        }
-  
-        recognition.current.onstart = () => {
-          console.log('Recognition started')
-          setIsListening(true)
-        }
-  
-        recognition.current.onend = () => {
-          console.log('Recognition ended')
+      recognition.current.onend = () => {
+        console.log('Recognition ended')
+        // Instead of setting isListening to false, we immediately restart recognition
+        if (gameState === 'playing' && !isSpeaking) {
+          console.log('Restarting recognition')
+          recognition.current.start()
+        } else {
           setIsListening(false)
-  
-          if (restartTimeout.current) {
-            clearTimeout(restartTimeout.current)
-          }
-  
-          if (gameState === 'playing' && !isSpeaking) {
-            restartTimeout.current = setTimeout(() => {
-              if (gameState === 'playing' && !isListening && !isSpeaking) {
-                startListening()
-              }
-            }, 120000) // 2 minutes
-          }
         }
+      }
   
-        recognition.current.onerror = (event) => {
-          if (event.error === 'no-speech') {
-            console.log('No speech detected, continuing to listen')
-            return
-          }
-          
-          if (event.error === 'aborted') {
-            console.log('Recognition aborted')
-            return
-          }
-          
-          console.error('Recognition error:', event.error)
-          setIsListening(false)
-          
-          if (gameState === 'playing') {
-            restartTimeout.current = setTimeout(() => {
-              if (gameState === 'playing' && !isListening && !isSpeaking) {
-                startListening()
-              }
-            }, 120000) // 2 minutes
-          }
+      recognition.current.onerror = (event) => {
+        console.error('Recognition error:', event.error)
+        if (event.error === 'no-speech' || event.error === 'audio-capture') {
+          // For these errors, we don't need to stop listening, just log and continue
+          console.log('Continuing to listen despite error:', event.error)
+          return
         }
-  
-        recognition.current.start()
-        console.log('Started listening')
-      } catch (error) {
-        console.error('Recognition start error:', error)
+        
         setIsListening(false)
         
-        if (gameState === 'playing') {
-          restartTimeout.current = setTimeout(() => {
-            if (gameState === 'playing' && !isListening && !isSpeaking) {
-              startListening()
-            }
-          }, 120000) // 2 minutes
+        if (gameState === 'playing' && !isSpeaking) {
+          console.log('Attempting to restart recognition after error')
+          setTimeout(() => startListening(), 1000)
         }
       }
-    }, 300),
-    [gameState, isListening, isSpeaking, cleanupRecognition, handleVoiceCommand]
-  )
-
+  
+      console.log('Starting speech recognition, current color:', currentColor)
+      recognition.current.start()
+      console.log('Started listening')
+    } catch (error) {
+      console.error('Recognition start error:', error)
+      setIsListening(false)
+      
+      if (gameState === 'playing' && !isSpeaking) {
+        console.log('Attempting to restart recognition after catch error')
+        setTimeout(() => startListening(), 1000)
+      }
+    }
+  }, [gameState, isListening, isSpeaking, cleanupRecognition, currentColor]) // Remove handleVoiceCommand from dependencies
+  
   const startGame = useCallback(async () => {
     try {
       setAndLogGameState('intro', 'start game')
@@ -411,7 +398,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         if (!isListening && !isSpeaking) {
           startListening()
         }
-      }, 500)
+      }, 0)
       return () => clearTimeout(timeoutId)
     }
   }, [gameState, isListening, isSpeaking, startListening])
@@ -436,6 +423,17 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       localStorage.setItem('colorGameSelectedColors', JSON.stringify(Object.keys(colorTable)))
     }
   }, [])
+
+  useEffect(() => {
+    if (gameState === 'playing' && !isListening && !isSpeaking) {
+      const timeoutId = setTimeout(() => {
+        if (!isListening && !isSpeaking) {
+          startListening()
+        }
+      }, 100)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [gameState, isListening, isSpeaking, startListening])
 
   return (
     <div className="relative h-screen overflow-auto">
