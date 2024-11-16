@@ -11,7 +11,19 @@ const andika = Andika({
 
 export const metadata = {
   title: 'MindSight Games',
-  description: 'Practice remote viewing while blindfolded',
+  description: 'Practice Mind Sight blindfolded with your AI play partner!',
+  openGraph: {
+    title: 'MindSight Games',
+    description: 'Practice Mind Sight blindfolded with your AI play partner!',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'MindSight Games - Practice with your AI play partner!',
+      },
+    ],
+  },
 }
 
 export default function RootLayout({ children }) {
