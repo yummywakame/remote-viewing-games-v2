@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-rgb: 17, 24, 39;
+  --foreground-hex: #FFFFFF;
+  --background-hex: #111827;
 }
 
 html, body {
@@ -14,8 +14,8 @@ html, body {
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  color: var(--foreground-hex);
+  background: var(--background-hex);
 }
 
 @layer components {
@@ -29,8 +29,8 @@ body {
     font-family: ui-monospace, monospace;
     font-weight: 500;
     letter-spacing: -0.025em;
-    color: white;
-    background-color: rgb(31, 41, 55);
+    color: #FFFFFF;
+    background-color: #1F2937;
     border-radius: 9999px;
   }
 
