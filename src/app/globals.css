@@ -5,6 +5,14 @@
 :root {
   --foreground-hex: #FFFFFF;
   --background-hex: #111827;
+  --gray-800: #1F2937;
+  --gray-900: #111827;
+  --purple-600: #9D4EDD;
+  --purple-700: #7B2CBF;
+  --blue-600: #3B82F6;
+  --blue-700: #2563EB;
+  --green-500: #22C55E;
+  --red-500: #EF4444;
 }
 
 html, body {

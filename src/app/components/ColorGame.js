@@ -216,7 +216,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
 
   return (
     <div className="relative h-screen overflow-auto">
-      <div className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-10 top-menu">
+      <div className="fixed top-0 left-0 right-0 bg-[#1a1b4d]/80 backdrop-blur-sm z-10 top-menu">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button

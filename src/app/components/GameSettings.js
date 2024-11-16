@@ -48,7 +48,7 @@ export default function GameSettings({ title, onClose, onSave, colorTable, selec
     >
       <motion.div
         ref={modalRef}
-        className="bg-gray-800 text-white rounded-xl shadow-lg w-[400px] overflow-hidden"
+        className="bg-[var(--gray-800)] text-white rounded-xl shadow-lg w-[400px] overflow-hidden"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
@@ -112,20 +112,20 @@ export default function GameSettings({ title, onClose, onSave, colorTable, selec
             </p>
           )}
 
-          <div className="flex justify-between">
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 rounded-full border border-gray-600 text-gray-300 hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            >
-              Reset to Defaults
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            >
-              Save Changes
-            </button>
-          </div>
+<div className="flex justify-between">
+          <button
+            onClick={handleReset}
+            className="px-4 py-2 rounded-full border border-[var(--gray-600)] text-[var(--gray-300)] hover:bg-[var(--gray-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+          >
+            Reset to Defaults
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white hover:from-[var(--purple-700)] hover:to-[var(--blue-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+          >
+            Save Changes
+          </button>
+        </div>
         </div>
       </motion.div>
     </motion.div>

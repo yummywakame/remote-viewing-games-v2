@@ -89,15 +89,15 @@ export default function Home() {
             </p>
 
             <motion.div
-              className="mt-12"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
+            className="mt-12"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <Link
+              href="/color-game"
+              className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white font-medium text-lg hover:from-[var(--purple-700)] hover:to-[var(--blue-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
-              <Link
-                href="/color-game"
-                className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-              >
                 <Eye className="mr-2" size={20} />
                 Color Game
               </Link>
