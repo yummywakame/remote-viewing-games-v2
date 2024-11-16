@@ -10,11 +10,14 @@ const andika = Andika({
 })
 
 export const metadata = {
+  metadataBase: new URL('https://mindsight.yummy-wakame.com'),
   title: 'MindSight Games',
   description: 'Practice Mind Sight blindfolded with your AI play partner!',
   openGraph: {
     title: 'MindSight Games',
     description: 'Practice Mind Sight blindfolded with your AI play partner!',
+    url: 'https://mindsight.yummy-wakame.com', 
+    type: 'website',
     images: [
       {
         url: '/og-image.jpg',
@@ -23,6 +26,9 @@ export const metadata = {
         alt: 'MindSight Games - Practice with your AI play partner!',
       },
     ],
+  },
+  facebook: {
+    appId: '452955081243065', // Replace with your actual Facebook App ID
   },
 }
 
