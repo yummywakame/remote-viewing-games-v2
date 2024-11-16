@@ -230,9 +230,9 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
             </Link>
             <div className="flex items-center space-x-4">
               {isListening && !isSpeaking ? (
-                <Mic className="text-green-500" size={24} />
+                <div className="w-3 h-3 rounded-full bg-green-500 pulse" />
               ) : (
-                <MicOff className="text-red-500" size={24} />
+                <div className="w-3 h-3 rounded-full bg-red-500" />
               )}
             </div>
           </div>
