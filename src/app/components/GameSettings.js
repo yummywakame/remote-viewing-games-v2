@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 
 export default function GameSettings({ title, onClose, onSave, colorTable, selectedColors }) {
   const [localSelectedColors, setLocalSelectedColors] = React.useState(selectedColors)
@@ -39,7 +39,7 @@ export default function GameSettings({ title, onClose, onSave, colorTable, selec
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[150]" // Updated z-index to match UserPreferences
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
