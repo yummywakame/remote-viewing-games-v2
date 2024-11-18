@@ -6,7 +6,6 @@ import { Settings, Eye, User } from 'lucide-react'
 import GameSettings from './GameSettings'
 import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
-import Link from 'next/link'
 import UserPreferences from './UserPreferences'
 
 const colorTable = {

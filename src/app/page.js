@@ -12,8 +12,9 @@ export default function Home() {
     const savedName = localStorage.getItem('userPreferencesName') || ''
     setUserName(savedName)
   }, [])
+
   return (
-    <div className="h-screen overflow-auto">
+    <div className="overflow-auto">
       {/* Full viewport background */}
       <div className="fixed inset-0 w-full h-full">
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
@@ -34,7 +35,7 @@ export default function Home() {
 
       {/* Floating icons */}
       <motion.div
-        className="fixed inset-0 pointer-events-none"
+        className="fixed min-h-screen w-full pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
@@ -64,7 +65,7 @@ export default function Home() {
       </motion.div>
 
       {/* Main content */}
-      <div className="relative h-screen flex items-center justify-center px-10">
+      <div className="relative min-h-screen flex items-center justify-center px-10">
         <motion.div
           className="text-center max-w-4xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
@@ -78,7 +79,7 @@ export default function Home() {
             transition={{ duration: 0.5 }}
           >
             {userName ? `Hi ${userName}!` : 'Hi there!'}
-            </motion.h2>
+          </motion.h2>
 
           <motion.div
             className="max-w-2xl mx-auto space-y-6"
@@ -96,15 +97,15 @@ export default function Home() {
             </p>
 
             <motion.div
-            className="mt-12"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <Link
-              href="/color-game"
-              className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white font-medium text-lg hover:from-[var(--purple-700)] hover:to-[var(--blue-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="mt-12"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
             >
+              <Link
+                href="/color-game"
+                className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white font-medium text-lg hover:from-[var(--purple-700)] hover:to-[var(--blue-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              >
                 <Eye className="mr-2" size={20} />
                 Color Game
               </Link>
