@@ -265,7 +265,9 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
                 onClick={() => setIsSettingsOpen(true)}
                 className="text-gray-400 hover:text-white transition-colors"
                 aria-label="Open game settings"
-                whileHover={{ rotate: 45 }}
+                initial={{ rotate: 0 }}
+                whileHover={{ rotate: 90 }}
+                animate={{ rotate: 0 }}
                 transition={{ duration: 0.2 }}
               >
                 <Settings size={24} />
