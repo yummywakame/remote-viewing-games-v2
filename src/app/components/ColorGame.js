@@ -64,6 +64,13 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     })
   }, [selectedVoice, voiceSpeed])
 
+  const cancelSpeech = useCallback(() => {
+    if (speechSynthesis.current) {
+      speechSynthesis.current.cancel()
+    }
+    setIsSpeaking(false)
+  }, [])
+
   const startListening = useCallback(() => {
     if (!recognition.current) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -149,15 +156,16 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     startListening()
   }, [setAndLogGameState, speak, selectNewColor, startListening, userName])
 
-
   const endGame = useCallback(async () => {
+    cancelSpeech()
     stopListening()
-    setAndLogGameState('initial', 'end game')
+    setAndLogGameState('ending', 'end game')
     setCurrentColor(null)
     setLastHeardWord('')
     await speak("Thank you for playing!")
+    setAndLogGameState('initial', 'game ended')
     router.push('/')
-  }, [stopListening, setAndLogGameState, speak, router])
+  }, [cancelSpeech, stopListening, setAndLogGameState, speak, router])
 
   const handleBackgroundClick = useCallback(() => {
     if (gameState === 'playing' && !isSpeaking) {
@@ -245,7 +253,6 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       router.push('/')
     }
   }, [gameState, endGame, router])
-
 
   return (
     <div className="relative h-screen overflow-auto">
