@@ -266,7 +266,6 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
                 aria-label="Open game settings"
                 initial={{ rotate: 0 }}
                 whileHover={{ rotate: 90 }}
-                animate={{ rotate: 0 }}
                 transition={{ duration: 0.2 }}
               >
                 <Settings size={24} />
