@@ -8,7 +8,7 @@ export default function ColorGamePage() {
   return (
     <>
       {/* Full viewport background */}
-      <div className="fixed inset-0 w-full h-full">
+      <div className="fixed-full">
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         </div>
@@ -16,7 +16,7 @@ export default function ColorGamePage() {
 
       {/* Floating icons */}
       <motion.div
-        className="fixed inset-0 pointer-events-none"
+        className="fixed-full pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
@@ -51,7 +51,7 @@ export default function ColorGamePage() {
       </div>
 
       {/* Decorative bottom gradient */}
-      <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+      <div className="fixed-bottom h-32 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
     </>
   )
 }

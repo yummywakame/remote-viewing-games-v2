@@ -256,7 +256,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
 
   return (
     <div className="relative h-screen overflow-auto">
-      <div className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-sm z-[100]">
+      <div className="fixed-top bg-gray-900/80 backdrop-blur-sm z-[100]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
@@ -296,7 +296,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       </div>
 
       <div
-        className="fixed inset-0 pt-16"
+        className="fixed-full pt-16"
         style={{
           backgroundColor: gameState === 'playing' || gameState === 'intro' ? colorTable[currentColor] : 'transparent',
           transition: 'background-color 0.5s ease'

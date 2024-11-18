@@ -16,14 +16,14 @@ export default function Home() {
   return (
     <div className="overflow-auto">
       {/* Full viewport background */}
-      <div className="fixed inset-0 w-full h-full">
+      <div className="fixed-full">
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         </div>
       </div>
 
       {/* MindSight Games title */}
-      <div className="fixed top-0 left-0 right-0 z-10">
+      <div className="fixed-top z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center h-16">
             <h1 className="text-white text-xl font-bold">
@@ -35,7 +35,7 @@ export default function Home() {
 
       {/* Floating icons */}
       <motion.div
-        className="fixed min-h-screen w-full pointer-events-none"
+        className="fixed-full pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
@@ -115,7 +115,7 @@ export default function Home() {
       </div>
 
       {/* Decorative bottom gradient */}
-      <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+      <div className="fixed-bottom h-32 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
     </div>
   )
 }
