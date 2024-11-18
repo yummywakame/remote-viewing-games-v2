@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, Mic, MicOff, Eye } from 'lucide-react'
+import { Settings, Eye, User } from 'lucide-react'
 import GameSettings from './GameSettings'
 import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
 import Link from 'next/link'
+import UserPreferences from './UserPreferences'
 
 const colorTable = {
   yellow: '#FFD700',
@@ -27,6 +28,10 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
   const [selectedColors, setSelectedColors] = useState(Object.keys(colorTable))
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isButtonAnimated, setIsButtonAnimated] = useState(false)
+  const [userName, setUserName] = useState('')
+  const [voiceSpeed, setVoiceSpeed] = useState(1.2)
+  const [selectedVoice, setSelectedVoice] = useState(null)
+  const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
 
   const speechSynthesis = useRef(null)
   const recognition = useRef(null)
@@ -48,13 +53,17 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       }
       setIsSpeaking(true)
       const utterance = new SpeechSynthesisUtterance(text)
+      if (selectedVoice) {
+        utterance.voice = selectedVoice
+      }
+      utterance.rate = voiceSpeed
       utterance.onend = () => {
         setIsSpeaking(false)
         resolve()
       }
       speechSynthesis.current.speak(utterance)
     })
-  }, [])
+  }, [selectedVoice, voiceSpeed])
 
   const startListening = useCallback(() => {
     if (!recognition.current) {
@@ -135,11 +144,12 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
 
   const startGame = useCallback(async () => {
     setAndLogGameState('intro', 'start game')
-    await speak("Welcome to the Color Game! When prompted, say the color you think it is, or say 'help' at any time for further instructions. Good luck!")
+    await speak(`Welcome to the Color Game ${userName || ''}! When prompted, say the color you think it is, or say 'help' at any time for further instructions. Good luck!`)
     setAndLogGameState('playing', 'game started')
     await selectNewColor()
     startListening()
-  }, [setAndLogGameState, speak, selectNewColor, startListening])
+  }, [setAndLogGameState, speak, selectNewColor, startListening, userName])
+
 
   const endGame = useCallback(async () => {
     stopListening()
@@ -214,23 +224,62 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     }
   }, [])
 
+  useEffect(() => {
+    const savedName = localStorage.getItem('userPreferencesName') || ''
+    const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2
+    const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
+    
+    setUserName(savedName)
+    setVoiceSpeed(savedVoiceSpeed)
+
+    if (savedVoiceName && speechSynthesis) {
+      const voices = speechSynthesis.current.getVoices()
+      const voice = voices.find(v => v.name === savedVoiceName)
+      setSelectedVoice(voice || null)
+    }
+  }, [])
+
+  const handleTitleClick = useCallback(async () => {
+    if (gameState !== 'initial') {
+      await endGame()
+    } else {
+      router.push('/')
+    }
+  }, [gameState, endGame, router])
+
+
   return (
     <div className="relative h-screen overflow-auto">
-      <div className="fixed top-0 left-0 right-0 bg-[#1a1b4d]/80 backdrop-blur-sm z-10 top-menu">
+      <div className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-sm z-[100]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setIsUserPreferencesOpen(true)}
+                className="text-gray-400 hover:text-white transition-colors"
+                aria-label="Open user preferences"
+              >
+                <User size={24} />
+              </button>
+              <motion.button
+                onClick={() => setIsSettingsOpen(true)}
+                className="text-gray-400 hover:text-white transition-colors"
+                aria-label="Open game settings"
+                whileHover={{ rotate: 45 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Settings size={24} />
+              </motion.button>
+            </div>
             <button
-              className="text-white hover:animate-spin-slow transition-all duration-300"
-              onClick={() => setIsSettingsOpen(true)}
+              onClick={handleTitleClick}
+              className="text-white text-xl font-bold hover:text-gray-300 transition-colors"
             >
-              <Settings size={24} />
-            </button>
-            <Link href="/" className="text-white text-xl font-bold absolute left-1/2 transform -translate-x-1/2">
               MindSight Games
-            </Link>
+            </button>
             <div className="flex items-center space-x-4">
               {isListening && !isSpeaking ? (
-                <div className="w-3 h-3 rounded-full bg-green-500 pulse" />
+                <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
               ) : (
                 <div className="w-3 h-3 rounded-full bg-red-500" />
               )}
@@ -238,6 +287,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
           </div>
         </div>
       </div>
+
       <div
         className="fixed inset-0 pt-16"
         style={{
@@ -322,6 +372,10 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       {gameState !== 'initial' && (
         <FloatingBubble word={lastHeardWord} />
       )}
+      <UserPreferences
+        isOpen={isUserPreferencesOpen}
+        onClose={() => setIsUserPreferencesOpen(false)}
+      />      
     </div>
   )
 }

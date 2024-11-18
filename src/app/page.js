@@ -3,8 +3,15 @@
 import { motion } from 'framer-motion'
 import { Sparkles, Eye, Brain, Shapes } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
+  const [userName, setUserName] = useState('')
+
+  useEffect(() => {
+    const savedName = localStorage.getItem('userPreferencesName') || ''
+    setUserName(savedName)
+  }, [])
   return (
     <div className="h-screen overflow-auto">
       {/* Full viewport background */}
@@ -70,8 +77,8 @@ export default function Home() {
             animate={{ scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            Hi there!
-          </motion.h2>
+            {userName ? `Hi ${userName}!` : 'Hi there!'}
+            </motion.h2>
 
           <motion.div
             className="max-w-2xl mx-auto space-y-6"
