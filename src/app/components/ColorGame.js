@@ -6,7 +6,7 @@ import GameSettings from './GameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-const colorTable = {
+const itemTable = {
   yellow: '#FFD700',
   green: '#008000',
   blue: '#1E90FF',
@@ -14,18 +14,18 @@ const colorTable = {
   pink: '#FF00FF',
   red: '#DC143C',
   orange: '#FF7F50',
-}
+};
 
 export default function ColorGame({ onGameStateChange = () => {} }) {
-  const handleVoiceCommand = useCallback((command, currentColor, speak, selectNewColor, endGame) => {
-    console.log('Voice command received:', command, 'Current color:', currentColor)
+  const handleVoiceCommand = useCallback((command, currentItem, speak, selectNewItem, endGame) => {
+    console.log('Voice command received:', command, 'Current item:', currentItem)
     const lowerCommand = command.toLowerCase()
     
     if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
       console.log('Next command detected')
-      const newColor = selectNewColor()
-      console.log('New color after next command:', newColor)
-      return newColor
+      const newItem = selectNewItem()
+      console.log('New item after next command:', newItem)
+      return newItem
     } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
       console.log('Stop command detected')
       endGame()
@@ -33,24 +33,24 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       console.log('Help requested')
       speak("To proceed to the next color say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what color is it?'. To display any color say 'show me', followed by the color you want to see.")
     } else if (/\b(what|which)(?:\s+(?:color|is|it))?\b/.test(lowerCommand)) {
-      console.log('Color hint requested for color:', currentColor)
-      speak(`The current color is ${currentColor}.`)
+      console.log('Color hint requested for color:', currentItem)
+      speak(`The current color is ${currentItem}.`)
     } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
       const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
-      const requestedColor = match[2]
-      console.log('Show color requested:', requestedColor)
-      if (colorTable.hasOwnProperty(requestedColor)) {
-        speak(`Showing ${requestedColor}.`)
-        return requestedColor
+      const requestedItem = match[2]
+      console.log('Show color requested:', requestedItem)
+      if (itemTable.hasOwnProperty(requestedItem)) {
+        speak(`Showing ${requestedItem}.`)
+        return requestedItem
       } else {
-        speak(`Sorry, ${requestedColor} is not in my color list.`)
+        speak(`Sorry, ${requestedItem} is not in my color list.`)
       }
     } else {
-      const colorGuess = Object.keys(colorTable).find(color => lowerCommand.includes(color))
+      const colorGuess = Object.keys(itemTable).find(color => lowerCommand.includes(color))
       if (colorGuess) {
-        console.log('Color guess:', colorGuess, 'Current color:', currentColor)
-        if (colorGuess === currentColor) {
-          speak(`Well done! The color is ${currentColor}.`)
+        console.log('Color guess:', colorGuess, 'Current color:', currentItem)
+        if (colorGuess === currentItem) {
+          speak(`Well done! The color is ${currentItem}.`)
         } else {
           speak("Try again!")
         }
@@ -61,16 +61,16 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     return null
   }, [])
 
-  const selectNewColor = useCallback((selectedColors, currentColor, setCurrentColor) => {
-    console.log('Selecting new color. Current color:', currentColor)
-    let newColor
+  const selectNewItem = useCallback((selectedItems, currentItem, setCurrentItem) => {
+    console.log('Selecting new item. Current item:', currentItem)
+    let newItem
     do {
-      newColor = selectedColors[Math.floor(Math.random() * selectedColors.length)]
-    } while (newColor === currentColor && selectedColors.length > 1)
+      newItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
+    } while (newItem === currentItem && selectedItems.length > 1)
     
-    console.log('New color selected:', newColor)
-    setCurrentColor(newColor)
-    return newColor
+    console.log('New item selected:', newItem)
+    setCurrentItem(newItem)
+    return newItem
   }, [])
 
   const renderGameContent = useCallback(({ gameState, startGame, endGame, isButtonAnimated, gameType }) => {
@@ -144,8 +144,8 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       onGameStateChange={onGameStateChange}
       renderGameContent={renderGameContent}
       handleVoiceCommand={handleVoiceCommand}
-      selectNewItem={selectNewColor}
-      colorTable={colorTable}
+      selectNewItem={selectNewItem}
+      itemTable={itemTable}
     />
   )
 }

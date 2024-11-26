@@ -14,14 +14,14 @@ export default function BaseGame({
   renderGameContent,
   handleVoiceCommand,
   selectNewItem,
-  colorTable
+  itemTable
 }) {
   const [gameState, setGameState] = useState('initial')
   const [currentItem, setCurrentItem] = useState(null)
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [lastHeardWord, setLastHeardWord] = useState('')
-  const [selectedItems, setSelectedItems] = useState(Object.keys(colorTable))
+  const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable))
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const [userName, setUserName] = useState('')
@@ -281,7 +281,7 @@ export default function BaseGame({
       <div
         className="fixed inset-0 pt-16"
         style={{
-          backgroundColor: (gameState === 'playing' || gameState === 'intro') && colorTable ? colorTable[currentItem] : 'transparent',
+          backgroundColor: (gameState === 'playing' || gameState === 'intro') && itemTable ? itemTable[currentItem] : 'transparent',
           transition: 'background-color 0.5s ease'
         }}
         onClick={handleBackgroundClick}
@@ -305,7 +305,7 @@ export default function BaseGame({
             title={`${gameType} Game`}
             onClose={() => setIsSettingsOpen(false)}
             onSave={handleSaveSettings}
-            colorTable={colorTable}
+            itemTable={itemTable}
             selectedItems={selectedItems}
           />
         )}
