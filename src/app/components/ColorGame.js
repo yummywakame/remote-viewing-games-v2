@@ -25,6 +25,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       console.log('Next command detected')
       const newItem = selectNewItem()
       console.log(`New ${gameType} after next command:`, newItem)
+      speak(`What ${gameType.toLowerCase()} is this?`)
       return newItem
     } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
       console.log('Stop command detected')
