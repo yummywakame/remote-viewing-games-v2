@@ -18,16 +18,27 @@ const colorTable = {
 
 export default function ColorGame({ onGameStateChange = () => {} }) {
   const handleVoiceCommand = useCallback((command, currentColor, speak, selectNewColor, endGame) => {
-    if (/\b(next|skip|forward)\b/.test(command)) {
-      selectNewColor()
-    } else if (/\b(stop|end|quit|exit)\b/.test(command)) {
+    console.log('Voice command received:', command, 'Current color:', currentColor)
+    const lowerCommand = command.toLowerCase()
+    
+    if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
+      console.log('Next command detected')
+      const newColor = selectNewColor()
+      console.log('New color after next command:', newColor)
+      return newColor
+    } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
+      console.log('Stop command detected')
       endGame()
-    } else if (/\b(help|instructions)\b/.test(command)) {
+    } else if (/\b(help|instructions)\b/.test(lowerCommand)) {
+      console.log('Help requested')
       speak("To proceed to the next color say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what color is it?'. To display any color say 'show me', followed by the color you want to see.")
-    } else if (/\b(what|which)(?:\s+(?:color|is|it))?\b/.test(command)) {
+    } else if (/\b(what|which)(?:\s+(?:color|is|it))?\b/.test(lowerCommand)) {
+      console.log('Color hint requested for color:', currentColor)
       speak(`The current color is ${currentColor}.`)
-    } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(command)) {
-      const [, , requestedColor] = command.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
+    } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
+      const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
+      const requestedColor = match[2]
+      console.log('Show color requested:', requestedColor)
       if (colorTable.hasOwnProperty(requestedColor)) {
         speak(`Showing ${requestedColor}.`)
         return requestedColor
@@ -35,24 +46,29 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
         speak(`Sorry, ${requestedColor} is not in my color list.`)
       }
     } else {
-      const colorGuess = Object.keys(colorTable).find(color => command.includes(color))
+      const colorGuess = Object.keys(colorTable).find(color => lowerCommand.includes(color))
       if (colorGuess) {
+        console.log('Color guess:', colorGuess, 'Current color:', currentColor)
         if (colorGuess === currentColor) {
           speak(`Well done! The color is ${currentColor}.`)
         } else {
           speak("Try again!")
         }
+      } else {
+        console.log('No valid command or color guess detected')
       }
     }
     return null
   }, [])
 
   const selectNewColor = useCallback((selectedColors, currentColor, setCurrentColor) => {
+    console.log('Selecting new color. Current color:', currentColor)
     let newColor
     do {
       newColor = selectedColors[Math.floor(Math.random() * selectedColors.length)]
     } while (newColor === currentColor && selectedColors.length > 1)
     
+    console.log('New color selected:', newColor)
     setCurrentColor(newColor)
     return newColor
   }, [])

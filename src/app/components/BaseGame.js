@@ -61,6 +61,21 @@ export default function BaseGame({
     })
   }, [selectedVoice, voiceSpeed])
 
+  const updateCurrentItem = useCallback((newItem) => {
+    console.log('Updating current item from:', currentItem, 'to:', newItem)
+    setCurrentItem(newItem)
+    currentItemRef.current = newItem
+  }, [currentItem])
+
+  const handleNextItem = useCallback(async () => {
+    if (gameState === 'playing' && !isSpeaking) {
+      const newItem = await selectNewItem(selectedItems, currentItemRef.current, updateCurrentItem)
+      console.log('Next item selected:', newItem)
+      updateCurrentItem(newItem)
+      speak(`What ${gameType.toLowerCase()} is this?`)
+    }
+  }, [gameState, isSpeaking, selectNewItem, selectedItems, updateCurrentItem, speak, gameType])
+
   const cancelSpeech = useCallback(() => {
     if (speechSynthesis.current) {
       speechSynthesis.current.cancel()
@@ -79,13 +94,12 @@ export default function BaseGame({
     cancelSpeech()
     stopListening()
     setAndLogGameState('ending', 'end game')
-    setCurrentItem(null)
-    currentItemRef.current = null
+    updateCurrentItem(null)
     setLastHeardWord('')
     await speak("Thank you for playing!")
     setAndLogGameState('initial', 'game ended')
     router.push('/')
-  }, [cancelSpeech, stopListening, setAndLogGameState, speak, router])
+  }, [cancelSpeech, stopListening, setAndLogGameState, speak, router, updateCurrentItem])
 
   const startListening = useCallback(() => {
     if (!recognition.current) {
@@ -99,7 +113,18 @@ export default function BaseGame({
         const last = event.results.length - 1
         const transcript = event.results[last][0].transcript.trim().toLowerCase()
         setLastHeardWord(transcript)
-        handleVoiceCommand(transcript, currentItemRef.current, speak, selectNewItem, endGame)
+        console.log('Voice command received with current item:', currentItemRef.current)
+        const newItem = handleVoiceCommand(
+          transcript, 
+          currentItemRef.current, 
+          speak, 
+          () => selectNewItem(selectedItems, currentItemRef.current, updateCurrentItem),
+          endGame
+        )
+        if (newItem) {
+          console.log('Updating item from voice command to:', newItem)
+          updateCurrentItem(newItem)
+        }
       }
 
       recognition.current.onend = () => {
@@ -115,26 +140,21 @@ export default function BaseGame({
       recognition.current.start()
       setIsListening(true)
     }
-  }, [gameState, isListening, isSpeaking, handleVoiceCommand, speak, selectNewItem, endGame])
+  }, [gameState, isListening, isSpeaking, handleVoiceCommand, speak, selectNewItem, endGame, selectedItems, updateCurrentItem])
 
   const startGame = useCallback(async () => {
     setAndLogGameState('intro', 'start game')
     await speak(`Welcome to the ${gameType} Game ${userName || ''}! When prompted, say the ${gameType.toLowerCase()} you think it is, or say 'help' at any time for further instructions. Good luck!`)
     setAndLogGameState('playing', 'game started')
-    const newItem = await selectNewItem(selectedItems, currentItem, setCurrentItem)
-    currentItemRef.current = newItem
+    const newItem = await selectNewItem(selectedItems, currentItem, updateCurrentItem)
+    updateCurrentItem(newItem)
     await speak(`What ${gameType.toLowerCase()} is this?`)
     startListening()
-  }, [setAndLogGameState, speak, selectNewItem, startListening, userName, gameType, selectedItems])
+  }, [setAndLogGameState, speak, selectNewItem, startListening, userName, gameType, selectedItems, currentItem, updateCurrentItem])
 
   const handleBackgroundClick = useCallback(() => {
-    if (gameState === 'playing' && !isSpeaking) {
-      selectNewItem(selectedItems, currentItem, setCurrentItem).then(newItem => {
-        currentItemRef.current = newItem
-        speak(`What ${gameType.toLowerCase()} is this?`)
-      })
-    }
-  }, [gameState, isSpeaking, selectNewItem, selectedItems, currentItem, speak, gameType])
+    handleNextItem()
+  }, [handleNextItem])
 
   const handleSaveSettings = useCallback((newSelectedItems) => {
     setSelectedItems(newSelectedItems)
