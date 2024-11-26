@@ -6,16 +6,17 @@ import { Settings, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
 import UserPreferences from './UserPreferences'
+import GameDisplay from './GameDisplay'
 
 export default function BaseGame({ 
-    GameSettings,
-    gameType,
-    onGameStateChange = () => {},
-    renderGameContent,
-    handleVoiceCommand,
-    selectNewItem,
-    itemTable
-  }) {
+  GameSettings,
+  gameType,
+  onGameStateChange = () => {},
+  renderGameContent,
+  handleVoiceCommand,
+  selectNewItem,
+  itemTable
+}) {
   const [gameState, setGameState] = useState('initial')
   const [currentItem, setCurrentItem] = useState(null)
   const [isListening, setIsListening] = useState(false)
@@ -142,7 +143,7 @@ export default function BaseGame({
           speak, 
           () => selectNewItem(selectedItems, currentItemRef.current, updateCurrentItem),
           endGame,
-          gameType // Add gameType parameter here
+          gameType
         )
         if (newItem) {
           console.log('Updating item from voice command to:', newItem)
@@ -163,7 +164,7 @@ export default function BaseGame({
       recognition.current.start()
       setIsListening(true)
     }
-  }, [gameState, isListening, isSpeaking, handleVoiceCommand, speak, selectNewItem, endGame, selectedItems, updateCurrentItem, gameType]) // Add gameType to dependencies
+  }, [gameState, isListening, isSpeaking, handleVoiceCommand, speak, selectNewItem, endGame, selectedItems, updateCurrentItem, gameType])
 
   const startGame = useCallback(async () => {
     setAndLogGameState('intro', 'start game')
@@ -303,16 +304,15 @@ export default function BaseGame({
         </div>
       </div>
 
-      <div
-        className="fixed inset-0 pt-16"
-        style={{
-          backgroundColor: (gameState === 'playing' || gameState === 'intro') && itemTable ? itemTable[currentItem] : 'transparent',
-          transition: 'background-color 0.5s ease'
-        }}
-        onClick={handleBackgroundClick}
-      >
+      <GameDisplay
+        gameType={gameType}
+        currentItem={currentItem}
+        itemTable={itemTable}
+      />
+
+      <div className="fixed inset-0 pt-16 pointer-events-none">
         <div className="flex items-center justify-center h-full">
-          <div className="game-content text-center">
+          <div className="game-content text-center pointer-events-auto">
             {renderGameContent({
               gameState,
               startGame,
@@ -323,6 +323,7 @@ export default function BaseGame({
           </div>
         </div>
       </div>
+
       <AnimatePresence>
         {isSettingsOpen && (
           <GameSettings
