@@ -35,7 +35,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       speak(`To proceed to the next ${gameType} say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what ${gameType} is it?'. To display any ${gameType} say 'show me', followed by the ${gameType} you want to see.`)
     } else if (new RegExp(`\\b(what|which)(?:\\s+(?:${gameType}|is|it))?\\b`).test(lowerCommand)) {
       console.log(`${gameType} hint requested for:`, currentItem)
-      speak(`The current ${gameType} is ${currentItem}.`)
+      speak(`It's ${currentItem}.`)
     } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
       const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
       const requestedItem = match[2]
@@ -51,7 +51,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       if (itemGuess) {
         console.log(`${gameType} guess:`, itemGuess, `Current ${gameType}:`, currentItem)
         if (itemGuess === currentItem) {
-          speak(`Well done! The ${gameType} is ${currentItem}.`)
+          speak(`Well done! It's ${currentItem}.`)
         } else {
           speak("Try again!")
         }
@@ -150,3 +150,4 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     />
   )
 }
+

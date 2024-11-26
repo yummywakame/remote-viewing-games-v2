@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react'
 import BaseGame from './BaseGame'
 import ShapeGameSettings from './ShapeGameSettings'
-import { Hexagon } from 'lucide-react'
+import { Shapes } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const itemTable = {
@@ -40,7 +40,7 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
       speak(`To proceed to the next ${gameType} say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what ${gameType} is it?'. To display any ${gameType} say 'show me', followed by the ${gameType} you want to see.`)
     } else if (new RegExp(`\\b(what|which)(?:\\s+(?:${gameType}|is|it))?\\b`).test(lowerCommand)) {
       console.log(`${gameType} hint requested for:`, currentItem)
-      speak(`The current ${gameType} is ${currentItem.split('-')[0]}.`)
+      speak(`It's a ${currentItem.split('-')[0]}.`)
     } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
       const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
       const requestedItem = match[2]
@@ -48,7 +48,7 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
       const matchingItems = Object.keys(itemTable).filter(item => item.startsWith(requestedItem))
       if (matchingItems.length > 0) {
         const randomItem = matchingItems[Math.floor(Math.random() * matchingItems.length)]
-        speak(`Showing ${randomItem.split('-')[0]}.`)
+        speak(`Showing a ${randomItem.split('-')[0]}.`)
         return randomItem
       } else {
         speak(`Sorry, ${requestedItem} is not in my ${gameType} list.`)
@@ -58,7 +58,7 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
       if (itemGuess) {
         console.log(`${gameType} guess:`, itemGuess, `Current ${gameType}:`, currentItem)
         if (itemGuess.split('-')[0] === currentItem.split('-')[0]) {
-          speak(`Well done! The ${gameType} is ${currentItem.split('-')[0]}.`)
+          speak(`Well done! It's a ${currentItem.split('-')[0]}.`)
         } else {
           speak("Try again!")
         }
@@ -111,7 +111,7 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Hexagon className="mr-2" size={20} />
+            <Shapes className="mr-2" size={20} />
             Start Game
           </motion.button>
         </motion.div>

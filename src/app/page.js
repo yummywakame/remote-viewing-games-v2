@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Sparkles, Eye, Brain, Shapes, Hexagon } from 'lucide-react'
+import { Sparkles, Eye, Brain, Shapes, Hexagon, Hash } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -15,8 +15,8 @@ export default function Home() {
 
   const games = [
     { name: 'Color Game', href: '/color-game', icon: Eye, color: 'from-purple-600 to-blue-600', available: true },
-    { name: 'Shape Game', href: '/shape-game', icon: Hexagon, color: 'from-blue-600 to-green-500', available: true },
-    { name: 'Number Game', href: '#', icon: Brain, color: 'from-orange-600 to-red-600', available: false },
+    { name: 'Shape Game', href: '/shape-game', icon: Shapes, color: 'from-blue-600 to-green-500', available: true },
+    { name: 'Number Game', href: '#', icon: Hash, color: 'from-orange-600 to-red-600', available: false },
   ]
 
   return (
