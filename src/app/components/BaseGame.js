@@ -91,6 +91,7 @@ export default function BaseGame({
   }, [])
 
   const endGame = useCallback(async () => {
+    console.log('Ending game...')
     cancelSpeech()
     stopListening()
     setAndLogGameState('ending', 'end game')
@@ -98,10 +99,31 @@ export default function BaseGame({
     setLastHeardWord('')
     await speak("Thank you for playing!")
     setAndLogGameState('initial', 'game ended')
+    
+    // Clear any ongoing timeouts or intervals
+    if (window) {
+      const highestTimeoutId = window.setTimeout(() => {}, 0);
+      for (let i = 0; i < highestTimeoutId; i++) {
+        window.clearTimeout(i);
+      }
+    }
+    
+    // Ensure speech recognition is fully stopped
+    if (recognition.current) {
+      recognition.current.onend = null;
+      recognition.current.stop();
+      recognition.current = null;
+    }
+    
     router.push('/')
   }, [cancelSpeech, stopListening, setAndLogGameState, speak, router, updateCurrentItem])
 
   const startListening = useCallback(() => {
+    if (gameState !== 'playing') {
+      console.log('Not starting listening because game state is not playing')
+      return
+    }
+
     if (!recognition.current) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
       recognition.current = new SpeechRecognition()
@@ -153,8 +175,10 @@ export default function BaseGame({
   }, [setAndLogGameState, speak, selectNewItem, startListening, userName, gameType, selectedItems, currentItem, updateCurrentItem])
 
   const handleBackgroundClick = useCallback(() => {
-    handleNextItem()
-  }, [handleNextItem])
+    if (gameState === 'playing') {
+      handleNextItem()
+    }
+  }, [gameState, handleNextItem])
 
   const handleSaveSettings = useCallback((newSelectedItems) => {
     setSelectedItems(newSelectedItems)
