@@ -8,14 +8,14 @@ import FloatingBubble from './FloatingBubble'
 import UserPreferences from './UserPreferences'
 
 export default function BaseGame({ 
-  GameSettings,
-  gameType,
-  onGameStateChange = () => {},
-  renderGameContent,
-  handleVoiceCommand,
-  selectNewItem,
-  itemTable
-}) {
+    GameSettings,
+    gameType,
+    onGameStateChange = () => {},
+    renderGameContent,
+    handleVoiceCommand,
+    selectNewItem,
+    itemTable
+  }) {
   const [gameState, setGameState] = useState('initial')
   const [currentItem, setCurrentItem] = useState(null)
   const [isListening, setIsListening] = useState(false)
@@ -141,7 +141,8 @@ export default function BaseGame({
           currentItemRef.current, 
           speak, 
           () => selectNewItem(selectedItems, currentItemRef.current, updateCurrentItem),
-          endGame
+          endGame,
+          gameType // Add gameType parameter here
         )
         if (newItem) {
           console.log('Updating item from voice command to:', newItem)
@@ -162,7 +163,7 @@ export default function BaseGame({
       recognition.current.start()
       setIsListening(true)
     }
-  }, [gameState, isListening, isSpeaking, handleVoiceCommand, speak, selectNewItem, endGame, selectedItems, updateCurrentItem])
+  }, [gameState, isListening, isSpeaking, handleVoiceCommand, speak, selectNewItem, endGame, selectedItems, updateCurrentItem, gameType]) // Add gameType to dependencies
 
   const startGame = useCallback(async () => {
     setAndLogGameState('intro', 'start game')

@@ -17,45 +17,45 @@ const itemTable = {
 };
 
 export default function ColorGame({ onGameStateChange = () => {} }) {
-  const handleVoiceCommand = useCallback((command, currentItem, speak, selectNewItem, endGame) => {
-    console.log('Voice command received:', command, 'Current item:', currentItem)
+  const handleVoiceCommand = useCallback((command, currentItem, speak, selectNewItem, endGame, gameType) => {
+    console.log(`Voice command received for ${gameType} game:`, command, 'Current item:', currentItem)
     const lowerCommand = command.toLowerCase()
     
     if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
       console.log('Next command detected')
       const newItem = selectNewItem()
-      console.log('New item after next command:', newItem)
+      console.log(`New ${gameType} after next command:`, newItem)
       return newItem
     } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
       console.log('Stop command detected')
       endGame()
     } else if (/\b(help|instructions)\b/.test(lowerCommand)) {
       console.log('Help requested')
-      speak("To proceed to the next color say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what color is it?'. To display any color say 'show me', followed by the color you want to see.")
-    } else if (/\b(what|which)(?:\s+(?:color|is|it))?\b/.test(lowerCommand)) {
-      console.log('Color hint requested for color:', currentItem)
-      speak(`The current color is ${currentItem}.`)
+      speak(`To proceed to the next ${gameType} say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what ${gameType} is it?'. To display any ${gameType} say 'show me', followed by the ${gameType} you want to see.`)
+    } else if (new RegExp(`\\b(what|which)(?:\\s+(?:${gameType}|is|it))?\\b`).test(lowerCommand)) {
+      console.log(`${gameType} hint requested for:`, currentItem)
+      speak(`The current ${gameType} is ${currentItem}.`)
     } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
       const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
       const requestedItem = match[2]
-      console.log('Show color requested:', requestedItem)
+      console.log(`Show ${gameType} requested:`, requestedItem)
       if (itemTable.hasOwnProperty(requestedItem)) {
         speak(`Showing ${requestedItem}.`)
         return requestedItem
       } else {
-        speak(`Sorry, ${requestedItem} is not in my color list.`)
+        speak(`Sorry, ${requestedItem} is not in my ${gameType} list.`)
       }
     } else {
-      const colorGuess = Object.keys(itemTable).find(color => lowerCommand.includes(color))
-      if (colorGuess) {
-        console.log('Color guess:', colorGuess, 'Current color:', currentItem)
-        if (colorGuess === currentItem) {
-          speak(`Well done! The color is ${currentItem}.`)
+      const itemGuess = Object.keys(itemTable).find(item => lowerCommand.includes(item))
+      if (itemGuess) {
+        console.log(`${gameType} guess:`, itemGuess, `Current ${gameType}:`, currentItem)
+        if (itemGuess === currentItem) {
+          speak(`Well done! The ${gameType} is ${currentItem}.`)
         } else {
           speak("Try again!")
         }
       } else {
-        console.log('No valid command or color guess detected')
+        console.log('No valid command or item guess detected')
       }
     }
     return null
