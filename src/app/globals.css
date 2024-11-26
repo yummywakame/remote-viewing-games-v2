@@ -13,6 +13,8 @@
   --blue-700: #2563EB;
   --green-500: #22C55E;
   --red-500: #EF4444;
+  --pink-500: #EC4899;
+  --rose-500: #F43F5E;
 }
 
 html, body {
@@ -107,4 +109,34 @@ body {
   .fixed-bottom {
     @apply fixed bottom-0 left-0 right-0;
   }
+}
+
+/* New styles for game buttons */
+.game-button {
+  @apply flex flex-col items-center justify-center p-6 rounded-2xl bg-opacity-20 backdrop-blur-lg transition-all duration-300 shadow-lg hover:shadow-xl;
+}
+
+.game-button-icon {
+  @apply w-12 h-12 mb-4 text-white;
+}
+
+.game-button-title {
+  @apply text-xl font-bold text-white mb-2;
+}
+
+.game-button-subtitle {
+  @apply text-sm text-gray-200;
+}
+
+.game-button-disabled {
+  @apply bg-gray-700 cursor-not-allowed;
+}
+
+.game-button-disabled .game-button-subtitle {
+  @apply text-gray-400;
+}
+
+/* New gradient for shape game button */
+.bg-gradient-shape-game {
+  @apply bg-gradient-to-br from-pink-500 to-rose-500;
 }

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 
 export default function GameDisplay({ gameType, currentItem, itemTable, onClick }) {
   const renderItem = () => {
@@ -12,13 +13,25 @@ export default function GameDisplay({ gameType, currentItem, itemTable, onClick 
     const style = {
       fontSize: '15rem',
       fontWeight: 'bold',
-      color: gameType === 'Number' ? 'white' : itemTable[currentItem],
+      color: gameType === 'Number' ? 'white' : 'currentColor',
       maxWidth: '500px',
       maxHeight: '500px',
       margin: '50px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+    }
+
+    if (gameType === 'Shape') {
+      return (
+        <Image
+          src={itemTable[currentItem]}
+          alt={currentItem}
+          width={300}
+          height={300}
+          style={{ filter: 'invert(1)' }}
+        />
+      )
     }
 
     return (
@@ -33,7 +46,15 @@ export default function GameDisplay({ gameType, currentItem, itemTable, onClick 
     )
   }
 
-  const backgroundColor = gameType === 'Color' ? itemTable[currentItem] : (gameType === 'Number' ? 'black' : 'white')
+  const getBackgroundColor = () => {
+    if (gameType === 'Color') {
+      return itemTable[currentItem]
+    }
+    const backgroundMode = localStorage.getItem(`${gameType.toLowerCase()}GameBackgroundMode`) || 'dark'
+    return backgroundMode === 'dark' ? 'black' : 'white'
+  }
+
+  const backgroundColor = getBackgroundColor()
 
   return (
     <div 
@@ -45,3 +66,4 @@ export default function GameDisplay({ gameType, currentItem, itemTable, onClick 
     </div>
   )
 }
+
