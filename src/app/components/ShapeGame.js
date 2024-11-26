@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import BaseGame from './BaseGame'
 import ShapeGameSettings from './ShapeGameSettings'
 import { Shapes } from 'lucide-react'
@@ -22,6 +22,26 @@ const itemTable = {
 };
 
 export default function ShapeGame({ onGameStateChange = () => {} }) {
+  const [longIntroEnabled, setLongIntroEnabled] = useState(true);
+  const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
+
+  useEffect(() => {
+    const savedLongIntro = localStorage.getItem('shapeGameLongIntro');
+    setLongIntroEnabled(savedLongIntro !== 'false');
+
+    const savedItems = localStorage.getItem('shapeGameSelectedItems');
+    if (savedItems) {
+      try {
+        const parsedItems = JSON.parse(savedItems);
+        if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
+          setSelectedItems(parsedItems);
+        }
+      } catch (error) {
+        console.error('Error parsing saved items:', error);
+      }
+    }
+  }, []);
+
   const handleVoiceCommand = useCallback((command, currentItem, speak, selectNewItem, endGame, gameType) => {
     console.log(`Voice command received for ${gameType} game:`, command, 'Current item:', currentItem)
     const lowerCommand = command.toLowerCase()
@@ -145,6 +165,13 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
     return null
   }, [])
 
+  const handleSaveSettings = useCallback((newSelectedItems, newLongIntroEnabled) => {
+    setSelectedItems(newSelectedItems);
+    setLongIntroEnabled(newLongIntroEnabled);
+    localStorage.setItem('shapeGameSelectedItems', JSON.stringify(newSelectedItems));
+    localStorage.setItem('shapeGameLongIntro', newLongIntroEnabled.toString());
+  }, []);
+
   return (
     <BaseGame
       GameSettings={ShapeGameSettings}
@@ -154,6 +181,8 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
       handleVoiceCommand={handleVoiceCommand}
       selectNewItem={selectNewItem}
       itemTable={itemTable}
+      longIntroEnabled={longIntroEnabled}
+      onSaveSettings={handleSaveSettings}
     />
   )
 }

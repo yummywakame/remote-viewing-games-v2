@@ -15,7 +15,9 @@ export default function BaseGame({
     renderGameContent,
     handleVoiceCommand,
     selectNewItem,
-    itemTable
+    itemTable,
+    longIntroEnabled,
+    onSaveSettings
   }) {
   const [gameState, setGameState] = useState('initial')
   const [currentItem, setCurrentItem] = useState(null)
@@ -168,13 +170,17 @@ export default function BaseGame({
 
   const startGame = useCallback(async () => {
     setAndLogGameState('intro', 'start game')
-    await speak(`Welcome to the ${gameType} Game ${userName || ''}! When prompted, say the ${gameType.toLowerCase()} you think it is, or say 'help' at any time for further instructions. Good luck!`)
+    if (longIntroEnabled) {
+      await speak(`Welcome to the ${gameType} Game ${userName || ''}! When prompted, say the ${gameType.toLowerCase()} you think it is, or say 'help' at any time for further instructions. Good luck!`)
+    } else {
+      await speak("Let's begin!")
+    }
     setAndLogGameState('playing', 'game started')
     const newItem = await selectNewItem(selectedItems, currentItem, updateCurrentItem)
     updateCurrentItem(newItem)
     await speak(`What ${gameType.toLowerCase()} is this?`)
     startListening()
-  }, [setAndLogGameState, speak, selectNewItem, startListening, userName, gameType, selectedItems, currentItem, updateCurrentItem])
+  }, [setAndLogGameState, speak, selectNewItem, startListening, userName, gameType, selectedItems, currentItem, updateCurrentItem, longIntroEnabled])
 
   const handleBackgroundClick = useCallback(() => {
     if (gameState === 'playing') {
@@ -183,10 +189,11 @@ export default function BaseGame({
     }
   }, [gameState, handleNextItem]);
 
-  const handleSaveSettings = useCallback((newSelectedItems) => {
+  const handleSaveSettings = useCallback((newSelectedItems, newLongIntroEnabled) => {
     setSelectedItems(newSelectedItems)
     localStorage.setItem(`${gameType.toLowerCase()}GameSelectedItems`, JSON.stringify(newSelectedItems))
-  }, [gameType])
+    onSaveSettings(newSelectedItems, newLongIntroEnabled)
+  }, [gameType, onSaveSettings])
 
   useEffect(() => {
     const savedItems = localStorage.getItem(`${gameType.toLowerCase()}GameSelectedItems`)
@@ -336,6 +343,7 @@ export default function BaseGame({
             onSave={handleSaveSettings}
             itemTable={itemTable}
             selectedItems={selectedItems}
+            longIntroEnabled={longIntroEnabled}
           />
         )}
       </AnimatePresence>
@@ -349,3 +357,4 @@ export default function BaseGame({
     </div>
   )
 }
+

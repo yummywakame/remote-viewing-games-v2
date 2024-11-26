@@ -3,16 +3,21 @@
 import * as React from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { useCallback } from 'react';
 
-export default function ShapeGameSettings({ onClose, onSave, itemTable, selectedItems }) {
-  const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedItems)
+export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedShapes }) {
+  const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedShapes)
   const [backgroundMode, setBackgroundMode] = React.useState('dark')
+  const [longIntroEnabled, setLongIntroEnabled] = React.useState(true)
   const modalRef = React.useRef(null)
 
   React.useEffect(() => {
-    setLocalSelectedItems(selectedItems)
+    setLocalSelectedItems(selectedShapes)
     setBackgroundMode(localStorage.getItem('shapeGameBackgroundMode') || 'dark')
-  }, [selectedItems])
+    setLongIntroEnabled(localStorage.getItem('shapeGameLongIntro') !== 'false')
+  }, [selectedShapes])
 
   const handleCheckboxChange = (item) => {
     setLocalSelectedItems((prev) => {
@@ -24,15 +29,15 @@ export default function ShapeGameSettings({ onClose, onSave, itemTable, selected
     })
   }
 
-  const handleSave = () => {
-    onSave(localSelectedItems)
-    localStorage.setItem('shapeGameBackgroundMode', backgroundMode)
+  const onSave = useCallback(() => {
     onClose()
-  }
+    onSaveSettings(selectedShapes, longIntroEnabled)
+  }, [onClose, onSaveSettings, selectedShapes, longIntroEnabled])
 
   const handleReset = () => {
     setLocalSelectedItems(Object.keys(itemTable))
     setBackgroundMode('dark')
+    setLongIntroEnabled(true)
   }
 
   const handleOutsideClick = (e) => {
@@ -40,6 +45,10 @@ export default function ShapeGameSettings({ onClose, onSave, itemTable, selected
       onClose()
     }
   }
+
+  const onLongIntroChange = (checked) => {
+    setLongIntroEnabled(checked);
+  };
 
   return (
     <motion.div
@@ -105,11 +114,23 @@ export default function ShapeGameSettings({ onClose, onSave, itemTable, selected
               </label>
             ))}
           </div>
+
+          <div className="space-y-4 mb-6">
+            <h3 className="text-lg font-semibold">Game Intro</h3>
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={longIntroEnabled}
+                onCheckedChange={onLongIntroChange}
+                className="data-[state=checked]:bg-blue-600"
+              />
+              <span className="text-sm text-gray-200">Full length</span>
+            </div>
+          </div>
           
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-2">Background Mode</h3>
+          <div className="space-y-4 mb-6">
+            <h3 className="text-lg font-semibold">Background Mode</h3>
             <div className="flex gap-4">
-              <label className="flex items-center">
+              <label className="flex items-center text-sm text-gray-200">
                 <input
                   type="radio"
                   value="dark"
@@ -119,7 +140,7 @@ export default function ShapeGameSettings({ onClose, onSave, itemTable, selected
                 />
                 Dark Mode
               </label>
-              <label className="flex items-center">
+              <label className="flex items-center text-sm text-gray-200">
                 <input
                   type="radio"
                   value="light"
@@ -131,6 +152,7 @@ export default function ShapeGameSettings({ onClose, onSave, itemTable, selected
               </label>
             </div>
           </div>
+
 
           {localSelectedItems.length <= 2 && (
             <p className="text-sm text-gray-400 mb-6">
@@ -146,7 +168,7 @@ export default function ShapeGameSettings({ onClose, onSave, itemTable, selected
               Reset to Defaults
             </button>
             <button
-              onClick={handleSave}
+              onClick={onSave}
               className="px-4 py-2 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white hover:from-[var(--purple-700)] hover:to-[var(--blue-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
               Save Changes
@@ -157,3 +179,4 @@ export default function ShapeGameSettings({ onClose, onSave, itemTable, selected
     </motion.div>
   )
 }
+

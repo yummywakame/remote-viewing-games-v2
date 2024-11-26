@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useCallback } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import BaseGame from './BaseGame'
-import GameSettings from './ColorGameSettings'
+import ColorGameSettings from './ColorGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -17,6 +17,26 @@ const itemTable = {
 };
 
 export default function ColorGame({ onGameStateChange = () => {} }) {
+  const [longIntroEnabled, setLongIntroEnabled] = useState(true);
+  const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
+
+  useEffect(() => {
+    const savedLongIntro = localStorage.getItem('colorGameLongIntro');
+    setLongIntroEnabled(savedLongIntro !== 'false');
+
+    const savedItems = localStorage.getItem('colorGameSelectedItems');
+    if (savedItems) {
+      try {
+        const parsedItems = JSON.parse(savedItems);
+        if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
+          setSelectedItems(parsedItems);
+        }
+      } catch (error) {
+        console.error('Error parsing saved items:', error);
+      }
+    }
+  }, []);
+
   const handleVoiceCommand = useCallback((command, currentItem, speak, selectNewItem, endGame, gameType) => {
     console.log(`Voice command received for ${gameType} game:`, command, 'Current item:', currentItem)
     const lowerCommand = command.toLowerCase()
@@ -35,7 +55,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       speak(`To proceed to the next ${gameType} say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what ${gameType} is it?'. To display any ${gameType} say 'show me', followed by the ${gameType} you want to see.`)
     } else if (new RegExp(`\\b(what|which)(?:\\s+(?:${gameType}|is|it))?\\b`).test(lowerCommand)) {
       console.log(`${gameType} hint requested for:`, currentItem)
-      speak(`It's ${currentItem}.`)
+      speak(`The current ${gameType} is ${currentItem}.`)
     } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
       const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
       const requestedItem = match[2]
@@ -51,7 +71,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       if (itemGuess) {
         console.log(`${gameType} guess:`, itemGuess, `Current ${gameType}:`, currentItem)
         if (itemGuess === currentItem) {
-          speak(`Well done! It's ${currentItem}.`)
+          speak(`Well done! The ${gameType} is ${currentItem}.`)
         } else {
           speak("Try again!")
         }
@@ -138,16 +158,24 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     return null
   }, [])
 
+  const handleSaveSettings = useCallback((newSelectedItems, newLongIntroEnabled) => {
+    setSelectedItems(newSelectedItems);
+    setLongIntroEnabled(newLongIntroEnabled);
+    localStorage.setItem('colorGameSelectedItems', JSON.stringify(newSelectedItems));
+    localStorage.setItem('colorGameLongIntro', newLongIntroEnabled.toString());
+  }, []);
+
   return (
     <BaseGame
-      GameSettings={GameSettings}
+      GameSettings={ColorGameSettings}
       gameType="Color"
       onGameStateChange={onGameStateChange}
       renderGameContent={renderGameContent}
       handleVoiceCommand={handleVoiceCommand}
       selectNewItem={selectNewItem}
       itemTable={itemTable}
+      longIntroEnabled={longIntroEnabled}
+      onSaveSettings={handleSaveSettings}
     />
   )
 }
-
