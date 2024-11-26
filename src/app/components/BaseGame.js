@@ -9,14 +9,14 @@ import UserPreferences from './UserPreferences'
 import GameDisplay from './GameDisplay'
 
 export default function BaseGame({ 
-  GameSettings,
-  gameType,
-  onGameStateChange = () => {},
-  renderGameContent,
-  handleVoiceCommand,
-  selectNewItem,
-  itemTable
-}) {
+    GameSettings,
+    gameType,
+    onGameStateChange = () => {},
+    renderGameContent,
+    handleVoiceCommand,
+    selectNewItem,
+    itemTable
+  }) {
   const [gameState, setGameState] = useState('initial')
   const [currentItem, setCurrentItem] = useState(null)
   const [isListening, setIsListening] = useState(false)
@@ -310,6 +310,7 @@ export default function BaseGame({
         currentItem={currentItem}
         itemTable={itemTable}
         onClick={handleBackgroundClick}
+        gameState={gameState}
       />
 
       <div className="fixed inset-0 pt-16 pointer-events-none">

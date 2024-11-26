@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react'
 import BaseGame from './BaseGame'
 import ShapeGameSettings from './ShapeGameSettings'
-import { Eye } from 'lucide-react'
+import { Hexagon } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const itemTable = {
@@ -107,11 +107,11 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
           </motion.p>
           <motion.button
             onClick={startGame}
-            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-green-500 text-white font-medium text-lg hover:from-blue-700 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Eye className="mr-2" size={20} />
+            <Hexagon className="mr-2" size={20} />
             Start Game
           </motion.button>
         </motion.div>
@@ -132,7 +132,7 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
         >
           <motion.button
             onClick={endGame}
-            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-green-500 text-white font-medium text-lg hover:from-blue-700 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -157,3 +157,4 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
     />
   )
 }
+

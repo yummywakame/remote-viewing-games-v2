@@ -1,36 +1,48 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 
-export default function GameDisplay({ gameType, currentItem, itemTable, onClick }) {
+export default function GameDisplay({ gameType, currentItem, itemTable, onClick, gameState }) {
+  const [backgroundMode, setBackgroundMode] = useState('dark')
+
+  useEffect(() => {
+    // Access localStorage only after component mounts
+    const storedMode = typeof window !== 'undefined' 
+      ? localStorage.getItem(`${gameType.toLowerCase()}GameBackgroundMode`) || 'dark'
+      : 'dark'
+    setBackgroundMode(storedMode)
+  }, [gameType])
+
   const renderItem = () => {
     if (gameType === 'Color') {
-      return null // Color game doesn't display an item
+      return null
     }
 
     const style = {
       fontSize: '15rem',
       fontWeight: 'bold',
       color: gameType === 'Number' ? 'white' : 'currentColor',
-      maxWidth: '500px',
-      maxHeight: '500px',
+      maxWidth: '750px',
+      maxHeight: '750px',
       margin: '50px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
     }
 
-    if (gameType === 'Shape') {
+    if (gameType === 'Shape' && currentItem) {
       return (
-        <Image
-          src={itemTable[currentItem]}
-          alt={currentItem}
-          width={300}
-          height={300}
-          style={{ filter: 'invert(1)' }}
-        />
+        <div className="flex items-center justify-center">
+          <Image
+            src={itemTable[currentItem]}
+            alt={`${currentItem.split('-')[0]} shape`}
+            width={450}
+            height={450}
+            style={{ filter: 'invert(1)' }}
+          />
+        </div>
       )
     }
 
@@ -47,10 +59,12 @@ export default function GameDisplay({ gameType, currentItem, itemTable, onClick 
   }
 
   const getBackgroundColor = () => {
+    if (gameState === 'initial') {
+      return 'transparent'
+    }
     if (gameType === 'Color') {
       return itemTable[currentItem]
     }
-    const backgroundMode = localStorage.getItem(`${gameType.toLowerCase()}GameBackgroundMode`) || 'dark'
     return backgroundMode === 'dark' ? 'black' : 'white'
   }
 
@@ -58,8 +72,8 @@ export default function GameDisplay({ gameType, currentItem, itemTable, onClick 
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center"
-      style={{ backgroundColor, transition: 'background-color 0.5s ease' }}
+      className="fixed inset-0 flex items-center justify-center transition-colors duration-500"
+      style={{ backgroundColor }}
       onClick={onClick}
     >
       {renderItem()}
