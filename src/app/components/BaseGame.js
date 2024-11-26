@@ -178,9 +178,10 @@ export default function BaseGame({
 
   const handleBackgroundClick = useCallback(() => {
     if (gameState === 'playing') {
-      handleNextItem()
+      console.log('Background clicked, triggering next item');
+      handleNextItem();
     }
-  }, [gameState, handleNextItem])
+  }, [gameState, handleNextItem]);
 
   const handleSaveSettings = useCallback((newSelectedItems) => {
     setSelectedItems(newSelectedItems)
@@ -206,7 +207,7 @@ export default function BaseGame({
       const timeoutId = setTimeout(startListening, 100)
       return () => clearTimeout(timeoutId)
     }
-  }, [gameState, isListening, isSpeaking, startListening])
+  }, [gameState, isListening, isSpeaking, startListening, handleBackgroundClick])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -308,6 +309,7 @@ export default function BaseGame({
         gameType={gameType}
         currentItem={currentItem}
         itemTable={itemTable}
+        onClick={handleBackgroundClick}
       />
 
       <div className="fixed inset-0 pt-16 pointer-events-none">

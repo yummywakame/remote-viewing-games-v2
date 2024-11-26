@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 
-export default function GameDisplay({ gameType, currentItem, itemTable }) {
+export default function GameDisplay({ gameType, currentItem, itemTable, onClick }) {
   const renderItem = () => {
     if (gameType === 'Color') {
       return null // Color game doesn't display an item
@@ -39,6 +39,7 @@ export default function GameDisplay({ gameType, currentItem, itemTable }) {
     <div 
       className="fixed inset-0 flex items-center justify-center"
       style={{ backgroundColor, transition: 'background-color 0.5s ease' }}
+      onClick={onClick}
     >
       {renderItem()}
     </div>
