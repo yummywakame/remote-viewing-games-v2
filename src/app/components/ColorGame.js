@@ -2,7 +2,7 @@
 
 import React, { useCallback } from 'react'
 import BaseGame from './BaseGame'
-import GameSettings from './GameSettings'
+import GameSettings from './ColorGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
 

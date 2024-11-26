@@ -4,7 +4,7 @@ import * as React from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-export default function GameSettings({ title, onClose, onSave, itemTable, selectedItems }) {
+export default function ColorGameSettings({ onClose, onSave, itemTable, selectedItems }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedItems)
   const modalRef = React.useRef(null)
 
@@ -56,7 +56,7 @@ export default function GameSettings({ title, onClose, onSave, itemTable, select
       >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold">{title} Settings</h2>
+            <h2 className="text-2xl font-semibold">Color Game Settings</h2>
             <button 
               onClick={onClose}
               className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors"
@@ -108,7 +108,7 @@ export default function GameSettings({ title, onClose, onSave, itemTable, select
           
           {localSelectedItems.length <= 2 && (
             <p className="text-sm text-gray-400 mb-6">
-              You must select at least two items.
+              You must select at least two colors.
             </p>
           )}
 
