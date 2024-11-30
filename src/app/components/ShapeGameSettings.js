@@ -154,7 +154,7 @@ export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, ite
           </div>
 
 
-          {localSelectedItems.length <= 2 && (
+          {localSelectedItems.length <= 1 && (
             <p className="text-sm text-gray-400 mb-6">
               You must select at least two shapes.
             </p>
