@@ -17,7 +17,7 @@ export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, ite
     setLocalSelectedItems(selectedShapes)
     setBackgroundMode(localStorage.getItem('shapeGameBackgroundMode') || 'dark')
     setLongIntroEnabled(localStorage.getItem('shapeGameLongIntro') !== 'false')
-  }, [selectedShapes])
+  }, [selectedShapes, setLocalSelectedItems])
 
   const handleCheckboxChange = (item) => {
     setLocalSelectedItems((prev) => {
@@ -31,8 +31,8 @@ export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, ite
 
   const onSave = useCallback(() => {
     onClose()
-    onSaveSettings(selectedShapes, longIntroEnabled)
-  }, [onClose, onSaveSettings, selectedShapes, longIntroEnabled])
+    onSaveSettings(localSelectedItems, longIntroEnabled)
+  }, [onClose, onSaveSettings, localSelectedItems, longIntroEnabled])
 
   const handleReset = () => {
     setLocalSelectedItems(Object.keys(itemTable))
@@ -98,7 +98,7 @@ export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, ite
                   disabled={localSelectedItems.length <= 2 && localSelectedItems.includes(item)}
                 />
                 <div className="flex items-center gap-3">
-                  <img src={path} alt={item} className="w-6 h-6" />
+                  <img src={path} alt={item} className="w-6 h-6 brightness-0 invert" />
                   <span className="capitalize font-medium">
                     {item.replace('-', ' ')}
                   </span>

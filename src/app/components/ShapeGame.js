@@ -174,7 +174,13 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
 
   return (
     <BaseGame
-      GameSettings={ShapeGameSettings}
+      GameSettings={(props) => (
+        <ShapeGameSettings
+          {...props}
+          selectedItems={selectedItems}
+          onSave={handleSaveSettings}
+        />
+      )}
       gameType="Shape"
       onGameStateChange={onGameStateChange}
       renderGameContent={renderGameContent}
