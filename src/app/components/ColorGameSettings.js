@@ -5,7 +5,7 @@ import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import DOMPurify from 'dompurify'
+import DOMPurify from 'isomorphic-dompurify'
 
 const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedColors }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedColors)
@@ -14,7 +14,7 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
 
   React.useEffect(() => {
     setLocalSelectedItems(selectedColors)
-    setLongIntroEnabled(localStorage.getItem('colorGameLongIntro') !== 'false')
+    setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
   }, [selectedColors])
 
   const handleCheckboxChange = React.useCallback((item) => {
@@ -45,6 +45,7 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
 
   const onLongIntroChange = React.useCallback((checked) => {
     setLongIntroEnabled(checked);
+    localStorage.setItem('gameLongIntro', DOMPurify.sanitize(checked.toString()));
   }, []);
 
   return (
@@ -97,10 +98,10 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
                 <div className="flex items-center gap-3">
                   <div 
                     className="w-6 h-6 rounded-full" 
-                    style={{ backgroundColor: color }}
+                    style={{ backgroundColor: DOMPurify.sanitize(color) }}
                   />
                   <span className="capitalize font-medium">
-                    {item}
+                    {DOMPurify.sanitize(item)}
                   </span>
                 </div>
                 {localSelectedItems.includes(item) && (
@@ -123,7 +124,9 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
                 onCheckedChange={onLongIntroChange}
                 className="data-[state=checked]:bg-blue-600"
               />
-              <span className="text-sm text-gray-200">Full length</span>
+              <span className="text-sm text-gray-200">
+                {longIntroEnabled ? "Full explanation" : "Brief"}
+              </span>
             </div>
           </div>
           
@@ -135,18 +138,19 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
           )}
 
           <div className="flex justify-between">
-            <button
+          <Button
               onClick={handleReset}
-              className="px-4 py-2 rounded-full border border-[var(--gray-600)] text-[var(--gray-300)] hover:bg-[var(--gray-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              variant="outline"
+              className="rounded-full border-2 border-white bg-white/5 text-white hover:bg-white/20 hover:text-white transition-colors"
             >
               Reset to Defaults
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={onSave}
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white hover:from-[var(--purple-700)] hover:to-[var(--blue-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] hover:from-[var(--purple-700)] hover:to-[var(--blue-700)]"
             >
               Save Changes
-            </button>
+            </Button>
           </div>
         </div>
       </motion.div>

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Sparkles, Eye, Brain, Shapes, Hash } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import DOMPurify from 'isomorphic-dompurify'
 
 export default function Home() {
   const [userName, setUserName] = useState('')
@@ -11,7 +12,7 @@ export default function Home() {
 
   useEffect(() => {
     const savedName = localStorage.getItem('userPreferencesName') || ''
-    setUserName(savedName)
+    setUserName(DOMPurify.sanitize(savedName))
 
     setGames([
       { name: 'Color Game', href: '/color-game', icon: Eye, color: 'from-purple-600 to-blue-600', available: true },

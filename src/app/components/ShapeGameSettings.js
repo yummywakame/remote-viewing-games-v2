@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import Image from 'next/image'
-import DOMPurify from 'dompurify'
+import DOMPurify from 'isomorphic-dompurify'
 
 const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedShapes }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedShapes)
@@ -15,7 +15,7 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSav
 
   React.useEffect(() => {
     setLocalSelectedItems(selectedShapes)
-    setLongIntroEnabled(localStorage.getItem('shapeGameLongIntro') !== 'false')
+    setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
   }, [selectedShapes])
 
   const handleCheckboxChange = React.useCallback((item) => {
@@ -36,6 +36,7 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSav
   const handleReset = React.useCallback(() => {
     setLocalSelectedItems(Object.keys(itemTable))
     setLongIntroEnabled(true)
+    localStorage.setItem('gameLongIntro', DOMPurify.sanitize('true'));
   }, [itemTable])
 
   const handleOutsideClick = React.useCallback((e) => {
@@ -46,6 +47,7 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSav
 
   const onLongIntroChange = React.useCallback((checked) => {
     setLongIntroEnabled(checked);
+    localStorage.setItem('gameLongIntro', DOMPurify.sanitize(checked.toString()));
   }, []);
 
   return (
@@ -97,14 +99,14 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSav
                 />
                 <div className="flex items-center gap-3">
                   <Image 
-                    src={path} 
-                    alt={item} 
+                    src={DOMPurify.sanitize(path)} 
+                    alt={DOMPurify.sanitize(item)} 
                     width={24} 
                     height={24} 
                     className="brightness-0 invert" 
                   />
                   <span className="capitalize font-medium">
-                    {item.replace('-', ' ')}
+                    {DOMPurify.sanitize(item.replace('-', ' '))}
                   </span>
                 </div>
                 {localSelectedItems.includes(item) && (
@@ -127,10 +129,11 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSav
                 onCheckedChange={onLongIntroChange}
                 className="data-[state=checked]:bg-blue-600"
               />
-              <span className="text-sm text-gray-200">Full length</span>
+              <span className="text-sm text-gray-200">
+                {longIntroEnabled ? "Full explanation" : "Brief"}
+              </span>
             </div>
           </div>
-          
 
           {localSelectedItems.length <= 1 && (
             <p className="text-sm text-gray-400 mb-6">
@@ -139,18 +142,19 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSav
           )}
 
           <div className="flex justify-between">
-            <button
+          <Button
               onClick={handleReset}
-              className="px-4 py-2 rounded-full border border-[var(--gray-600)] text-[var(--gray-300)] hover:bg-[var(--gray-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              variant="outline"
+              className="rounded-full border-2 border-white bg-white/5 text-white hover:bg-white/20 hover:text-white transition-colors"
             >
               Reset to Defaults
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={onSave}
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white hover:from-[var(--purple-700)] hover:to-[var(--blue-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] hover:from-[var(--purple-700)] hover:to-[var(--blue-700)]"
             >
               Save Changes
-            </button>
+            </Button>
           </div>
         </div>
       </motion.div>
