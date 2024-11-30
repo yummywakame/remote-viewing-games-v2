@@ -3,20 +3,23 @@
 import * as React from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { useCallback } from 'react';
+import DOMPurify from 'dompurify'
 
-export default function ColorGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedColors }) {
+const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedColors }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedColors)
+  const [backgroundMode, setBackgroundMode] = React.useState('dark')
   const [longIntroEnabled, setLongIntroEnabled] = React.useState(true)
   const modalRef = React.useRef(null)
 
   React.useEffect(() => {
     setLocalSelectedItems(selectedColors)
+    setBackgroundMode(localStorage.getItem('colorGameBackgroundMode') || 'dark')
     setLongIntroEnabled(localStorage.getItem('colorGameLongIntro') !== 'false')
   }, [selectedColors])
 
-  const handleCheckboxChange = (item) => {
+  const handleCheckboxChange = React.useCallback((item) => {
     setLocalSelectedItems((prev) => {
       if (prev.includes(item)) {
         return prev.length > 2 ? prev.filter((c) => c !== item) : prev
@@ -24,27 +27,28 @@ export default function ColorGameSettings({ onClose, onSave: onSaveSettings, ite
         return [...prev, item]
       }
     })
-  }
+  }, [])
 
-  const onSave = useCallback(() => {
+  const onSave = React.useCallback(() => {
     onClose()
     onSaveSettings(localSelectedItems, longIntroEnabled)
   }, [onClose, onSaveSettings, localSelectedItems, longIntroEnabled])
 
-  const handleReset = () => {
+  const handleReset = React.useCallback(() => {
     setLocalSelectedItems(Object.keys(itemTable))
+    setBackgroundMode('dark')
     setLongIntroEnabled(true)
-  }
+  }, [itemTable])
 
-  const handleOutsideClick = (e) => {
+  const handleOutsideClick = React.useCallback((e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose()
     }
-  }
+  }, [onClose])
 
-  const onLongIntroChange = (checked) => {
+  const onLongIntroChange = React.useCallback((checked) => {
     setLongIntroEnabled(checked);
-  };
+  }, []);
 
   return (
     <motion.div
@@ -76,7 +80,7 @@ export default function ColorGameSettings({ onClose, onSave: onSaveSettings, ite
           </div>
           
           <div className="grid grid-cols-2 gap-4 mb-6">
-            {Object.entries(itemTable).map(([item, hex]) => (
+            {Object.entries(itemTable).map(([item, color]) => (
               <label
                 key={item}
                 className={`
@@ -85,7 +89,6 @@ export default function ColorGameSettings({ onClose, onSave: onSaveSettings, ite
                   ${localSelectedItems.includes(item) ? 'ring-2 ring-offset-2 ring-offset-gray-800' : 'ring-1 ring-gray-600'}
                   hover:ring-2 hover:ring-offset-2 hover:ring-offset-gray-800
                 `}
-                style={{ backgroundColor: hex + '20' }}
               >
                 <input
                   type="checkbox"
@@ -95,11 +98,11 @@ export default function ColorGameSettings({ onClose, onSave: onSaveSettings, ite
                   disabled={localSelectedItems.length <= 2 && localSelectedItems.includes(item)}
                 />
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-6 h-6 rounded-full shadow-inner"
-                    style={{ backgroundColor: hex }}
+                  <div 
+                    className="w-6 h-6 rounded-full" 
+                    style={{ backgroundColor: color }}
                   />
-                  <span className="capitalize font-medium" style={{ color: hex }}>
+                  <span className="capitalize font-medium">
                     {item}
                   </span>
                 </div>
@@ -127,6 +130,31 @@ export default function ColorGameSettings({ onClose, onSave: onSaveSettings, ite
             </div>
           </div>
           
+          <div className="space-y-4 mb-6">
+            <h3 className="text-lg font-semibold">Background Mode</h3>
+            <div className="flex gap-4">
+              <label className="flex items-center text-sm text-gray-200">
+                <input
+                  type="radio"
+                  value="dark"
+                  checked={backgroundMode === 'dark'}
+                  onChange={() => setBackgroundMode('dark')}
+                  className="mr-2"
+                />
+                Dark Mode
+              </label>
+              <label className="flex items-center text-sm text-gray-200">
+                <input
+                  type="radio"
+                  value="light"
+                  checked={backgroundMode === 'light'}
+                  onChange={() => setBackgroundMode('light')}
+                  className="mr-2"
+                />
+                Light Mode
+              </label>
+            </div>
+          </div>
 
           {localSelectedItems.length <= 1 && (
             <p className="text-sm text-gray-400 mb-6">
@@ -152,5 +180,7 @@ export default function ColorGameSettings({ onClose, onSave: onSaveSettings, ite
       </motion.div>
     </motion.div>
   )
-}
+});
+
+export default ColorGameSettings;
 

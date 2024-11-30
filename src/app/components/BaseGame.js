@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
 import UserPreferences from './UserPreferences'
 import GameDisplay from './GameDisplay'
-import DOMPurify from 'dompurify'
+import DOMPurify from 'isomorphic-dompurify'
 
 export default function BaseGame({ 
     GameSettings,
@@ -203,7 +203,6 @@ export default function BaseGame({
     );
   }, [userName, voiceSpeed, selectedVoice, selectedItems, longIntroEnabled, gameType])
 
-
   useEffect(() => {
     const savedItems = localStorage.getItem(`${gameType.toLowerCase()}GameSelectedItems`)
     if (savedItems) {
@@ -336,7 +335,7 @@ export default function BaseGame({
               startGame,
               endGame,
               isButtonAnimated,
-              gameType: DOMPurify.sanitize(gameType)
+              gameType: typeof window !== 'undefined' ? DOMPurify.sanitize(gameType) : gameType
             })}
           </div>
         </div>

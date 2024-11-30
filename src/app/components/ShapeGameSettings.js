@@ -3,11 +3,12 @@
 import * as React from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { useCallback } from 'react';
 import Image from 'next/image'
+import DOMPurify from 'dompurify'
 
-export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedShapes }) {
+const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedShapes }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedShapes)
   const [backgroundMode, setBackgroundMode] = React.useState('dark')
   const [longIntroEnabled, setLongIntroEnabled] = React.useState(true)
@@ -17,9 +18,9 @@ export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, ite
     setLocalSelectedItems(selectedShapes)
     setBackgroundMode(localStorage.getItem('shapeGameBackgroundMode') || 'dark')
     setLongIntroEnabled(localStorage.getItem('shapeGameLongIntro') !== 'false')
-  }, [selectedShapes, setLocalSelectedItems])
+  }, [selectedShapes])
 
-  const handleCheckboxChange = (item) => {
+  const handleCheckboxChange = React.useCallback((item) => {
     setLocalSelectedItems((prev) => {
       if (prev.includes(item)) {
         return prev.length > 2 ? prev.filter((c) => c !== item) : prev
@@ -27,28 +28,28 @@ export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, ite
         return [...prev, item]
       }
     })
-  }
+  }, [])
 
-  const onSave = useCallback(() => {
+  const onSave = React.useCallback(() => {
     onClose()
     onSaveSettings(localSelectedItems, longIntroEnabled)
   }, [onClose, onSaveSettings, localSelectedItems, longIntroEnabled])
 
-  const handleReset = () => {
+  const handleReset = React.useCallback(() => {
     setLocalSelectedItems(Object.keys(itemTable))
     setBackgroundMode('dark')
     setLongIntroEnabled(true)
-  }
+  }, [itemTable])
 
-  const handleOutsideClick = (e) => {
+  const handleOutsideClick = React.useCallback((e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose()
     }
-  }
+  }, [onClose])
 
-  const onLongIntroChange = (checked) => {
+  const onLongIntroChange = React.useCallback((checked) => {
     setLongIntroEnabled(checked);
-  };
+  }, []);
 
   return (
     <motion.div
@@ -159,7 +160,6 @@ export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, ite
             </div>
           </div>
 
-
           {localSelectedItems.length <= 1 && (
             <p className="text-sm text-gray-400 mb-6">
               You must select at least two shapes.
@@ -184,5 +184,7 @@ export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, ite
       </motion.div>
     </motion.div>
   )
-}
+});
+
+export default ShapeGameSettings;
 
