@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
 import UserPreferences from './UserPreferences'
 import GameDisplay from './GameDisplay'
-import DOMPurify from 'dompurify';
+import DOMPurify from 'dompurify'
 
 export default function BaseGame({ 
     GameSettings,
@@ -51,7 +51,7 @@ export default function BaseGame({
         return
       }
       setIsSpeaking(true)
-      const utterance = new SpeechSynthesisUtterance(text)
+      const utterance = new SpeechSynthesisUtterance(DOMPurify.sanitize(text))
       if (selectedVoice) {
         utterance.voice = selectedVoice
       }
@@ -189,17 +189,20 @@ export default function BaseGame({
     }
   }, [gameState, handleNextItem]);
 
-  const handleSaveSettings = useCallback((newSelectedItems, newLongIntroEnabled) => {
-    setSelectedItems(newSelectedItems);
+  const handleSaveSettings = useCallback(() => {
+    localStorage.setItem('userPreferencesName', DOMPurify.sanitize(userName))
+    localStorage.setItem('userPreferencesVoiceSpeed', DOMPurify.sanitize(voiceSpeed.toString()))
+    localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(selectedVoice?.name || ''))
     localStorage.setItem(
       `${gameType.toLowerCase()}GameSelectedItems`, 
-      DOMPurify.sanitize(JSON.stringify(newSelectedItems))
+      DOMPurify.sanitize(JSON.stringify(selectedItems))
     );
     localStorage.setItem(
       `${gameType.toLowerCase()}GameLongIntro`, 
-      DOMPurify.sanitize(newLongIntroEnabled.toString())
+      DOMPurify.sanitize(longIntroEnabled.toString())
     );
-  }, [gameType]);
+  }, [userName, voiceSpeed, selectedVoice, selectedItems, longIntroEnabled, gameType])
+
 
   useEffect(() => {
     const savedItems = localStorage.getItem(`${gameType.toLowerCase()}GameSelectedItems`)
@@ -259,12 +262,12 @@ export default function BaseGame({
     const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2
     const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
     
-    setUserName(savedName)
+    setUserName(DOMPurify.sanitize(savedName))
     setVoiceSpeed(savedVoiceSpeed)
 
     if (savedVoiceName && speechSynthesis.current) {
       const voices = speechSynthesis.current.getVoices()
-      const voice = voices.find(v => v.name === savedVoiceName)
+      const voice = voices.find(v => v.name === DOMPurify.sanitize(savedVoiceName))
       setSelectedVoice(voice || null)
     }
   }, [])
@@ -325,7 +328,6 @@ export default function BaseGame({
         onClick={handleBackgroundClick}
         gameState={gameState}
       />
-
       <div className="fixed inset-0 pt-16 pointer-events-none">
         <div className="flex items-center justify-center h-full">
           <div className="game-content text-center pointer-events-auto">
@@ -334,7 +336,7 @@ export default function BaseGame({
               startGame,
               endGame,
               isButtonAnimated,
-              gameType
+              gameType: DOMPurify.sanitize(gameType)
             })}
           </div>
         </div>

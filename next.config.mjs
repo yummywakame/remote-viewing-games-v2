@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove the output: 'export' line if you're not doing static exports
   images: {
     // Consider enabling image optimization if you're not doing static exports
     // unoptimized: true,
@@ -11,8 +10,20 @@ const nextConfig = {
   },
   experimental: {
     typedRoutes: false
-  }
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;"
+          },
+        ],
+      },
+    ]
+  },
 }
 
 export default nextConfig
-

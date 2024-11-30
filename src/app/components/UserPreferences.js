@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Volume2, X } from 'lucide-react'
+import DOMPurify from 'dompurify'
 
 const PreviewButton = ({ onClick }) => {
   const [isHovered, setIsHovered] = useState(false)
@@ -37,7 +38,7 @@ export default function UserPreferences({ isOpen, onClose }) {
     const loadPreferences = () => {
       const savedName = localStorage.getItem('userPreferencesName') || ''
       const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2
-      setName(savedName)
+      setName(DOMPurify.sanitize(savedName))
       setVoiceSpeed(savedVoiceSpeed)
     }
 
@@ -62,10 +63,10 @@ export default function UserPreferences({ isOpen, onClose }) {
   }, [])
 
   const handleSave = useCallback(() => {
-    localStorage.setItem('userPreferencesName', name)
-    localStorage.setItem('userPreferencesVoiceSpeed', voiceSpeed.toString())
+    localStorage.setItem('userPreferencesName', DOMPurify.sanitize(name))
+    localStorage.setItem('userPreferencesVoiceSpeed', DOMPurify.sanitize(voiceSpeed.toString()))
     if (selectedVoice) {
-      localStorage.setItem('userPreferencesVoiceName', selectedVoice.name)
+      localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(selectedVoice.name))
     }
     onClose()
   }, [name, voiceSpeed, selectedVoice, onClose])
@@ -78,15 +79,12 @@ export default function UserPreferences({ isOpen, onClose }) {
   }, [availableVoices])
 
   const handlePreview = useCallback(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      const utterance = new SpeechSynthesisUtterance(`Hello ${name || 'there'}! This is a preview of the selected voice and speed.`)
-      if (selectedVoice) {
-        utterance.voice = selectedVoice
-      }
-      utterance.rate = voiceSpeed
-      window.speechSynthesis.speak(utterance)
-    }
-  }, [name, selectedVoice, voiceSpeed])
+    if (!selectedVoice) return;
+    const utterance = new SpeechSynthesisUtterance(`Hello ${DOMPurify.sanitize(name || 'there')}! This is a preview of the selected voice and speed.`)
+    utterance.voice = selectedVoice
+    utterance.rate = voiceSpeed
+    speechSynthesis.speak(utterance)
+  }, [name, voiceSpeed, selectedVoice])
 
   return (
     <AnimatePresence>
@@ -126,7 +124,7 @@ export default function UserPreferences({ isOpen, onClose }) {
                     type="text"
                     id="name"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => setName(DOMPurify.sanitize(e.target.value))}
                     className="w-full px-3 py-2 bg-gray-700 rounded-md text-white"
                     placeholder="Enter your first name"
                   />
