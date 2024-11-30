@@ -9,13 +9,11 @@ import DOMPurify from 'dompurify'
 
 const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedColors }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedColors)
-  const [backgroundMode, setBackgroundMode] = React.useState('dark')
   const [longIntroEnabled, setLongIntroEnabled] = React.useState(true)
   const modalRef = React.useRef(null)
 
   React.useEffect(() => {
     setLocalSelectedItems(selectedColors)
-    setBackgroundMode(localStorage.getItem('colorGameBackgroundMode') || 'dark')
     setLongIntroEnabled(localStorage.getItem('colorGameLongIntro') !== 'false')
   }, [selectedColors])
 
@@ -36,7 +34,6 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
 
   const handleReset = React.useCallback(() => {
     setLocalSelectedItems(Object.keys(itemTable))
-    setBackgroundMode('dark')
     setLongIntroEnabled(true)
   }, [itemTable])
 
@@ -130,31 +127,6 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
             </div>
           </div>
           
-          <div className="space-y-4 mb-6">
-            <h3 className="text-lg font-semibold">Background Mode</h3>
-            <div className="flex gap-4">
-              <label className="flex items-center text-sm text-gray-200">
-                <input
-                  type="radio"
-                  value="dark"
-                  checked={backgroundMode === 'dark'}
-                  onChange={() => setBackgroundMode('dark')}
-                  className="mr-2"
-                />
-                Dark Mode
-              </label>
-              <label className="flex items-center text-sm text-gray-200">
-                <input
-                  type="radio"
-                  value="light"
-                  checked={backgroundMode === 'light'}
-                  onChange={() => setBackgroundMode('light')}
-                  className="mr-2"
-                />
-                Light Mode
-              </label>
-            </div>
-          </div>
 
           {localSelectedItems.length <= 1 && (
             <p className="text-sm text-gray-400 mb-6">
