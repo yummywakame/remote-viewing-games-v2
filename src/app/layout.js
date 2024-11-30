@@ -2,7 +2,7 @@
 
 import './globals.css'
 import { Andika } from 'next/font/google'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import UserPreferences from './components/UserPreferences'
 
 const andika = Andika({
@@ -15,6 +15,13 @@ const andika = Andika({
 
 export default function RootLayout({ children }) {
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
+  const [params, setParams] = useState(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setParams(new URLSearchParams(window.location.search))
+    }
+  }, [])
 
   return (
     <html lang="en" className={andika.variable}>

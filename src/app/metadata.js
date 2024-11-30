@@ -1,11 +1,12 @@
-export const metadata = {
+export const generateMetadata = () => {
+  return {
     metadataBase: new URL('https://mindsight.yummy-wakame.com'),
     title: 'MindSight Games',
     description: 'Practice Mind Sight blindfolded with your AI play partner!',
     openGraph: {
       title: 'MindSight Games',
       description: 'Practice Mind Sight blindfolded with your AI play partner!',
-      url: 'https://mindsight.yummy-wakame.com', 
+      url: 'https://mindsight.yummy-wakame.com',
       type: 'website',
       images: [
         {
@@ -20,3 +21,4 @@ export const metadata = {
       appId: '452955081243065',
     },
   }
+}

@@ -3,7 +3,6 @@
 import * as React from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { useCallback } from 'react';
 

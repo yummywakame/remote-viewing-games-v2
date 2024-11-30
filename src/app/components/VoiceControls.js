@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 
-export default function VoiceControls({ onCommand }) {
+export default function VoiceControls() {
   const [isListening, setIsListening] = useState(false)
 
   useEffect(() => {

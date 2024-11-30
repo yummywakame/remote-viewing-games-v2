@@ -2,7 +2,7 @@
 
 import ShapeGame from '../components/ShapeGame'
 import { motion } from 'framer-motion'
-import { Sparkles, Eye, Brain, Shapes, Settings } from 'lucide-react'
+import { Sparkles, Eye, Brain, Shapes } from 'lucide-react'
 
 export default function ShapeGamePage() {
   return (

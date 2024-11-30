@@ -17,8 +17,7 @@ export default function BaseGame({
     handleVoiceCommand,
     selectNewItem,
     itemTable,
-    longIntroEnabled,
-    onSaveSettings
+    longIntroEnabled
   }) {
   const [gameState, setGameState] = useState('initial')
   const [currentItem, setCurrentItem] = useState(null)
