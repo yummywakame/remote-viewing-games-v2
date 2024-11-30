@@ -117,7 +117,7 @@ export default function ColorGameSettings({ onClose, onSave: onSaveSettings, ite
           </div>
 
           <div className="space-y-4 mb-6">
-            <h3 className="text-lg font-semibold">Game Intro</h3>
+            <h3 className="text-lg font-semibold">Welcome message</h3>
             <div className="flex items-center gap-3">
               <Switch
                 checked={longIntroEnabled}
@@ -129,7 +129,7 @@ export default function ColorGameSettings({ onClose, onSave: onSaveSettings, ite
           </div>
           
 
-          {localSelectedItems.length <= 2 && (
+          {localSelectedItems.length <= 1 && (
             <p className="text-sm text-gray-400 mb-6">
               You must select at least two colors.
             </p>

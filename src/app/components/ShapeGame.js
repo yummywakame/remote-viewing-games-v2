@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useCallback, useState, useEffect } from 'react'
+import React, { useCallback, useState, useEffect, memo } from 'react'
 import BaseGame from './BaseGame'
 import ShapeGameSettings from './ShapeGameSettings'
 import { Shapes } from 'lucide-react'
 import { motion } from 'framer-motion'
+import DOMPurify from 'dompurify'
 
 const itemTable = {
   'triangle': '/shapes/triangle.svg',
@@ -21,7 +22,7 @@ const itemTable = {
   'star-outline': '/shapes/star-outline.svg',
 };
 
-export default function ShapeGame({ onGameStateChange = () => {} }) {
+const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [longIntroEnabled, setLongIntroEnabled] = useState(true);
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
 
@@ -32,7 +33,7 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
     const savedItems = localStorage.getItem('shapeGameSelectedItems');
     if (savedItems) {
       try {
-        const parsedItems = JSON.parse(savedItems);
+        const parsedItems = JSON.parse(DOMPurify.sanitize(savedItems));
         if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
           setSelectedItems(parsedItems);
         }
@@ -168,8 +169,8 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
   const handleSaveSettings = useCallback((newSelectedItems, newLongIntroEnabled) => {
     setSelectedItems(newSelectedItems);
     setLongIntroEnabled(newLongIntroEnabled);
-    localStorage.setItem('shapeGameSelectedItems', JSON.stringify(newSelectedItems));
-    localStorage.setItem('shapeGameLongIntro', newLongIntroEnabled.toString());
+    localStorage.setItem('shapeGameSelectedItems', DOMPurify.sanitize(JSON.stringify(newSelectedItems)));
+    localStorage.setItem('shapeGameLongIntro', DOMPurify.sanitize(newLongIntroEnabled.toString()));
   }, []);
 
   return (
@@ -191,5 +192,6 @@ export default function ShapeGame({ onGameStateChange = () => {} }) {
       onSaveSettings={handleSaveSettings}
     />
   )
-}
+});
 
+export default ShapeGame;

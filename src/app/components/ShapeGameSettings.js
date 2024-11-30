@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { useCallback } from 'react';
+import Image from 'next/image'
 
 export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedShapes }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedShapes)
@@ -98,7 +99,13 @@ export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, ite
                   disabled={localSelectedItems.length <= 2 && localSelectedItems.includes(item)}
                 />
                 <div className="flex items-center gap-3">
-                  <img src={path} alt={item} className="w-6 h-6 brightness-0 invert" />
+                  <Image 
+                    src={path} 
+                    alt={item} 
+                    width={24} 
+                    height={24} 
+                    className="brightness-0 invert" 
+                  />
                   <span className="capitalize font-medium">
                     {item.replace('-', ' ')}
                   </span>
@@ -116,7 +123,7 @@ export default function ShapeGameSettings({ onClose, onSave: onSaveSettings, ite
           </div>
 
           <div className="space-y-4 mb-6">
-            <h3 className="text-lg font-semibold">Game Intro</h3>
+            <h3 className="text-lg font-semibold">Welcome message</h3>
             <div className="flex items-center gap-3">
               <Switch
                 checked={longIntroEnabled}

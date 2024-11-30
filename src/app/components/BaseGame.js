@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
 import UserPreferences from './UserPreferences'
 import GameDisplay from './GameDisplay'
+import DOMPurify from 'dompurify';
 
 export default function BaseGame({ 
     GameSettings,
@@ -190,10 +191,16 @@ export default function BaseGame({
   }, [gameState, handleNextItem]);
 
   const handleSaveSettings = useCallback((newSelectedItems, newLongIntroEnabled) => {
-    setSelectedItems(newSelectedItems)
-    localStorage.setItem(`${gameType.toLowerCase()}GameSelectedItems`, JSON.stringify(newSelectedItems))
-    onSaveSettings(newSelectedItems, newLongIntroEnabled)
-  }, [gameType, onSaveSettings])
+    setSelectedItems(newSelectedItems);
+    localStorage.setItem(
+      `${gameType.toLowerCase()}GameSelectedItems`, 
+      DOMPurify.sanitize(JSON.stringify(newSelectedItems))
+    );
+    localStorage.setItem(
+      `${gameType.toLowerCase()}GameLongIntro`, 
+      DOMPurify.sanitize(newLongIntroEnabled.toString())
+    );
+  }, [gameType]);
 
   useEffect(() => {
     const savedItems = localStorage.getItem(`${gameType.toLowerCase()}GameSelectedItems`)

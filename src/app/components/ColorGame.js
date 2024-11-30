@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useCallback, useState, useEffect } from 'react'
+import React, { useCallback, useState, useEffect, memo } from 'react'
 import BaseGame from './BaseGame'
 import ColorGameSettings from './ColorGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
+import DOMPurify from 'dompurify'
 
 const itemTable = {
   yellow: '#FFD700',
@@ -16,7 +17,7 @@ const itemTable = {
   orange: '#FF7F50',
 };
 
-export default function ColorGame({ onGameStateChange = () => {} }) {
+const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [longIntroEnabled, setLongIntroEnabled] = useState(true);
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
 
@@ -27,7 +28,7 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
     const savedItems = localStorage.getItem('colorGameSelectedItems');
     if (savedItems) {
       try {
-        const parsedItems = JSON.parse(savedItems);
+        const parsedItems = JSON.parse(DOMPurify.sanitize(savedItems));
         if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
           setSelectedItems(parsedItems);
         }
@@ -161,8 +162,8 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
   const handleSaveSettings = useCallback((newSelectedItems, newLongIntroEnabled) => {
     setSelectedItems(newSelectedItems);
     setLongIntroEnabled(newLongIntroEnabled);
-    localStorage.setItem('colorGameSelectedItems', JSON.stringify(newSelectedItems));
-    localStorage.setItem('colorGameLongIntro', newLongIntroEnabled.toString());
+    localStorage.setItem('colorGameSelectedItems', DOMPurify.sanitize(JSON.stringify(newSelectedItems)));
+    localStorage.setItem('colorGameLongIntro', DOMPurify.sanitize(newLongIntroEnabled.toString()));
   }, []);
 
   return (
@@ -178,4 +179,6 @@ export default function ColorGame({ onGameStateChange = () => {} }) {
       onSaveSettings={handleSaveSettings}
     />
   )
-}
+});
+
+export default ColorGame;

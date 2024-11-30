@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Remove the output: 'export' line if you're not doing static exports
   images: {
-    unoptimized: true,
+    // Consider enabling image optimization if you're not doing static exports
+    // unoptimized: true,
   },
   typescript: {
-    ignoreBuildErrors: true
+    // Consider removing this to catch TypeScript errors during build
+    // ignoreBuildErrors: true
   },
   experimental: {
     typedRoutes: false
@@ -13,3 +15,4 @@ const nextConfig = {
 }
 
 export default nextConfig
+

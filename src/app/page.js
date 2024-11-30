@@ -132,7 +132,8 @@ export default function Home() {
             </motion.div>
 
             <p className="text-lg text-gray-400 mt-8">
-              This app was created to allow you to practice MindSight without a partner. Remember to put your blindfold on before starting a game.
+              This app was created to allow you to test your MindSight skills without a partner. 
+              The first time you play each game, please play it without your blindfold on so that you can get accustomed to how it looks and works.
             </p>
           </motion.div>
         </motion.div>
