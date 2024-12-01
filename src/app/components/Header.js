@@ -39,19 +39,23 @@ const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSett
               <>
                 {isListening && !isSpeaking ? (
                   <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
-                ) : (
+                ) : isSpeaking ? (
                   <div className="w-3 h-3 rounded-full bg-red-500" />
+                ) : (
+                  <div className="w-3 h-3 rounded-full bg-gray-500" />
                 )}
-                <motion.button
-                  onClick={onOpenGameSettings}
-                  className="text-gray-400 hover:text-white transition-colors"
-                  aria-label="Open game settings"
-                  initial={{ rotate: 0 }}
-                  whileHover={{ rotate: 90 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Settings size={24} />
-                </motion.button>
+                {onOpenGameSettings && (
+                  <motion.button
+                    onClick={onOpenGameSettings}
+                    className="text-gray-400 hover:text-white transition-colors"
+                    aria-label="Open game settings"
+                    initial={{ rotate: 0 }}
+                    whileHover={{ rotate: 90 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Settings size={24} />
+                  </motion.button>
+                )}
               </>
             )}
           </div>

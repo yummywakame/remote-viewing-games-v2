@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
 import UserPreferences from './UserPreferences'
 import GameDisplay from './GameDisplay'
-import Header from './Header'
+import { GameStateContext } from '../layout'
 import DOMPurify from 'isomorphic-dompurify'
 import Promise from 'promise';
 
@@ -23,30 +23,24 @@ export default function BaseGame({
     isIntroComplete,
     setIsIntroComplete
   }) {
+  // Context and Router
+  const { setIsListening: setGlobalIsListening, setIsSpeaking: setGlobalIsSpeaking } = useContext(GameStateContext)
+  const router = useRouter()
+
+  // Refs
+  const speechSynthesis = useRef(null)
+  const recognition = useRef(null)
+  const currentItemRef = useRef(null)
+  const startListeningRef = useRef(null)
+
+  // State
   const [savedItems, setSavedItems] = useState(Object.keys(itemTable))
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`${gameType.toLowerCase()}GameSelectedItems`)
-      if (saved) {
-        try {
-          const parsedItems = JSON.parse(saved)
-          if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
-            setSavedItems(parsedItems)
-          }
-        } catch (error) {
-          console.error('Error parsing saved items:', error)
-        }
-      }
-    }
-  }, [gameType, itemTable])
-
+  const [selectedItems] = useState(savedItems)
   const [gameState, setGameState] = useState('initial')
   const [currentItem, setCurrentItem] = useState(null)
-  const [isListening, setIsListening] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [isListening, setIsListeningLocal] = useState(false)
+  const [isSpeakingLocal, setIsSpeakingLocal] = useState(false)
   const [lastHeardWord, setLastHeardWord] = useState('')
-  const [selectedItems] = useState(savedItems)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const [userName, setUserName] = useState('')
@@ -54,11 +48,7 @@ export default function BaseGame({
   const [selectedVoice, setSelectedVoice] = useState(null)
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
 
-  const speechSynthesis = useRef(null)
-  const recognition = useRef(null)
-  const currentItemRef = useRef(null)
-  const router = useRouter()
-
+  // Core utility functions
   const setAndLogGameState = useCallback((newState, action) => {
     setGameState(newState)
     onGameStateChange(newState)
@@ -66,90 +56,34 @@ export default function BaseGame({
     setIsButtonAnimated(newState === 'intro' || newState === 'playing')
   }, [onGameStateChange])
 
-  const speak = useCallback((text) => {
-    return new Promise((resolve) => {
-      if (typeof window === 'undefined' || !speechSynthesis.current) {
-        resolve()
-        return
-      }
-      setIsSpeaking(true)
-      console.log('Started speaking')
-      const utterance = new SpeechSynthesisUtterance(DOMPurify.sanitize(text))
-      if (selectedVoice) {
-        utterance.voice = selectedVoice
-      }
-      utterance.rate = voiceSpeed
-      utterance.onend = () => {
-        console.log('Finished speaking')
-        setIsSpeaking(false)
-        resolve()
-      }
-      speechSynthesis.current.speak(utterance)
-    })
-  }, [selectedVoice, voiceSpeed])
-
   const updateCurrentItem = useCallback((newItem) => {
     console.log('Updating current item from:', currentItem, 'to:', newItem)
     setCurrentItem(newItem)
     currentItemRef.current = newItem
   }, [currentItem])
 
-  const handleNextItem = useCallback(async () => {
-    if (gameState === 'playing' && !isSpeaking) {
-      const newItem = await selectNewItem(selectedItems, currentItemRef.current, updateCurrentItem)
-      console.log('Next item selected:', newItem)
-      updateCurrentItem(newItem)
-      speak(`What ${gameType.toLowerCase()} is this?`)
+  // Speech control functions
+  const stopListening = useCallback(() => {
+    if (recognition.current) {
+      recognition.current.stop()
     }
-  }, [gameState, isSpeaking, selectNewItem, selectedItems, updateCurrentItem, speak, gameType])
+    console.log('Setting isListening to false')
+    setGlobalIsListening(false)
+    setIsListeningLocal(false)
+  }, [setGlobalIsListening])
 
   const cancelSpeech = useCallback(() => {
     if (speechSynthesis.current) {
       speechSynthesis.current.cancel()
     }
-    setIsSpeaking(false)
-  }, [])
+    setGlobalIsSpeaking(false)
+    setIsSpeakingLocal(false)
+  }, [setGlobalIsSpeaking])
 
-  const stopListening = useCallback(() => {
-    if (recognition.current) {
-      recognition.current.stop()
-    }
-    console.log('Setting isListening to false');
-    setIsListening(false)
-  }, [])
-
-  const endGame = useCallback(async () => {
-    console.log('Ending game...')
-    cancelSpeech()
-    stopListening()
-    setAndLogGameState('ending', 'end game')
-    updateCurrentItem(null)
-    setLastHeardWord('')
-    await speak("Thank you for playing!")
-    setAndLogGameState('initial', 'game ended')
-    setIsIntroComplete(false)
-    
-    // Clear any ongoing timeouts or intervals
-    if (window) {
-      const highestTimeoutId = window.setTimeout(() => {}, 0);
-      for (let i = 0; i < highestTimeoutId; i++) {
-        window.clearTimeout(i);
-      }
-    }
-    
-    // Ensure speech recognition is fully stopped
-    if (recognition.current) {
-      recognition.current.onend = null;
-      recognition.current.stop();
-      recognition.current = null;
-    }
-    
-    router.push('/')
-  }, [cancelSpeech, stopListening, setAndLogGameState, speak, router, updateCurrentItem, setIsIntroComplete])
-
-  const startListening = useCallback(() => {
-    if (gameState !== 'playing') {
-      console.log('Not starting listening because game state is not playing')
+  // Initialize startListening ref early
+  startListeningRef.current = () => {
+    if (gameState !== 'playing' || isSpeakingLocal) {
+      console.log('Not starting listening because game state is not playing or is currently speaking')
       return
     }
 
@@ -181,25 +115,92 @@ export default function BaseGame({
 
       recognition.current.onstart = () => {
         console.log('Speech recognition started')
-        console.log('Setting isListening to true');
-        setIsListening(true)
+        setGlobalIsListening(true)
+        setIsListeningLocal(true)
       }
 
       recognition.current.onend = () => {
         console.log('Speech recognition ended')
-        if (gameState === 'playing' && !isSpeaking) {
+        if (gameState === 'playing' && !isSpeakingLocal) {
           recognition.current.start()
         } else {
-          setIsListening(false)
+          setGlobalIsListening(false)
+          setIsListeningLocal(false)
         }
       }
     }
 
-    if (!isListening && !isSpeaking && gameState === 'playing') {
+    if (!isListening && !isSpeakingLocal && gameState === 'playing') {
       console.log('Starting speech recognition')
       recognition.current.start()
     }
-  }, [gameState, isListening, isSpeaking, handleVoiceCommand, speak, selectNewItem, endGame, selectedItems, updateCurrentItem, gameType])
+  }
+
+  // Define speak function with access to startListeningRef
+  const speak = useCallback((text) => {
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined' || !speechSynthesis.current) {
+        resolve()
+        return
+      }
+      setGlobalIsSpeaking(true)
+      setIsSpeakingLocal(true)
+      stopListening()
+      console.log('Started speaking')
+      const utterance = new SpeechSynthesisUtterance(DOMPurify.sanitize(text))
+      if (selectedVoice) {
+        utterance.voice = selectedVoice
+      }
+      utterance.rate = voiceSpeed
+      utterance.onend = () => {
+        console.log('Finished speaking')
+        setGlobalIsSpeaking(false)
+        setIsSpeakingLocal(false)
+        if (gameState === 'playing') {
+          startListeningRef.current()
+        }
+        resolve()
+      }
+      speechSynthesis.current.speak(utterance)
+    })
+  }, [selectedVoice, voiceSpeed, setGlobalIsSpeaking, stopListening, gameState, setGlobalIsSpeaking])
+
+  // Game control functions
+  const endGame = useCallback(async () => {
+    console.log('Ending game...')
+    cancelSpeech()
+    stopListening()
+    setAndLogGameState('ending', 'end game')
+    updateCurrentItem(null)
+    setLastHeardWord('')
+    await speak("Thank you for playing!")
+    setAndLogGameState('initial', 'game ended')
+    setIsIntroComplete(false)
+    
+    if (window) {
+      const highestTimeoutId = window.setTimeout(() => {}, 0)
+      for (let i = 0; i < highestTimeoutId; i++) {
+        window.clearTimeout(i)
+      }
+    }
+    
+    if (recognition.current) {
+      recognition.current.onend = null
+      recognition.current.stop()
+      recognition.current = null
+    }
+    
+    router.push('/')
+  }, [cancelSpeech, stopListening, setAndLogGameState, speak, router, updateCurrentItem, setIsIntroComplete])
+
+  const handleNextItem = useCallback(async () => {
+    if (gameState === 'playing' && !isSpeakingLocal) {
+      const newItem = await selectNewItem(selectedItems, currentItemRef.current, updateCurrentItem)
+      console.log('Next item selected:', newItem)
+      updateCurrentItem(newItem)
+      speak(`What ${gameType.toLowerCase()} is this?`)
+    }
+  }, [gameState, isSpeakingLocal, selectNewItem, selectedItems, updateCurrentItem, speak, gameType])
 
   const startGame = useCallback(async () => {
     setAndLogGameState('intro', 'start game')
@@ -213,15 +214,16 @@ export default function BaseGame({
     const newItem = await selectNewItem(selectedItems, currentItem, updateCurrentItem)
     updateCurrentItem(newItem)
     await speak(`What ${gameType.toLowerCase()} is this?`)
-    startListening()
-  }, [setAndLogGameState, speak, selectNewItem, startListening, userName, gameType, selectedItems, currentItem, updateCurrentItem, longIntroEnabled, setIsIntroComplete])
+    startListeningRef.current()
+  }, [setAndLogGameState, speak, selectNewItem, userName, gameType, selectedItems, currentItem, updateCurrentItem, longIntroEnabled, setIsIntroComplete])
 
+  // Event handlers
   const handleBackgroundClick = useCallback(() => {
     if (gameState === 'playing') {
-      console.log('Background clicked, triggering next item');
-      handleNextItem();
+      console.log('Background clicked, triggering next item')
+      handleNextItem()
     }
-  }, [gameState, handleNextItem]);
+  }, [gameState, handleNextItem])
 
   const handleSaveSettings = useCallback(() => {
     localStorage.setItem('userPreferencesName', DOMPurify.sanitize(userName))
@@ -230,12 +232,37 @@ export default function BaseGame({
     localStorage.setItem(
       `${gameType.toLowerCase()}GameSelectedItems`, 
       DOMPurify.sanitize(JSON.stringify(selectedItems))
-    );
+    )
     localStorage.setItem(
       `${gameType.toLowerCase()}GameLongIntro`, 
       DOMPurify.sanitize(longIntroEnabled.toString())
-    );
+    )
   }, [userName, voiceSpeed, selectedVoice, selectedItems, longIntroEnabled, gameType])
+
+  const handleTitleClick = useCallback(async () => {
+    if (gameState !== 'initial') {
+      await endGame()
+    } else {
+      router.push('/')
+    }
+  }, [gameState, endGame, router])
+
+  // Effects
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`${gameType.toLowerCase()}GameSelectedItems`)
+      if (saved) {
+        try {
+          const parsedItems = JSON.parse(saved)
+          if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
+            setSavedItems(parsedItems)
+          }
+        } catch (error) {
+          console.error('Error parsing saved items:', error)
+        }
+      }
+    }
+  }, [gameType, itemTable])
 
   useEffect(() => {
     const savedName = localStorage.getItem('userPreferencesName') || ''
@@ -285,32 +312,25 @@ export default function BaseGame({
   }, [])
 
   useEffect(() => {
-    if (gameState === 'playing' && !isListening && !isSpeaking) {
+    if (gameState === 'playing' && !isListening && !isSpeakingLocal) {
       console.log('Setting up timeout to start listening')
       const timeoutId = setTimeout(() => {
         console.log('Timeout finished, calling startListening')
-        startListening()
+        startListeningRef.current()
       }, 100)
       return () => clearTimeout(timeoutId)
+    } else if (isSpeakingLocal) {
+      stopListening()
     }
-  }, [gameState, isListening, isSpeaking, startListening])
-
-
-  const handleTitleClick = useCallback(async () => {
-    if (gameState !== 'initial') {
-      await endGame()
-    } else {
-      router.push('/')
-    }
-  }, [gameState, endGame, router])
+  }, [gameState, isListening, isSpeakingLocal, stopListening])
 
   useEffect(() => {
-    console.log('isListening state changed:', isListening);
-  }, [isListening]);
+    console.log('isListening state changed:', isListening)
+  }, [isListening])
 
+  // Render
   return (
     <div className="relative h-screen overflow-auto">
-      {/* Remove duplicate header from here since it's already in layout.js */}
       <GameDisplay
         gameType={gameType}
         currentItem={currentItem}
@@ -352,6 +372,7 @@ export default function BaseGame({
       )}
       <UserPreferences
         isOpen={isUserPreferencesOpen}
+        onClose={() => setIsUserPreferencesOpen}
         onClose={() => setIsUserPreferencesOpen(false)}
       />      
     </div>
