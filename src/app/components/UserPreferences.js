@@ -25,8 +25,14 @@ const UserPreferences = memo(function UserPreferences({ isOpen, onClose }) {
     const loadPreferences = () => {
       const savedName = localStorage.getItem('userPreferencesName') || ''
       const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2
+      const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
       setName(DOMPurify.sanitize(savedName))
       setVoiceSpeed(savedVoiceSpeed)
+      if (savedVoiceName) {
+        const voices = window.speechSynthesis.getVoices()
+        const voice = voices.find(v => v.name === savedVoiceName)
+        setSelectedVoice(voice || null)
+      }
     }
 
     loadPreferences()
@@ -36,12 +42,6 @@ const UserPreferences = memo(function UserPreferences({ isOpen, onClose }) {
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices()
       setAvailableVoices(voices)
-
-      const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
-      if (savedVoiceName) {
-        const voice = voices.find(v => v.name === savedVoiceName)
-        setSelectedVoice(voice || null)
-      }
     }
 
     window.speechSynthesis.onvoiceschanged = loadVoices

@@ -61,7 +61,9 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       speak(`To proceed to the next ${gameType} say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what ${gameType} is it?'. To display any ${gameType} say 'show me', followed by the ${gameType} you want to see.`)
     } else if (new RegExp(`\\b(what|which)(?:\\s+(?:${gameType}|is|it))?\\b`).test(lowerCommand)) {
       console.log(`${gameType} hint requested for:`, currentItem)
-      speak(`It's a ${currentItem.split('-')[0]}.`)
+      const shapeName = currentItem.split('-')[0];
+      const article = ['a', 'e', 'i', 'o', 'u'].includes(shapeName[0].toLowerCase()) ? 'an' : 'a';
+      speak(`It's ${article} ${shapeName}.`)
     } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
       const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
       const requestedItem = match[2]
@@ -79,7 +81,9 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       if (itemGuess) {
         console.log(`${gameType} guess:`, itemGuess, `Current ${gameType}:`, currentItem)
         if (itemGuess.split('-')[0] === currentItem.split('-')[0]) {
-          speak(`Well done! It's a ${currentItem.split('-')[0]}.`)
+          const shapeName = currentItem.split('-')[0];
+          const article = ['a', 'e', 'i', 'o', 'u'].includes(shapeName[0].toLowerCase()) ? 'an' : 'a';
+          speak(`Well done! It's ${article} ${shapeName}.`)
         } else {
           speak("Try again!")
         }
@@ -195,3 +199,4 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
 });
 
 export default ShapeGame;
+
