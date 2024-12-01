@@ -115,9 +115,9 @@ export default function Home() {
                   <Link href={game.href}>
                     <motion.div
                       className={`flex flex-col items-center justify-center p-6 rounded-2xl bg-opacity-20 backdrop-blur-lg ${
-                        game.available ? `bg-gradient-to-br ${game.color}` : 'bg-gray-700'
-                      } transition-all duration-300 shadow-lg hover:shadow-xl`}
-                      whileHover={game.available ? { scale: 1.05, y: -5 } : {}}
+                        game.available ? `bg-gradient-to-br ${game.color} hover:opacity-90` : 'bg-gray-700'
+                      } transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1`}
+                      whileHover={game.available ? { scale: 1.05, y: -8 } : {}}
                       whileTap={game.available ? { scale: 0.95 } : {}}
                     >
                       <game.icon className="w-12 h-12 mb-4 text-white" />
