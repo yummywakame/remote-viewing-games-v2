@@ -22,7 +22,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
 
   useEffect(() => {
-    const savedLongIntro = localStorage.getItem('colorGameLongIntro');
+    const savedLongIntro = localStorage.getItem('gameLongIntro');
     setLongIntroEnabled(savedLongIntro !== 'false');
 
     const savedItems = localStorage.getItem('colorGameSelectedItems');
@@ -163,7 +163,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     setSelectedItems(newSelectedItems);
     setLongIntroEnabled(newLongIntroEnabled);
     localStorage.setItem('colorGameSelectedItems', DOMPurify.sanitize(JSON.stringify(newSelectedItems)));
-    localStorage.setItem('colorGameLongIntro', DOMPurify.sanitize(newLongIntroEnabled.toString()));
+    localStorage.setItem('gameLongIntro', DOMPurify.sanitize(newLongIntroEnabled.toString()));
   }, []);
 
   return (
