@@ -73,12 +73,14 @@ export default function BaseGame({
         return
       }
       setIsSpeaking(true)
+      console.log('Started speaking')
       const utterance = new SpeechSynthesisUtterance(DOMPurify.sanitize(text))
       if (selectedVoice) {
         utterance.voice = selectedVoice
       }
       utterance.rate = voiceSpeed
       utterance.onend = () => {
+        console.log('Finished speaking')
         setIsSpeaking(false)
         resolve()
       }
@@ -112,6 +114,7 @@ export default function BaseGame({
     if (recognition.current) {
       recognition.current.stop()
     }
+    console.log('Setting isListening to false');
     setIsListening(false)
   }, [])
 
@@ -176,7 +179,14 @@ export default function BaseGame({
         }
       }
 
+      recognition.current.onstart = () => {
+        console.log('Speech recognition started')
+        console.log('Setting isListening to true');
+        setIsListening(true)
+      }
+
       recognition.current.onend = () => {
+        console.log('Speech recognition ended')
         if (gameState === 'playing' && !isSpeaking) {
           recognition.current.start()
         } else {
@@ -186,8 +196,8 @@ export default function BaseGame({
     }
 
     if (!isListening && !isSpeaking && gameState === 'playing') {
+      console.log('Starting speech recognition')
       recognition.current.start()
-      setIsListening(true)
     }
   }, [gameState, isListening, isSpeaking, handleVoiceCommand, speak, selectNewItem, endGame, selectedItems, updateCurrentItem, gameType])
 
@@ -276,7 +286,11 @@ export default function BaseGame({
 
   useEffect(() => {
     if (gameState === 'playing' && !isListening && !isSpeaking) {
-      const timeoutId = setTimeout(startListening, 100)
+      console.log('Setting up timeout to start listening')
+      const timeoutId = setTimeout(() => {
+        console.log('Timeout finished, calling startListening')
+        startListening()
+      }, 100)
       return () => clearTimeout(timeoutId)
     }
   }, [gameState, isListening, isSpeaking, startListening])
@@ -290,15 +304,13 @@ export default function BaseGame({
     }
   }, [gameState, endGame, router])
 
+  useEffect(() => {
+    console.log('isListening state changed:', isListening);
+  }, [isListening]);
+
   return (
     <div className="relative h-screen overflow-auto">
-      <Header
-        isListening={isListening && !isSpeaking}
-        isSpeaking={isSpeaking}
-        onOpenUserPreferences={() => setIsUserPreferencesOpen(true)}
-        onOpenGameSettings={() => setIsSettingsOpen(true)}
-      />
-
+      {/* Remove duplicate header from here since it's already in layout.js */}
       <GameDisplay
         gameType={gameType}
         currentItem={currentItem}
@@ -345,3 +357,4 @@ export default function BaseGame({
     </div>
   )
 }
+

@@ -11,7 +11,7 @@ const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSett
   const isHomePage = pathname === '/'
 
   return (
-    <div className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-sm z-[100]">
+    <div className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-sm z-[200]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative flex items-center justify-center h-16">
           {/* Left side */}

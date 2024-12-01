@@ -16,11 +16,15 @@ const andika = Andika({
 
 export default function RootLayout({ children }) {
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
 
   return (
     <html lang="en" className={andika.variable}>
       <body className={`font-sans h-screen overflow-hidden bg-gray-900 relative`}>
         <Header
+          isListening={isListening}
+          isSpeaking={isSpeaking}
           onOpenUserPreferences={() => setIsUserPreferencesOpen(true)}
         />
         <div className="fixed-full pointer-events-none">
