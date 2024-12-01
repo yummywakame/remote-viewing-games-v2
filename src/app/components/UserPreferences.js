@@ -15,6 +15,8 @@ const PreviewButton = memo(({ onClick, disabled }) => (
   </button>
 ));
 
+PreviewButton.displayName = 'PreviewButton';
+
 const UserPreferences = memo(function UserPreferences({ isOpen, onClose }) {
   const [name, setName] = useState('')
   const [voiceSpeed, setVoiceSpeed] = useState(1.2)
@@ -185,5 +187,6 @@ const UserPreferences = memo(function UserPreferences({ isOpen, onClose }) {
   )
 });
 
-export default UserPreferences;
+UserPreferences.displayName = 'UserPreferences';
 
+export default UserPreferences;

@@ -8,6 +8,7 @@ import FloatingBubble from './FloatingBubble'
 import UserPreferences from './UserPreferences'
 import GameDisplay from './GameDisplay'
 import DOMPurify from 'isomorphic-dompurify'
+import Promise from 'promise';
 
 export default function BaseGame({ 
     GameSettings,
@@ -45,7 +46,7 @@ export default function BaseGame({
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [lastHeardWord, setLastHeardWord] = useState('')
-  const [selectedItems, setSelectedItems] = useState(savedItems)
+  const [selectedItems] = useState(savedItems)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const [userName, setUserName] = useState('')
@@ -376,4 +377,3 @@ export default function BaseGame({
     </div>
   )
 }
-

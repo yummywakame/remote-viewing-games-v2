@@ -3,9 +3,23 @@
     "next/core-web-vitals",
     "eslint:recommended"
   ],
+  "env": {
+    "es6": true,
+    "browser": true,
+    "node": true
+  },
+  "globals": {
+    "Promise": "readonly"
+  },
   "rules": {
     "react-hooks/exhaustive-deps": "off",
-    "@next/next/no-img-element": "error"
+    "@next/next/no-img-element": "error",
+    "no-undef": "error"
+  },
+  "parserOptions": {
+    "ecmaVersion": 2018,
+    "sourceType": "module"
   }
 }
+
 

@@ -19,7 +19,7 @@ const itemTable = {
 
 const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [longIntroEnabled, setLongIntroEnabled] = useState(true);
-  const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
+  const [setSelectedItems] = useState(Object.keys(itemTable));
   const [isIntroComplete, setIsIntroComplete] = useState(false);
 
   useEffect(() => {
@@ -62,7 +62,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
       const requestedItem = match[2]
       console.log(`Show ${gameType} requested:`, requestedItem)
-      if (itemTable.hasOwnProperty(requestedItem)) {
+      if (Object.prototype.hasOwnProperty.call(itemTable, requestedItem)) {
         speak(`Showing ${requestedItem}.`)
         return requestedItem
       } else {
@@ -186,4 +186,3 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
 });
 
 export default ColorGame;
-
