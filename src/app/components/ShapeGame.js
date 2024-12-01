@@ -198,6 +198,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       selectNewItem={selectNewItem}
       itemTable={itemTable}
       longIntroEnabled={longIntroEnabled}
+      selectedItems={selectedItems}
       onSaveSettings={handleSaveSettings}
       backgroundMode={backgroundMode}
       isIntroComplete={isIntroComplete}
@@ -207,4 +208,3 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
 });
 
 export default ShapeGame;
-

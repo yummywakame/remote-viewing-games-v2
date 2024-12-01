@@ -49,7 +49,6 @@ const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSett
                     onClick={onOpenGameSettings}
                     className="text-gray-400 hover:text-white transition-colors"
                     aria-label="Open game settings"
-                    initial={{ rotate: 0 }}
                     whileHover={{ rotate: 90 }}
                     transition={{ duration: 0.2 }}
                   >

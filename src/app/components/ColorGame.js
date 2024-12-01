@@ -19,11 +19,11 @@ const itemTable = {
 
 const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [longIntroEnabled, setLongIntroEnabled] = useState(true);
-  const [setSelectedItems] = useState(Object.keys(itemTable));
+  const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
   const [isIntroComplete, setIsIntroComplete] = useState(false);
 
   useEffect(() => {
-    const savedLongIntro = localStorage.getItem('gameLongIntro');
+    const savedLongIntro = localStorage.getItem('colorGameLongIntro');
     setLongIntroEnabled(savedLongIntro !== 'false');
 
     const savedItems = localStorage.getItem('colorGameSelectedItems');
@@ -164,7 +164,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     setSelectedItems(newSelectedItems);
     setLongIntroEnabled(newLongIntroEnabled);
     localStorage.setItem('colorGameSelectedItems', DOMPurify.sanitize(JSON.stringify(newSelectedItems)));
-    localStorage.setItem('gameLongIntro', DOMPurify.sanitize(newLongIntroEnabled.toString()));
+    localStorage.setItem('colorGameLongIntro', DOMPurify.sanitize(newLongIntroEnabled.toString()));
   }, []);
 
   return (
@@ -177,6 +177,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       selectNewItem={selectNewItem}
       itemTable={itemTable}
       longIntroEnabled={longIntroEnabled}
+      selectedItems={selectedItems}
       onSaveSettings={handleSaveSettings}
       isIntroComplete={isIntroComplete}
       setIsIntroComplete={setIsIntroComplete}
