@@ -24,7 +24,7 @@ export default function BaseGame({
     setIsIntroComplete
   }) {
   // Context and Router
-  const { setIsListening: setGlobalIsListening, setIsSpeaking: setGlobalIsSpeaking } = useContext(GameStateContext)
+  const { setIsListening: setGlobalIsListening, setIsSpeaking: setGlobalIsSpeaking, setOnOpenGameSettings } = useContext(GameStateContext)
   const router = useRouter()
 
   // Refs
@@ -121,18 +121,25 @@ export default function BaseGame({
 
       recognition.current.onend = () => {
         console.log('Speech recognition ended')
+        setGlobalIsListening(false)
+        setIsListeningLocal(false)
         if (gameState === 'playing' && !isSpeakingLocal) {
-          recognition.current.start()
-        } else {
-          setGlobalIsListening(false)
-          setIsListeningLocal(false)
+          startListeningRef.current()
         }
       }
     }
 
     if (!isListening && !isSpeakingLocal && gameState === 'playing') {
       console.log('Starting speech recognition')
-      recognition.current.start()
+      try {
+        recognition.current.start()
+      } catch (error) {
+        if (error.name === 'InvalidStateError') {
+          console.log('Speech recognition is already started')
+        } else {
+          console.error('Error starting speech recognition:', error)
+        }
+      }
     }
   }
 
@@ -319,14 +326,17 @@ export default function BaseGame({
         startListeningRef.current()
       }, 100)
       return () => clearTimeout(timeoutId)
-    } else if (isSpeakingLocal) {
-      stopListening()
     }
-  }, [gameState, isListening, isSpeakingLocal, stopListening])
+  }, [gameState, isListening, isSpeakingLocal])
 
   useEffect(() => {
     console.log('isListening state changed:', isListening)
   }, [isListening])
+
+  useEffect(() => {
+    setOnOpenGameSettings(() => () => setIsSettingsOpen(true))
+    return () => setOnOpenGameSettings(null)
+  }, [setOnOpenGameSettings])
 
   // Render
   return (
@@ -348,7 +358,8 @@ export default function BaseGame({
               startGame,
               endGame,
               isButtonAnimated,
-              gameType: typeof window !== 'undefined' ? DOMPurify.sanitize(gameType) : gameType
+              gameType: typeof window !== 'undefined' ? DOMPurify.sanitize(gameType) : gameType,
+              onOpenGameSettings: () => setIsSettingsOpen(true)
             })}
           </div>
         </div>

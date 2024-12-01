@@ -20,15 +20,24 @@ export default function RootLayout({ children }) {
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [onOpenGameSettings, setOnOpenGameSettings] = useState(null)
 
   return (
     <html lang="en" className={andika.variable}>
       <body className={`font-sans h-screen overflow-hidden bg-gray-900 relative`}>
-        <GameStateContext.Provider value={{ isListening, setIsListening, isSpeaking, setIsSpeaking }}>
+        <GameStateContext.Provider value={{ 
+          isListening, 
+          setIsListening, 
+          isSpeaking, 
+          setIsSpeaking,
+          onOpenGameSettings,
+          setOnOpenGameSettings 
+        }}>
           <Header
             isListening={isListening}
             isSpeaking={isSpeaking}
             onOpenUserPreferences={() => setIsUserPreferencesOpen(true)}
+            onOpenGameSettings={onOpenGameSettings}
           />
           <div className="fixed-full pointer-events-none">
             <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-gray-900 to-transparent" />
