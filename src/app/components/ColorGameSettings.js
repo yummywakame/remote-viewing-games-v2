@@ -4,17 +4,14 @@ import * as React from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
 import DOMPurify from 'isomorphic-dompurify'
 
 const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedColors }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedColors)
-  const [longIntroEnabled, setLongIntroEnabled] = React.useState(true)
   const modalRef = React.useRef(null)
 
   React.useEffect(() => {
     setLocalSelectedItems(selectedColors)
-    setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
   }, [selectedColors])
 
   const handleCheckboxChange = React.useCallback((item) => {
@@ -29,12 +26,11 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
 
   const onSave = React.useCallback(() => {
     onClose()
-    onSaveSettings(localSelectedItems, longIntroEnabled)
-  }, [onClose, onSaveSettings, localSelectedItems, longIntroEnabled])
+    onSaveSettings(localSelectedItems)
+  }, [onClose, onSaveSettings, localSelectedItems])
 
   const handleReset = React.useCallback(() => {
     setLocalSelectedItems(Object.keys(itemTable))
-    setLongIntroEnabled(true)
   }, [itemTable])
 
   const handleOutsideClick = React.useCallback((e) => {
@@ -42,11 +38,6 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
       onClose()
     }
   }, [onClose])
-
-  const onLongIntroChange = React.useCallback((checked) => {
-    setLongIntroEnabled(checked);
-    localStorage.setItem('gameLongIntro', DOMPurify.sanitize(checked.toString()));
-  }, []);
 
   return (
     <motion.div
@@ -116,29 +107,14 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
             ))}
           </div>
 
-          <div className="space-y-4 mb-6">
-            <h3 className="text-lg font-semibold">Welcome message</h3>
-            <div className="flex items-center gap-3">
-              <Switch
-                checked={longIntroEnabled}
-                onCheckedChange={onLongIntroChange}
-                className="data-[state=checked]:bg-blue-600"
-              />
-              <span className="text-sm text-gray-200">
-                {longIntroEnabled ? "Full explanation" : "Brief"}
-              </span>
-            </div>
-          </div>
-          
-
           {localSelectedItems.length <= 1 && (
             <p className="text-sm text-gray-400 mb-6">
               You must select at least two colors.
             </p>
           )}
 
-          <div className="flex justify-between">
-          <Button
+          <div className="mt-8 pt-6 flex justify-between">
+            <Button
               onClick={handleReset}
               variant="outline"
               className="rounded-full border-2 border-white bg-white/5 text-white hover:bg-white/20 hover:text-white transition-colors"

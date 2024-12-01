@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Volume2, X } from 'lucide-react'
 import DOMPurify from 'dompurify'
+import { Switch } from "@/components/ui/switch"
 
 const PreviewButton = memo(({ onClick, disabled }) => (
   <button
@@ -22,14 +23,17 @@ const UserPreferences = memo(function UserPreferences({ isOpen, onClose }) {
   const [voiceSpeed, setVoiceSpeed] = useState(1.2)
   const [availableVoices, setAvailableVoices] = useState([])
   const [selectedVoice, setSelectedVoice] = useState(null)
+  const [longIntroEnabled, setLongIntroEnabled] = useState(true)
 
   useEffect(() => {
     const loadPreferences = () => {
       const savedName = localStorage.getItem('userPreferencesName') || ''
       const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2
       const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
+      const savedLongIntro = localStorage.getItem('gameLongIntro')
       setName(DOMPurify.sanitize(savedName))
       setVoiceSpeed(savedVoiceSpeed)
+      setLongIntroEnabled(savedLongIntro !== 'false')
       if (savedVoiceName) {
         const voices = window.speechSynthesis.getVoices()
         const voice = voices.find(v => v.name === savedVoiceName)
@@ -60,16 +64,19 @@ const UserPreferences = memo(function UserPreferences({ isOpen, onClose }) {
     if (selectedVoice) {
       localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(selectedVoice.name))
     }
+    localStorage.setItem('gameLongIntro', DOMPurify.sanitize(longIntroEnabled.toString()));
     onClose()
-  }, [name, voiceSpeed, selectedVoice, onClose])
+  }, [name, voiceSpeed, selectedVoice, longIntroEnabled, onClose])
 
   const handleReset = useCallback(() => {
     setName('')
     setVoiceSpeed(1.2)
     setSelectedVoice(null)
+    setLongIntroEnabled(true)
     localStorage.removeItem('userPreferencesName')
     localStorage.removeItem('userPreferencesVoiceSpeed')
     localStorage.removeItem('userPreferencesVoiceName')
+    localStorage.removeItem('gameLongIntro')
   }, [])
 
   const handlePreview = useCallback(() => {
@@ -79,6 +86,11 @@ const UserPreferences = memo(function UserPreferences({ isOpen, onClose }) {
     utterance.rate = voiceSpeed
     speechSynthesis.speak(utterance)
   }, [name, voiceSpeed, selectedVoice])
+
+  const onLongIntroChange = useCallback((checked) => {
+    setLongIntroEnabled(checked);
+    localStorage.setItem('gameLongIntro', DOMPurify.sanitize(checked.toString()));
+  }, []);
 
   return (
     <AnimatePresence>
@@ -163,21 +175,38 @@ const UserPreferences = memo(function UserPreferences({ isOpen, onClose }) {
                   <span className="text-sm text-gray-400">Preview voice</span>
                   <PreviewButton onClick={handlePreview} disabled={!selectedVoice} />
                 </div>
-              </div>
 
-              <div className="mt-6 flex justify-between">
-                <button
-                  onClick={handleReset}
-                  className="px-4 py-2 rounded-full border border-[var(--gray-600)] text-[var(--gray-300)] hover:bg-[var(--gray-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                >
-                  Reset to Defaults
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-2 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white hover:from-[var(--purple-700)] hover:to-[var(--blue-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                >
-                  Save Changes
-                </button>
+                <div>
+                  <label htmlFor="welcome-message-length" className="block text-sm font-medium text-gray-400 mb-1">
+                    Welcome message length
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      id="welcome-message-length"
+                      checked={longIntroEnabled}
+                      onCheckedChange={onLongIntroChange}
+                      className="data-[state=checked]:bg-blue-600"
+                    />
+                    <span className="text-sm text-gray-200">
+                      {longIntroEnabled ? "Full explanation" : "Brief"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-6 flex justify-between">
+                  <button
+                    onClick={handleReset}
+                    className="px-4 py-2 rounded-full border border-[var(--gray-600)] text-[var(--gray-300)] hover:bg-[var(--gray-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                  >
+                    Reset to Defaults
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="px-4 py-2 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white hover:from-[var(--purple-700)] hover:to-[var(--blue-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                  >
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -190,3 +219,4 @@ const UserPreferences = memo(function UserPreferences({ isOpen, onClose }) {
 UserPreferences.displayName = 'UserPreferences';
 
 export default UserPreferences;
+
