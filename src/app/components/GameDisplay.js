@@ -4,7 +4,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 
-export default function GameDisplay({ gameType, currentItem, itemTable, onClick, gameState, backgroundMode, isIntroComplete }) {
+export default function GameDisplay({ gameType, currentItem, itemTable, onClick, gameState, isIntroComplete }) {
   const renderItem = () => {
     if (gameType === 'Color') {
       return null

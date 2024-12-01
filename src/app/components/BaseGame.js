@@ -246,13 +246,6 @@ export default function BaseGame({
     )
   }, [userName, voiceSpeed, selectedVoice, selectedItems, longIntroEnabled, gameType])
 
-  const handleTitleClick = useCallback(async () => {
-    if (gameState !== 'initial') {
-      await endGame()
-    } else {
-      router.push('/')
-    }
-  }, [gameState, endGame, router])
 
   // Effects
   useEffect(() => {
@@ -383,12 +376,9 @@ export default function BaseGame({
       )}
       <UserPreferences
         isOpen={isUserPreferencesOpen}
-        onClose={() => setIsUserPreferencesOpen}
         onClose={() => setIsUserPreferencesOpen(false)}
       />      
     </div>
   )
 }
-
-
 
