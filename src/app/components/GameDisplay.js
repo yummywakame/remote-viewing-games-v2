@@ -4,15 +4,15 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 
-export default function GameDisplay({ gameType, currentItem, itemTable, onClick, gameState }) {
-  const [backgroundMode, setBackgroundMode] = useState('dark')
+export default function GameDisplay({ gameType, currentItem, itemTable, onClick, gameState, backgroundMode, isIntroComplete }) {
+  const [localBackgroundMode, setLocalBackgroundMode] = useState('light')
 
   useEffect(() => {
     // Access localStorage only after component mounts
     const storedMode = typeof window !== 'undefined' 
-      ? localStorage.getItem(`${gameType.toLowerCase()}GameBackgroundMode`) || 'dark'
-      : 'dark'
-    setBackgroundMode(storedMode)
+      ? localStorage.getItem(`${gameType.toLowerCase()}GameBackgroundMode`) || 'light'
+      : 'light'
+    setLocalBackgroundMode(storedMode)
   }, [gameType])
 
   const renderItem = () => {
@@ -40,7 +40,7 @@ export default function GameDisplay({ gameType, currentItem, itemTable, onClick,
             alt={`${currentItem.split('-')[0]} shape`}
             width={450}
             height={450}
-            style={{ filter: 'invert(1)' }}
+            style={{ filter: isIntroComplete ? 'invert(1)' : 'none' }}
           />
         </div>
       )
@@ -59,13 +59,13 @@ export default function GameDisplay({ gameType, currentItem, itemTable, onClick,
   }
 
   const getBackgroundColor = () => {
-    if (gameState === 'initial') {
+    if (gameState === 'initial' || !isIntroComplete) {
       return 'transparent'
     }
     if (gameType === 'Color') {
       return itemTable[currentItem]
     }
-    return backgroundMode === 'dark' ? 'black' : 'white'
+    return (backgroundMode === 'dark' || localBackgroundMode === 'dark') ? 'black' : 'white'
   }
 
   const backgroundColor = getBackgroundColor()

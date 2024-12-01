@@ -25,6 +25,8 @@ const itemTable = {
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [longIntroEnabled, setLongIntroEnabled] = useState(true);
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
+  const [backgroundMode, setBackgroundMode] = useState('light');
+  const [isIntroComplete, setIsIntroComplete] = useState(false);
 
   useEffect(() => {
     const savedLongIntro = localStorage.getItem('shapeGameLongIntro');
@@ -52,6 +54,9 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       const newItem = selectNewItem()
       console.log(`New ${gameType} after next command:`, newItem)
       speak(`What ${gameType.toLowerCase()} is this?`)
+      if (isIntroComplete) {
+        setBackgroundMode('dark')
+      }
       return newItem
     } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
       console.log('Stop command detected')
@@ -92,7 +97,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       }
     }
     return null
-  }, [])
+  }, [isIntroComplete])
 
   const selectNewItem = useCallback((selectedItems, currentItem, setCurrentItem) => {
     console.log('Selecting new item. Current item:', currentItem)
@@ -194,6 +199,9 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       itemTable={itemTable}
       longIntroEnabled={longIntroEnabled}
       onSaveSettings={handleSaveSettings}
+      backgroundMode={backgroundMode}
+      isIntroComplete={isIntroComplete}
+      setIsIntroComplete={setIsIntroComplete}
     />
   )
 });

@@ -17,14 +17,35 @@ export default function BaseGame({
     handleVoiceCommand,
     selectNewItem,
     itemTable,
-    longIntroEnabled
+    longIntroEnabled,
+    backgroundMode,
+    isIntroComplete,
+    setIsIntroComplete
   }) {
+  const [savedItems, setSavedItems] = useState(Object.keys(itemTable))
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`${gameType.toLowerCase()}GameSelectedItems`)
+      if (saved) {
+        try {
+          const parsedItems = JSON.parse(saved)
+          if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
+            setSavedItems(parsedItems)
+          }
+        } catch (error) {
+          console.error('Error parsing saved items:', error)
+        }
+      }
+    }
+  }, [gameType, itemTable])
+
   const [gameState, setGameState] = useState('initial')
   const [currentItem, setCurrentItem] = useState(null)
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [lastHeardWord, setLastHeardWord] = useState('')
-  const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable))
+  const [selectedItems, setSelectedItems] = useState(savedItems)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const [userName, setUserName] = useState('')
@@ -102,6 +123,7 @@ export default function BaseGame({
     setLastHeardWord('')
     await speak("Thank you for playing!")
     setAndLogGameState('initial', 'game ended')
+    setIsIntroComplete(false)
     
     // Clear any ongoing timeouts or intervals
     if (window) {
@@ -119,7 +141,7 @@ export default function BaseGame({
     }
     
     router.push('/')
-  }, [cancelSpeech, stopListening, setAndLogGameState, speak, router, updateCurrentItem])
+  }, [cancelSpeech, stopListening, setAndLogGameState, speak, router, updateCurrentItem, setIsIntroComplete])
 
   const startListening = useCallback(() => {
     if (gameState !== 'playing') {
@@ -175,12 +197,13 @@ export default function BaseGame({
     } else {
       await speak("Let's begin!")
     }
+    setIsIntroComplete(true)
     setAndLogGameState('playing', 'game started')
     const newItem = await selectNewItem(selectedItems, currentItem, updateCurrentItem)
     updateCurrentItem(newItem)
     await speak(`What ${gameType.toLowerCase()} is this?`)
     startListening()
-  }, [setAndLogGameState, speak, selectNewItem, startListening, userName, gameType, selectedItems, currentItem, updateCurrentItem, longIntroEnabled])
+  }, [setAndLogGameState, speak, selectNewItem, startListening, userName, gameType, selectedItems, currentItem, updateCurrentItem, longIntroEnabled, setIsIntroComplete])
 
   const handleBackgroundClick = useCallback(() => {
     if (gameState === 'playing') {
@@ -204,25 +227,19 @@ export default function BaseGame({
   }, [userName, voiceSpeed, selectedVoice, selectedItems, longIntroEnabled, gameType])
 
   useEffect(() => {
-    const savedItems = localStorage.getItem(`${gameType.toLowerCase()}GameSelectedItems`)
-    if (savedItems) {
-      try {
-        const parsedItems = JSON.parse(savedItems)
-        if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
-          setSelectedItems(parsedItems)
-        }
-      } catch (error) {
-        console.error('Error parsing saved items:', error)
-      }
-    }
-  }, [gameType])
+    const savedName = localStorage.getItem('userPreferencesName') || ''
+    const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2
+    const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
+    
+    setUserName(DOMPurify.sanitize(savedName))
+    setVoiceSpeed(savedVoiceSpeed)
 
-  useEffect(() => {
-    if (gameState === 'playing' && !isListening && !isSpeaking) {
-      const timeoutId = setTimeout(startListening, 100)
-      return () => clearTimeout(timeoutId)
+    if (savedVoiceName && speechSynthesis.current) {
+      const voices = speechSynthesis.current.getVoices()
+      const voice = voices.find(v => v.name === DOMPurify.sanitize(savedVoiceName))
+      setSelectedVoice(voice || null)
     }
-  }, [gameState, isListening, isSpeaking, startListening, handleBackgroundClick])
+  }, [])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -257,19 +274,12 @@ export default function BaseGame({
   }, [])
 
   useEffect(() => {
-    const savedName = localStorage.getItem('userPreferencesName') || ''
-    const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2
-    const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
-    
-    setUserName(DOMPurify.sanitize(savedName))
-    setVoiceSpeed(savedVoiceSpeed)
-
-    if (savedVoiceName && speechSynthesis.current) {
-      const voices = speechSynthesis.current.getVoices()
-      const voice = voices.find(v => v.name === DOMPurify.sanitize(savedVoiceName))
-      setSelectedVoice(voice || null)
+    if (gameState === 'playing' && !isListening && !isSpeaking) {
+      const timeoutId = setTimeout(startListening, 100)
+      return () => clearTimeout(timeoutId)
     }
-  }, [])
+  }, [gameState, isListening, isSpeaking, startListening])
+
 
   const handleTitleClick = useCallback(async () => {
     if (gameState !== 'initial') {
@@ -326,6 +336,8 @@ export default function BaseGame({
         itemTable={itemTable}
         onClick={handleBackgroundClick}
         gameState={gameState}
+        backgroundMode={backgroundMode}
+        isIntroComplete={isIntroComplete}
       />
       <div className="fixed inset-0 pt-16 pointer-events-none">
         <div className="flex items-center justify-center h-full">

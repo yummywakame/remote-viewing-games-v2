@@ -20,6 +20,7 @@ const itemTable = {
 const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [longIntroEnabled, setLongIntroEnabled] = useState(true);
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
+  const [isIntroComplete, setIsIntroComplete] = useState(false);
 
   useEffect(() => {
     const savedLongIntro = localStorage.getItem('gameLongIntro');
@@ -177,6 +178,9 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       itemTable={itemTable}
       longIntroEnabled={longIntroEnabled}
       onSaveSettings={handleSaveSettings}
+      isIntroComplete={isIntroComplete}
+      setIsIntroComplete={setIsIntroComplete}
+      backgroundMode="light"
     />
   )
 });
