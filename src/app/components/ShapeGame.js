@@ -64,9 +64,9 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       const shapeName = currentItem.split('-')[0];
       const article = ['a', 'e', 'i', 'o', 'u'].includes(shapeName[0].toLowerCase()) ? 'an' : 'a';
       speak(`It's ${article} ${shapeName}.`)
-    } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
-      const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
-      const requestedItem = match[2]
+    } else if (/\b(show(?:\s+me)?)\s+(a\s+|an\s+)?(\w+)\b/.test(lowerCommand)) {
+      const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(a\s+|an\s+)?(\w+)\b/)
+      const requestedItem = match[3]
       console.log(`Show ${gameType} requested:`, requestedItem)
       const matchingItems = Object.keys(itemTable).filter(item => item.startsWith(requestedItem))
       if (matchingItems.length > 0) {
