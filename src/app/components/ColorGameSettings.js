@@ -3,7 +3,6 @@
 import * as React from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { Button } from "@/components/ui/button"
 import DOMPurify from 'isomorphic-dompurify'
 
 const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedColors }) {
@@ -114,19 +113,18 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
           )}
 
           <div className="mt-8 pt-6 flex justify-between">
-            <Button
+            <button
               onClick={handleReset}
-              variant="outline"
-              className="rounded-full border-2 border-white bg-white/5 text-white hover:bg-white/20 hover:text-white transition-colors"
+              className="px-4 py-2 rounded-full border border-[var(--gray-600)] text-[var(--gray-300)] hover:bg-[var(--gray-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
               Reset to Defaults
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={onSave}
-              className="rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] hover:from-[var(--purple-700)] hover:to-[var(--blue-700)]"
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white hover:from-[var(--purple-700)] hover:to-[var(--blue-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
               Save Changes
-            </Button>
+            </button>
           </div>
         </div>
       </motion.div>
