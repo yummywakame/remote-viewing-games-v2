@@ -1,12 +1,12 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, User } from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
 import UserPreferences from './UserPreferences'
 import GameDisplay from './GameDisplay'
+import Header from './Header'
 import DOMPurify from 'isomorphic-dompurify'
 import Promise from 'promise';
 
@@ -292,44 +292,12 @@ export default function BaseGame({
 
   return (
     <div className="relative h-screen overflow-auto">
-      <div className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-sm z-[100]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setIsUserPreferencesOpen(true)}
-                className="text-gray-400 hover:text-white transition-colors"
-                aria-label="Open user preferences"
-              >
-                <User size={24} />
-              </button>
-              <motion.button
-                onClick={() => setIsSettingsOpen(true)}
-                className="text-gray-400 hover:text-white transition-colors"
-                aria-label="Open game settings"
-                initial={{ rotate: 0 }}
-                whileHover={{ rotate: 90 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Settings size={24} />
-              </motion.button>
-            </div>
-            <button
-              onClick={handleTitleClick}
-              className="text-white text-xl font-bold hover:text-gray-300 transition-colors"
-            >
-              MindSight Games
-            </button>
-            <div className="flex items-center space-x-4">
-              {isListening && !isSpeaking ? (
-                <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
-              ) : (
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <Header
+        isListening={isListening && !isSpeaking}
+        isSpeaking={isSpeaking}
+        onOpenUserPreferences={() => setIsUserPreferencesOpen(true)}
+        onOpenGameSettings={() => setIsSettingsOpen(true)}
+      />
 
       <GameDisplay
         gameType={gameType}

@@ -2,8 +2,9 @@
 
 import './globals.css'
 import { Andika } from 'next/font/google'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import UserPreferences from './components/UserPreferences'
+import Header from './components/Header'
 
 const andika = Andika({
   subsets: ['latin'],
@@ -15,21 +16,17 @@ const andika = Andika({
 
 export default function RootLayout({ children }) {
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
-  const [params, setParams] = useState(null)
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setParams(new URLSearchParams(window.location.search))
-    }
-  }, [])
 
   return (
     <html lang="en" className={andika.variable}>
       <body className={`font-sans h-screen overflow-hidden bg-gray-900 relative`}>
+        <Header
+          onOpenUserPreferences={() => setIsUserPreferencesOpen(true)}
+        />
         <div className="fixed-full pointer-events-none">
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-gray-900 to-transparent" />
         </div>
-        <main className="h-screen relative z-10">
+        <main className="h-screen relative z-10 pt-16">
           <div className="max-w-[600px] px-5 mx-auto h-full">
             {children}
           </div>

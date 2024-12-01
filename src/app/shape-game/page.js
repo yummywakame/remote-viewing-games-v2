@@ -21,8 +21,7 @@ export default function ShapeGamePage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
       >
-        {[Eye, Brain, Shapes,
-Sparkles].map((Icon, index) => (
+        {[Eye, Brain, Shapes, Sparkles].map((Icon, index) => (
           <motion.div
             key={index}
             className="absolute text-white/20"

@@ -30,17 +30,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* MindSight Games title */}
-      <div className="fixed-top z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center h-16">
-            <h1 className="text-white text-xl font-bold">
-              MindSight Games
-            </h1>
-          </div>
-        </div>
-      </div>
-
       {/* Floating icons */}
       <motion.div
         className="fixed-full pointer-events-none"
