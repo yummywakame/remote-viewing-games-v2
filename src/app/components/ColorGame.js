@@ -32,6 +32,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
         const parsedItems = JSON.parse(savedItems);
         if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
           setSelectedItems(parsedItems);
+          console.log("Loaded selected items:", parsedItems);
         }
       } catch (error) {
         console.error('Error parsing saved items:', error);
@@ -161,6 +162,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   }, [])
 
   const handleSaveSettings = useCallback((newSelectedItems) => {
+    console.log("Saving new selected items:", newSelectedItems);
     setSelectedItems(newSelectedItems);
     localStorage.setItem('colorGameSelectedItems', JSON.stringify(newSelectedItems));
   }, []);
@@ -181,6 +183,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       selectNewItem={selectNewItem}
       itemTable={itemTable}
       longIntroEnabled={longIntroEnabled}
+      selectedItems={selectedItems}
       onSaveSettings={handleSaveSettings}
       isIntroComplete={isIntroComplete}
       setIsIntroComplete={setIsIntroComplete}

@@ -20,7 +20,9 @@ export default function BaseGame({
     itemTable,
     backgroundMode,
     isIntroComplete,
-    setIsIntroComplete
+    setIsIntroComplete,
+    selectedItems,
+    onSaveSettings
   }) {
   // Context and Router
   const { 
@@ -39,8 +41,6 @@ export default function BaseGame({
   const startListeningRef = useRef(null)
 
   // State
-  const [savedItems, setSavedItems] = useState(Object.keys(itemTable))
-  const [selectedItems] = useState(savedItems)
   const [gameState, setGameState] = useState('initial')
   const [currentItem, setCurrentItem] = useState(null)
   const [isListening, setIsListeningLocal] = useState(false)
@@ -243,29 +243,10 @@ export default function BaseGame({
     localStorage.setItem('userPreferencesName', DOMPurify.sanitize(userName))
     localStorage.setItem('userPreferencesVoiceSpeed', DOMPurify.sanitize(voiceSpeed.toString()))
     localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(selectedVoice?.name || ''))
-    localStorage.setItem(
-      `${gameType.toLowerCase()}GameSelectedItems`, 
-      DOMPurify.sanitize(JSON.stringify(selectedItems))
-    )
-  }, [userName, voiceSpeed, selectedVoice, selectedItems, gameType])
+    onSaveSettings(selectedItems)
+  }, [userName, voiceSpeed, selectedVoice, selectedItems, onSaveSettings])
 
   // Effects
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`${gameType.toLowerCase()}GameSelectedItems`)
-      if (saved) {
-        try {
-          const parsedItems = JSON.parse(saved)
-          if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
-            setSavedItems(parsedItems)
-          }
-        } catch (error) {
-          console.error('Error parsing saved items:', error)
-        }
-      }
-    }
-  }, [gameType, itemTable])
-
   useEffect(() => {
     const savedName = localStorage.getItem('userPreferencesName') || ''
     const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2
@@ -393,3 +374,4 @@ export default function BaseGame({
     </div>
   )
 }
+
