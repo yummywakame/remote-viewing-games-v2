@@ -29,7 +29,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     const savedItems = localStorage.getItem('colorGameSelectedItems');
     if (savedItems) {
       try {
-        const parsedItems = JSON.parse(DOMPurify.sanitize(savedItems));
+        const parsedItems = JSON.parse(savedItems);
         if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
           setSelectedItems(parsedItems);
         }
@@ -160,16 +160,20 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     return null
   }, [])
 
-  const handleSaveSettings = useCallback((newSelectedItems, newLongIntroEnabled) => {
+  const handleSaveSettings = useCallback((newSelectedItems) => {
     setSelectedItems(newSelectedItems);
-    setLongIntroEnabled(newLongIntroEnabled);
-    localStorage.setItem('colorGameSelectedItems', DOMPurify.sanitize(JSON.stringify(newSelectedItems)));
-    localStorage.setItem('colorGameLongIntro', DOMPurify.sanitize(newLongIntroEnabled.toString()));
+    localStorage.setItem('colorGameSelectedItems', JSON.stringify(newSelectedItems));
   }, []);
 
   return (
     <BaseGame
-      GameSettings={ColorGameSettings}
+      GameSettings={(props) => (
+        <ColorGameSettings
+          {...props}
+          selectedItems={selectedItems}
+          onSave={handleSaveSettings}
+        />
+      )}
       gameType="Color"
       onGameStateChange={onGameStateChange}
       renderGameContent={renderGameContent}
@@ -177,7 +181,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       selectNewItem={selectNewItem}
       itemTable={itemTable}
       longIntroEnabled={longIntroEnabled}
-      selectedItems={selectedItems}
       onSaveSettings={handleSaveSettings}
       isIntroComplete={isIntroComplete}
       setIsIntroComplete={setIsIntroComplete}
@@ -187,3 +190,4 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
 });
 
 export default ColorGame;
+
