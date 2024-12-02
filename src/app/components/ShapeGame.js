@@ -3,9 +3,9 @@
 import React, { useCallback, useState, useEffect, memo } from 'react'
 import BaseGame from './BaseGame'
 import ShapeGameSettings from './ShapeGameSettings'
-import { Shapes } from 'lucide-react'
+import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
-import DOMPurify from 'dompurify'
+import DOMPurify from 'isomorphic-dompurify'
 
 const itemTable = {
   'triangle': '/shapes/triangle.svg',
@@ -23,19 +23,14 @@ const itemTable = {
 };
 
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
-  const [longIntroEnabled, setLongIntroEnabled] = useState(true);
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
-  const [backgroundMode, setBackgroundMode] = useState('light');
   const [isIntroComplete, setIsIntroComplete] = useState(false);
 
   useEffect(() => {
-    const savedLongIntro = localStorage.getItem('shapeGameLongIntro');
-    setLongIntroEnabled(savedLongIntro !== 'false');
-
     const savedItems = localStorage.getItem('shapeGameSelectedItems');
     if (savedItems) {
       try {
-        const parsedItems = JSON.parse(DOMPurify.sanitize(savedItems));
+        const parsedItems = JSON.parse(savedItems);
         if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
           setSelectedItems(parsedItems);
         }
@@ -54,9 +49,6 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       const newItem = selectNewItem()
       console.log(`New ${gameType} after next command:`, newItem)
       speak(`What ${gameType.toLowerCase()} is this?`)
-      if (isIntroComplete) {
-        setBackgroundMode('dark')
-      }
       return newItem
     } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
       console.log('Stop command detected')
@@ -66,29 +58,23 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       speak(`To proceed to the next ${gameType} say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what ${gameType} is it?'. To display any ${gameType} say 'show me', followed by the ${gameType} you want to see.`)
     } else if (new RegExp(`\\b(what|which)(?:\\s+(?:${gameType}|is|it))?\\b`).test(lowerCommand)) {
       console.log(`${gameType} hint requested for:`, currentItem)
-      const shapeName = currentItem.split('-')[0];
-      const article = ['a', 'e', 'i', 'o', 'u'].includes(shapeName[0].toLowerCase()) ? 'an' : 'a';
-      speak(`It's ${article} ${shapeName}.`)
-    } else if (/\b(show(?:\s+me)?)\s+(a\s+|an\s+)?(\w+)\b/.test(lowerCommand)) {
-      const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(a\s+|an\s+)?(\w+)\b/)
-      const requestedItem = match[3]
+      speak(`The current ${gameType} is ${currentItem}.`)
+    } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
+      const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
+      const requestedItem = match[2]
       console.log(`Show ${gameType} requested:`, requestedItem)
-      const matchingItems = Object.keys(itemTable).filter(item => item.startsWith(requestedItem))
-      if (matchingItems.length > 0) {
-        const randomItem = matchingItems[Math.floor(Math.random() * matchingItems.length)]
-        speak(`Showing a ${randomItem.split('-')[0]}.`)
-        return randomItem
+      if (Object.prototype.hasOwnProperty.call(itemTable, requestedItem)) {
+        speak(`Showing ${requestedItem}.`)
+        return requestedItem
       } else {
         speak(`Sorry, ${requestedItem} is not in my ${gameType} list.`)
       }
     } else {
-      const itemGuess = Object.keys(itemTable).find(item => lowerCommand.includes(item.split('-')[0]))
+      const itemGuess = Object.keys(itemTable).find(item => lowerCommand.includes(item))
       if (itemGuess) {
         console.log(`${gameType} guess:`, itemGuess, `Current ${gameType}:`, currentItem)
-        if (itemGuess.split('-')[0] === currentItem.split('-')[0]) {
-          const shapeName = currentItem.split('-')[0];
-          const article = ['a', 'e', 'i', 'o', 'u'].includes(shapeName[0].toLowerCase()) ? 'an' : 'a';
-          speak(`Well done! It's ${article} ${shapeName}.`)
+        if (itemGuess === currentItem) {
+          speak(`Well done! The ${gameType} is ${currentItem}.`)
         } else {
           speak("Try again!")
         }
@@ -97,7 +83,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       }
     }
     return null
-  }, [isIntroComplete])
+  }, [])
 
   const selectNewItem = useCallback((selectedItems, currentItem, setCurrentItem) => {
     console.log('Selecting new item. Current item:', currentItem)
@@ -141,7 +127,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Shapes className="mr-2" size={20} />
+            <Eye className="mr-2" size={20} />
             Start Game
           </motion.button>
         </motion.div>
@@ -175,11 +161,11 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     return null
   }, [])
 
-  const handleSaveSettings = useCallback((newSelectedItems, newLongIntroEnabled) => {
+  const handleSaveSettings = useCallback((newSelectedItems) => {
+    console.log("Saving new selected items:", newSelectedItems);
     setSelectedItems(newSelectedItems);
-    setLongIntroEnabled(newLongIntroEnabled);
-    localStorage.setItem('shapeGameSelectedItems', DOMPurify.sanitize(JSON.stringify(newSelectedItems)));
-    localStorage.setItem('shapeGameLongIntro', DOMPurify.sanitize(newLongIntroEnabled.toString()));
+    localStorage.setItem('shapeGameSelectedItems', JSON.stringify(newSelectedItems));
+    
   }, []);
 
   return (
@@ -197,14 +183,14 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       handleVoiceCommand={handleVoiceCommand}
       selectNewItem={selectNewItem}
       itemTable={itemTable}
-      longIntroEnabled={longIntroEnabled}
       selectedItems={selectedItems}
       onSaveSettings={handleSaveSettings}
-      backgroundMode={backgroundMode}
       isIntroComplete={isIntroComplete}
       setIsIntroComplete={setIsIntroComplete}
+      backgroundMode="dark"
     />
   )
 });
 
 export default ShapeGame;
+

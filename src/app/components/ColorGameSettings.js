@@ -4,8 +4,16 @@ import * as React from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import DOMPurify from 'isomorphic-dompurify'
+import { Switch } from '@/components/ui/switch'
 
-const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedColors }) {
+const ColorGameSettings = React.memo(function ColorGameSettings({ 
+  onClose, 
+  onSave: onSaveSettings, 
+  itemTable, 
+  selectedItems: selectedColors,
+  longIntroEnabled,
+  setLongIntroEnabled
+}) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedColors)
   const modalRef = React.useRef(null)
 
@@ -25,8 +33,8 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
 
   const onSave = React.useCallback(() => {
     onClose()
-    onSaveSettings(localSelectedItems)
-  }, [onClose, onSaveSettings, localSelectedItems])
+    onSaveSettings(localSelectedItems, longIntroEnabled)
+  }, [onClose, onSaveSettings, localSelectedItems, longIntroEnabled])
 
   const handleReset = React.useCallback(() => {
     setLocalSelectedItems(Object.keys(itemTable))
@@ -67,6 +75,14 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
             </button>
           </div>
           
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm font-medium">Enable Long Intro</span>
+            <Switch
+              checked={longIntroEnabled}
+              onCheckedChange={setLongIntroEnabled}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4 mb-6">
             {Object.entries(itemTable).map(([item, color]) => (
               <label

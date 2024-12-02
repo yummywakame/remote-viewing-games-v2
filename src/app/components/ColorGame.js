@@ -165,7 +165,9 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     console.log("Saving new selected items:", newSelectedItems);
     setSelectedItems(newSelectedItems);
     localStorage.setItem('colorGameSelectedItems', JSON.stringify(newSelectedItems));
-  }, []);
+    
+    localStorage.setItem('colorGameLongIntro', DOMPurify.sanitize(String(longIntroEnabled)));
+  }, [longIntroEnabled]);
 
   return (
     <BaseGame
@@ -174,6 +176,8 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
           {...props}
           selectedItems={selectedItems}
           onSave={handleSaveSettings}
+          longIntroEnabled={longIntroEnabled}
+          setLongIntroEnabled={setLongIntroEnabled}
         />
       )}
       gameType="Color"
