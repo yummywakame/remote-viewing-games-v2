@@ -97,10 +97,8 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const selectNewItem = useCallback((selectedItems, currentItem, setCurrentItem) => {
     console.log('Selecting new item. Current item:', currentItem)
     console.log('Available items:', selectedItems)
-    let newItem
-    do {
-      newItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
-    } while (newItem === currentItem && selectedItems.length > 1)
+    
+    const newItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
     
     console.log('New item selected:', newItem)
     setCurrentItem(newItem)
