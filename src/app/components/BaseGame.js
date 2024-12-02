@@ -24,7 +24,13 @@ export default function BaseGame({
     setIsIntroComplete
   }) {
   // Context and Router
-  const { setIsListening: setGlobalIsListening, setIsSpeaking: setGlobalIsSpeaking, setOnOpenGameSettings, setIsGamePlaying } = useContext(GameStateContext)
+  const { 
+    setIsListening: setGlobalIsListening, 
+    setIsSpeaking: setGlobalIsSpeaking, 
+    setOnOpenGameSettings, 
+    setIsGamePlaying,
+    setExitGame
+  } = useContext(GameStateContext)
   const router = useRouter()
 
   // Refs
@@ -171,7 +177,7 @@ export default function BaseGame({
       }
       speechSynthesis.current.speak(utterance)
     })
-  }, [selectedVoice, voiceSpeed, setGlobalIsSpeaking, stopListening, gameState, setGlobalIsSpeaking])
+  }, [selectedVoice, voiceSpeed, setGlobalIsSpeaking, stopListening, gameState])
 
   // Game control functions
   const endGame = useCallback(async () => {
@@ -246,7 +252,6 @@ export default function BaseGame({
       DOMPurify.sanitize(longIntroEnabled.toString())
     )
   }, [userName, voiceSpeed, selectedVoice, selectedItems, longIntroEnabled, gameType])
-
 
   // Effects
   useEffect(() => {
@@ -332,6 +337,15 @@ export default function BaseGame({
     return () => setOnOpenGameSettings(null)
   }, [setOnOpenGameSettings])
 
+  useEffect(() => {
+    setExitGame(() => async () => {
+      console.log('Exiting game...')
+      await endGame()
+    })
+
+    return () => setExitGame(null)
+  }, [setExitGame, endGame])
+
   // Render
   return (
     <div className="relative h-screen overflow-auto">
@@ -382,3 +396,4 @@ export default function BaseGame({
     </div>
   )
 }
+

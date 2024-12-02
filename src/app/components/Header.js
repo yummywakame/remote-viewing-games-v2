@@ -30,7 +30,12 @@ const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSett
           <Link
             href="/"
             className={`text-white text-xl font-bold hover:text-gray-300 transition-colors ${isHomePage ? 'pointer-events-none' : ''}`}
-            onClick={() => !isHomePage && onExitGame()}
+            onClick={(e) => {
+              if (!isHomePage) {
+                e.preventDefault();
+                onExitGame();
+              }
+            }}
           >
             MindSight Games
           </Link>
@@ -73,4 +78,3 @@ const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSett
 }
 
 export default Header
-

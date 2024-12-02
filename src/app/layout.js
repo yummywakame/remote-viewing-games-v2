@@ -2,9 +2,10 @@
 
 import './globals.css'
 import { Andika } from 'next/font/google'
-import { useState, createContext } from 'react'
+import { useState, createContext, useCallback } from 'react'
 import UserPreferences from './components/UserPreferences'
 import Header from './components/Header'
+import { useRouter } from 'next/navigation'
 
 const andika = Andika({
   subsets: ['latin'],
@@ -22,6 +23,16 @@ export default function RootLayout({ children }) {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [onOpenGameSettings, setOnOpenGameSettings] = useState(null)
   const [isGamePlaying, setIsGamePlaying] = useState(false)
+  const [exitGame, setExitGame] = useState(null)
+  const router = useRouter()
+
+  const handleExitGame = useCallback(() => {
+    if (exitGame) {
+      exitGame();
+    }
+    setIsGamePlaying(false);
+    router.push('/');
+  }, [exitGame, router]);
 
   return (
     <html lang="en" className={andika.variable}>
@@ -34,7 +45,9 @@ export default function RootLayout({ children }) {
           onOpenGameSettings,
           setOnOpenGameSettings,
           isGamePlaying,
-          setIsGamePlaying
+          setIsGamePlaying,
+          exitGame,
+          setExitGame
         }}>
           <Header
             isListening={isListening}
@@ -42,6 +55,7 @@ export default function RootLayout({ children }) {
             onOpenUserPreferences={() => setIsUserPreferencesOpen(true)}
             onOpenGameSettings={onOpenGameSettings}
             isGamePlaying={isGamePlaying}
+            onExitGame={handleExitGame}
           />
           <div className="fixed-full pointer-events-none">
             <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-gray-900 to-transparent" />
@@ -63,3 +77,4 @@ export default function RootLayout({ children }) {
     </html>
   )
 }
+
