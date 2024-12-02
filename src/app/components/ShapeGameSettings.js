@@ -3,10 +3,16 @@
 import * as React from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
-import Image from 'next/image'
 import DOMPurify from 'isomorphic-dompurify'
+import Image from 'next/image'
+import { Switch } from '@/components/ui/switch'
 
-const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSave: onSaveSettings, itemTable, selectedItems: selectedShapes }) {
+const ShapeGameSettings = React.memo(function ShapeGameSettings({ 
+  onClose, 
+  onSave: onSaveSettings, 
+  itemTable, 
+  selectedItems: selectedShapes,
+}) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedShapes)
   const modalRef = React.useRef(null)
 
@@ -69,13 +75,13 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSav
           </div>
           
           <div className="grid grid-cols-2 gap-4 mb-6">
-            {Object.entries(itemTable).map(([item, path]) => (
+            {Object.entries(itemTable).map(([item, shape]) => (
               <label
                 key={item}
                 className={`
                   relative p-4 rounded-lg cursor-pointer
                   transition-all duration-200
-                  ${localSelectedItems.includes(item) ? 'ring-2 ring-offset-2 ring-offset-gray-800' : 'ring-1 ring-gray-600'}
+                  ${localSelectedItems.includes(item) ? 'ring-2 ring-offset-2 ring-offset-gray-800 bg-gray-700' : 'ring-1 ring-gray-600'}
                   hover:ring-2 hover:ring-offset-2 hover:ring-offset-gray-800
                 `}
               >
@@ -85,17 +91,19 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSav
                   checked={localSelectedItems.includes(item)}
                   onChange={() => handleCheckboxChange(item)}
                   disabled={localSelectedItems.length <= 2 && localSelectedItems.includes(item)}
+                  aria-label={`Select ${item} shape`}
                 />
                 <div className="flex items-center gap-3">
-                  <Image 
-                    src={DOMPurify.sanitize(path)} 
-                    alt={DOMPurify.sanitize(item)} 
-                    width={24} 
-                    height={24} 
-                    className="brightness-0 invert" 
-                  />
+                  <div className="w-8 h-8 flex items-center justify-center">
+                    <Image
+                      src={`${shape}`}
+                      alt={item}
+                      width={32}
+                      height={32}
+                    />
+                  </div>
                   <span className="capitalize font-medium">
-                    {DOMPurify.sanitize(item.replace('-', ' '))}
+                    {DOMPurify.sanitize(item)}
                   </span>
                 </div>
                 {localSelectedItems.includes(item) && (
@@ -110,8 +118,9 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSav
             ))}
           </div>
 
+
           {localSelectedItems.length <= 1 && (
-            <p className="text-sm text-gray-400 mb-6">
+            <p className="text-sm text-red-400 mb-6">
               You must select at least two shapes.
             </p>
           )}
@@ -125,7 +134,8 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSav
             </button>
             <button
               onClick={onSave}
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white hover:bg-black transition-all duration-500 bg-[length:200%_200%] bg-[100%] hover:bg-[0%] shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-green-500 text-white hover:from-blue-700 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              disabled={localSelectedItems.length <= 1}
             >
               Save Changes
             </button>
@@ -134,7 +144,7 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({ onClose, onSav
       </motion.div>
     </motion.div>
   )
-});
+})
 
-export default ShapeGameSettings;
+export default ShapeGameSettings
 

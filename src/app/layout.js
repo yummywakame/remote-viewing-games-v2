@@ -19,42 +19,70 @@ export const GameStateContext = createContext()
 
 export default function RootLayout({ children }) {
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
-  const [isListening, setIsListening] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const [onOpenGameSettings, setOnOpenGameSettings] = useState(null)
-  const [isGamePlaying, setIsGamePlaying] = useState(false)
-  const [exitGame, setExitGame] = useState(null)
+  const [isListeningState, setIsListeningState] = useState(false)
+  const [isSpeakingState, setIsSpeakingState] = useState(false)
+  const [onOpenGameSettingsState, setOnOpenGameSettingsState] = useState(null)
+  const [isGamePlayingState, setIsGamePlayingState] = useState(false)
+  const [exitGameState, setExitGameState] = useState(null)
   const router = useRouter()
 
   const handleExitGame = useCallback(() => {
-    if (exitGame) {
-      exitGame();
+    if (exitGameState) {
+      exitGameState();
     }
-    setIsGamePlaying(false);
+    setIsGamePlayingState(false);
     router.push('/');
-  }, [exitGame, router]);
+  }, [exitGameState, router]);
+
+  const handleOpenUserPreferences = useCallback(() => {
+    setIsUserPreferencesOpen(true)
+  }, [])
+
+  const handleCloseUserPreferences = useCallback(() => {
+    setIsUserPreferencesOpen(false)
+  }, [])
+
+  const setIsListening = useCallback((value) => {
+    setIsListeningState(value);
+  }, []);
+
+  const setIsSpeaking = useCallback((value) => {
+    setIsSpeakingState(value);
+  }, []);
+
+  const setOnOpenGameSettings = useCallback((value) => {
+    setOnOpenGameSettingsState(value);
+  }, []);
+
+  const setIsGamePlaying = useCallback((value) => {
+    setIsGamePlayingState(value);
+  }, []);
+
+  const setExitGame = useCallback((value) => {
+    setExitGameState(value);
+  }, []);
 
   return (
     <html lang="en" className={andika.variable}>
       <body className={`font-sans h-screen overflow-hidden bg-gray-900 relative`}>
         <GameStateContext.Provider value={{ 
-          isListening, 
+          isListening: isListeningState, 
           setIsListening, 
-          isSpeaking, 
+          isSpeaking: isSpeakingState, 
           setIsSpeaking,
-          onOpenGameSettings,
+          onOpenGameSettings: onOpenGameSettingsState,
           setOnOpenGameSettings,
-          isGamePlaying,
+          isGamePlaying: isGamePlayingState,
           setIsGamePlaying,
-          exitGame,
+          exitGame: exitGameState,
           setExitGame
         }}>
           <Header
-            isListening={isListening}
-            isSpeaking={isSpeaking}
-            onOpenUserPreferences={() => setIsUserPreferencesOpen(true)}
-            onOpenGameSettings={onOpenGameSettings}
-            isGamePlaying={isGamePlaying}
+            isListening={isListeningState}
+            isSpeaking={isSpeakingState}
+            onOpenUserPreferences={handleOpenUserPreferences}
+            onOpenGameSettings={onOpenGameSettingsState}
+            isGamePlaying={isGamePlayingState}
             onExitGame={handleExitGame}
           />
           <div className="fixed-full pointer-events-none">
@@ -67,10 +95,10 @@ export default function RootLayout({ children }) {
           </main>
           <UserPreferences
             isOpen={isUserPreferencesOpen}
-            onClose={() => setIsUserPreferencesOpen(false)}
+            onClose={handleCloseUserPreferences}
           />
           <div className="fixed bottom-2 right-2 text-white text-xs opacity-50 z-[200]">
-            v0.04
+            v{process.env.NEXT_PUBLIC_APP_VERSION}
           </div>
         </GameStateContext.Provider>
       </body>
