@@ -81,7 +81,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     } else if (/\b(what|which)(?:\s+(?:shape|is|it))?/.test(lowerCommand)) {
       console.log(`${gameType} hint requested for:`, currentItem)
       const article = getArticle(currentItem);
-      speak(`The current shape is ${article} ${currentItem}.`)
+      speak(`It's ${article} ${currentItem}.`)
     } else if (/\b(?:show(?:\s+me)?|show)\s+(?:a|an?|and)?\s*(\w+)\b/.test(lowerCommand)) {
       const match = lowerCommand.match(/\b(?:show(?:\s+me)?|show)\s+(?:a|an?|and)?\s*(\w+)\b/)
       let requestedItem = match[1]
@@ -99,6 +99,10 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       } else {
         speak(`Sorry, ${requestedItem} is not in my shape list.`)
       }
+    } else if (/\b(thanks|thank\s*you)\b/i.test(lowerCommand)) {
+      const responses = ["You're welcome!", "Any time!", "I'm here for you!"];
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      speak(randomResponse);
     } else {
       const itemGuess = Object.keys(itemTable).find(item => lowerCommand.includes(item))
       if (itemGuess) {

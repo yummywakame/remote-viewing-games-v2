@@ -84,6 +84,10 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       } else {
         speak(`Sorry, ${requestedItem} is not in my ${gameType} list.`)
       }
+    } else if (/\b(thanks|thank\s*you)\b/i.test(lowerCommand)) {
+      const responses = ["You're welcome!", "Any time!", "I'm here for you!"];
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      speak(randomResponse);
     } else {
       const itemGuess = Object.keys(itemTable).find(item => lowerCommand.includes(item))
       if (itemGuess) {
@@ -224,3 +228,4 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
 });
 
 export default ColorGame;
+
