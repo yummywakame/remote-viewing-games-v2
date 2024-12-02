@@ -6,6 +6,7 @@ import { useState, createContext, useCallback } from 'react'
 import UserPreferences from './components/UserPreferences'
 import Header from './components/Header'
 import { useRouter } from 'next/navigation'
+import DOMPurify from 'dompurify';
 
 const andika = Andika({
   subsets: ['latin'],
@@ -96,6 +97,14 @@ export default function RootLayout({ children }) {
           <UserPreferences
             isOpen={isUserPreferencesOpen}
             onClose={handleCloseUserPreferences}
+            userName=""
+            voiceSpeed={1.2}
+            selectedVoice={null}
+            onUpdatePreferences={(name, speed, voice) => {
+              localStorage.setItem('userPreferencesName', DOMPurify.sanitize(name));
+              localStorage.setItem('userPreferencesVoiceSpeed', DOMPurify.sanitize(speed.toString()));
+              localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(voice?.name || ''));
+            }}
           />
           <div className="fixed bottom-2 right-2 text-white text-xs opacity-50 z-[200]">
             v{process.env.NEXT_PUBLIC_APP_VERSION}
