@@ -11,7 +11,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, selectedVoice,
   const [speed, setSpeed] = useState(1.2)
   const [voice, setVoice] = useState(selectedVoice?.name || '')
   const [voices, setVoices] = useState([])
-  const [longIntroEnabled, setLongIntroEnabled] = useState(true)
+  const [longIntroEnabled, setLongIntroEnabled] = useState(true) // Update 1: Initial state of longIntroEnabled
   const modalRef = useRef(null)
 
   useEffect(() => {
@@ -20,7 +20,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, selectedVoice,
     setVoice(selectedVoice?.name || '')
 
     const savedLongIntro = localStorage.getItem('gameLongIntro')
-    setLongIntroEnabled(savedLongIntro === null ? true : savedLongIntro !== 'false')
+    setLongIntroEnabled(savedLongIntro === 'false' ? false : true) // Update 2: Updated useEffect hook
 
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       const loadVoices = () => {
