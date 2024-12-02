@@ -5,15 +5,12 @@ import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import DOMPurify from 'isomorphic-dompurify'
 import Image from 'next/image'
-import { Switch } from '@/components/ui/switch'
 
 const ShapeGameSettings = React.memo(function ShapeGameSettings({ 
   onClose, 
   onSave: onSaveSettings, 
   itemTable, 
-  selectedItems: selectedShapes,
-  longIntroEnabled,
-  setLongIntroEnabled
+  selectedItems: selectedShapes
 }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedShapes)
   const modalRef = React.useRef(null)
@@ -34,8 +31,8 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({
 
   const onSave = React.useCallback(() => {
     onClose()
-    onSaveSettings(localSelectedItems, longIntroEnabled)
-  }, [onClose, onSaveSettings, localSelectedItems, longIntroEnabled])
+    onSaveSettings(localSelectedItems)
+  }, [onClose, onSaveSettings, localSelectedItems])
 
   const handleReset = React.useCallback(() => {
     setLocalSelectedItems(Object.keys(itemTable))
@@ -74,14 +71,6 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({
             >
               <X className="h-4 w-4" />
             </button>
-          </div>
-          
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium">Enable Long Intro</span>
-            <Switch
-              checked={longIntroEnabled}
-              onCheckedChange={setLongIntroEnabled}
-            />
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
@@ -133,20 +122,22 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({
             </p>
           )}
 
-          <div className="mt-8 pt-6 flex justify-between">
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 rounded-full border border-gray-600 text-gray-300 hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            >
-              Reset to Defaults
-            </button>
-            <button
-              onClick={onSave}
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-green-500 text-white hover:from-blue-700 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-              disabled={localSelectedItems.length <= 1}
-            >
-              Save Changes
-            </button>
+          <div className="mt-8 pt-6 border-t border-gray-700">
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 rounded-full text-gray-300 hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              >
+                Reset
+              </button>
+              <button
+                onClick={onSave}
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-green-500 text-white hover:from-blue-700 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                disabled={localSelectedItems.length <= 1}
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       </motion.div>

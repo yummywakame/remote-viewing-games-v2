@@ -4,15 +4,12 @@ import * as React from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import DOMPurify from 'isomorphic-dompurify'
-import { Switch } from '@/components/ui/switch'
 
 const ColorGameSettings = React.memo(function ColorGameSettings({ 
   onClose, 
   onSave: onSaveSettings, 
   itemTable, 
-  selectedItems: selectedColors,
-  longIntroEnabled,
-  setLongIntroEnabled
+  selectedItems: selectedColors
 }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedColors)
   const modalRef = React.useRef(null)
@@ -33,8 +30,8 @@ const ColorGameSettings = React.memo(function ColorGameSettings({
 
   const onSave = React.useCallback(() => {
     onClose()
-    onSaveSettings(localSelectedItems, longIntroEnabled)
-  }, [onClose, onSaveSettings, localSelectedItems, longIntroEnabled])
+    onSaveSettings(localSelectedItems)
+  }, [onClose, onSaveSettings, localSelectedItems])
 
   const handleReset = React.useCallback(() => {
     setLocalSelectedItems(Object.keys(itemTable))
@@ -73,14 +70,6 @@ const ColorGameSettings = React.memo(function ColorGameSettings({
             >
               <X className="h-4 w-4" />
             </button>
-          </div>
-          
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium">Enable Long Intro</span>
-            <Switch
-              checked={longIntroEnabled}
-              onCheckedChange={setLongIntroEnabled}
-            />
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
@@ -128,19 +117,21 @@ const ColorGameSettings = React.memo(function ColorGameSettings({
             </p>
           )}
 
-          <div className="mt-8 pt-6 flex justify-between">
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 rounded-full border border-[var(--gray-600)] text-[var(--gray-300)] hover:bg-[var(--gray-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            >
-              Reset to Defaults
-            </button>
-            <button
-              onClick={onSave}
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            >
-              Save Changes
-            </button>
+          <div className="mt-8 pt-6 border-t border-gray-700">
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 rounded-full text-gray-300 hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              >
+                Reset
+              </button>
+              <button
+                onClick={onSave}
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -149,3 +140,4 @@ const ColorGameSettings = React.memo(function ColorGameSettings({
 });
 
 export default ColorGameSettings;
+
