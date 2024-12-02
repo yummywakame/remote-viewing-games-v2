@@ -24,7 +24,7 @@ export default function BaseGame({
     setIsIntroComplete
   }) {
   // Context and Router
-  const { setIsListening: setGlobalIsListening, setIsSpeaking: setGlobalIsSpeaking, setOnOpenGameSettings } = useContext(GameStateContext)
+  const { setIsListening: setGlobalIsListening, setIsSpeaking: setGlobalIsSpeaking, setOnOpenGameSettings, setIsGamePlaying } = useContext(GameStateContext)
   const router = useRouter()
 
   // Refs
@@ -54,7 +54,8 @@ export default function BaseGame({
     onGameStateChange(newState)
     console.log(`Game state changed to ${newState} (${action})`)
     setIsButtonAnimated(newState === 'intro' || newState === 'playing')
-  }, [onGameStateChange])
+    setIsGamePlaying(newState === 'intro' || newState === 'playing')
+  }, [onGameStateChange, setIsGamePlaying])
 
   const updateCurrentItem = useCallback((newItem) => {
     console.log('Updating current item from:', currentItem, 'to:', newItem)
@@ -381,4 +382,3 @@ export default function BaseGame({
     </div>
   )
 }
-

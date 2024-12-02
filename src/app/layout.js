@@ -21,6 +21,7 @@ export default function RootLayout({ children }) {
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [onOpenGameSettings, setOnOpenGameSettings] = useState(null)
+  const [isGamePlaying, setIsGamePlaying] = useState(false)
 
   return (
     <html lang="en" className={andika.variable}>
@@ -31,13 +32,16 @@ export default function RootLayout({ children }) {
           isSpeaking, 
           setIsSpeaking,
           onOpenGameSettings,
-          setOnOpenGameSettings 
+          setOnOpenGameSettings,
+          isGamePlaying,
+          setIsGamePlaying
         }}>
           <Header
             isListening={isListening}
             isSpeaking={isSpeaking}
             onOpenUserPreferences={() => setIsUserPreferencesOpen(true)}
             onOpenGameSettings={onOpenGameSettings}
+            isGamePlaying={isGamePlaying}
           />
           <div className="fixed-full pointer-events-none">
             <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-gray-900 to-transparent" />
@@ -59,4 +63,3 @@ export default function RootLayout({ children }) {
     </html>
   )
 }
-

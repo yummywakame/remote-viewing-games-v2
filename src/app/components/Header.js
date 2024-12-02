@@ -1,12 +1,12 @@
 'use client'
 
 import React from 'react'
-import { motion, useAnimation } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Settings, User } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSettings }) => {
+const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSettings, isGamePlaying, onExitGame }) => {
   const pathname = usePathname()
   const isHomePage = pathname === '/'
 
@@ -18,8 +18,9 @@ const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSett
           <div className="absolute left-0 flex items-center space-x-4">
             <button
               onClick={onOpenUserPreferences}
-              className="text-gray-400 hover:text-white transition-colors"
+              className={`text-gray-400 hover:text-white transition-colors ${isGamePlaying ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Open user preferences"
+              disabled={isGamePlaying}
             >
               <User size={24} />
             </button>
@@ -29,6 +30,7 @@ const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSett
           <Link
             href="/"
             className={`text-white text-xl font-bold hover:text-gray-300 transition-colors ${isHomePage ? 'pointer-events-none' : ''}`}
+            onClick={() => !isHomePage && onExitGame()}
           >
             MindSight Games
           </Link>
