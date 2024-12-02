@@ -16,6 +16,11 @@ const itemTable = {
   'star': '/shapes/star.svg',
 };
 
+// Helper function to determine the correct article
+const getArticle = (shape) => {
+  return ['oval'].includes(shape) ? 'an' : 'a';
+};
+
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
   const [isIntroComplete, setIsIntroComplete] = useState(false);
@@ -60,38 +65,47 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const handleVoiceCommand = useCallback((command, currentItem, speak, selectNewItem, endGame, gameType) => {
     console.log(`Voice command received for ${gameType} game:`, command, 'Current item:', currentItem)
     const lowerCommand = command.toLowerCase()
-    
+  
     if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
       console.log('Next command detected')
       const newItem = selectNewItem()
       console.log(`New ${gameType} after next command:`, newItem)
-      speak(`What ${DOMPurify.sanitize(gameType.toLowerCase())} is this?`)
+      speak(`What shape is this?`)
       return newItem
     } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
       console.log('Stop command detected')
       endGame()
     } else if (/\b(help|instructions)\b/.test(lowerCommand)) {
       console.log('Help requested')
-      speak(`To proceed to the next ${gameType} say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what ${gameType} is it?'. To display any ${gameType} say 'show me', followed by the ${gameType} you want to see.`)
-    } else if (new RegExp(`\\b(what|which)(?:\\s+(?:${gameType}|is|it))?\\b`).test(lowerCommand)) {
+      speak(`To proceed to the next shape say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what shape is it?'. To display any shape say 'show me', followed by the shape you want to see.`)
+    } else if (/\b(what|which)(?:\s+(?:shape|is|it))?/.test(lowerCommand)) {
       console.log(`${gameType} hint requested for:`, currentItem)
-      speak(`The current ${gameType} is ${currentItem}.`)
-    } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
-      const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
-      const requestedItem = match[2]
+      const article = getArticle(currentItem);
+      speak(`The current shape is ${article} ${currentItem}.`)
+    } else if (/\b(?:show(?:\s+me)?|show)\s+(?:a|an?|and)?\s*(\w+)\b/.test(lowerCommand)) {
+      const match = lowerCommand.match(/\b(?:show(?:\s+me)?|show)\s+(?:a|an?|and)?\s*(\w+)\b/)
+      let requestedItem = match[1]
+      
+      // Special handling for "an oval"
+      if (requestedItem === 'n' && lowerCommand.includes('oval')) {
+        requestedItem = 'oval'
+      }
+      
       console.log(`Show ${gameType} requested:`, requestedItem)
       if (Object.prototype.hasOwnProperty.call(itemTable, requestedItem)) {
-        speak(`Showing ${requestedItem}.`)
+        const article = getArticle(requestedItem);
+        speak(`Showing ${article} ${requestedItem}.`)
         return requestedItem
       } else {
-        speak(`Sorry, ${requestedItem} is not in my ${gameType} list.`)
+        speak(`Sorry, ${requestedItem} is not in my shape list.`)
       }
     } else {
       const itemGuess = Object.keys(itemTable).find(item => lowerCommand.includes(item))
       if (itemGuess) {
         console.log(`${gameType} guess:`, itemGuess, `Current ${gameType}:`, currentItem)
         if (itemGuess === currentItem) {
-          speak(`Well done! The ${gameType} is ${currentItem}.`)
+          const article = getArticle(currentItem);
+          speak(`Well done! It's ${article} ${currentItem}.`)
         } else {
           speak("Try again!")
         }
