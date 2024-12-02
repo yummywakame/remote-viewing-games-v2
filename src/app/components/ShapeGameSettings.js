@@ -5,7 +5,6 @@ import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import DOMPurify from 'isomorphic-dompurify'
 import Image from 'next/image'
-import { Switch } from '@/components/ui/switch'
 
 const ShapeGameSettings = React.memo(function ShapeGameSettings({ 
   onClose, 
@@ -56,7 +55,7 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({
     >
       <motion.div
         ref={modalRef}
-        className="bg-[var(--gray-800)] text-white rounded-xl shadow-lg w-[400px] overflow-hidden"
+        className="bg-[#1F2937] text-white rounded-xl shadow-lg w-[400px] overflow-hidden"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
@@ -80,7 +79,7 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({
                 key={item}
                 className={`
                   relative p-4 rounded-lg cursor-pointer
-                  transition-all duration-200
+                  transition-all duration-200 flex items-center
                   ${localSelectedItems.includes(item) ? 'ring-2 ring-offset-2 ring-offset-gray-800 bg-gray-700' : 'ring-1 ring-gray-600'}
                   hover:ring-2 hover:ring-offset-2 hover:ring-offset-gray-800
                 `}
@@ -93,19 +92,18 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({
                   disabled={localSelectedItems.length <= 2 && localSelectedItems.includes(item)}
                   aria-label={`Select ${item} shape`}
                 />
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <Image
-                      src={`${shape}`}
-                      alt={item}
-                      width={32}
-                      height={32}
-                    />
-                  </div>
-                  <span className="capitalize font-medium">
-                    {DOMPurify.sanitize(item)}
-                  </span>
+                <div className="w-8 h-8 flex items-center justify-center mr-3">
+                  <Image
+                    src={`${shape}`}
+                    alt={item}
+                    width={32}
+                    height={32}
+                    className="[&>svg]:text-white [&>svg]:fill-white [&>svg]:stroke-white invert"
+                  />
                 </div>
+                <span className="capitalize font-medium">
+                  {DOMPurify.sanitize(item)}
+                </span>
                 {localSelectedItems.includes(item) && (
                   <motion.div
                     className="absolute inset-0 rounded-lg bg-white/10"
@@ -118,7 +116,6 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({
             ))}
           </div>
 
-
           {localSelectedItems.length <= 1 && (
             <p className="text-sm text-red-400 mb-6">
               You must select at least two shapes.
@@ -128,7 +125,7 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({
           <div className="mt-8 pt-6 flex justify-between">
             <button
               onClick={handleReset}
-              className="px-4 py-2 rounded-full border border-[var(--gray-600)] text-[var(--gray-300)] hover:bg-[var(--gray-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="px-4 py-2 rounded-full border border-gray-600 text-gray-300 hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
               Reset to Defaults
             </button>
