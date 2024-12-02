@@ -149,4 +149,3 @@ const ColorGameSettings = React.memo(function ColorGameSettings({
 });
 
 export default ColorGameSettings;
-

@@ -21,6 +21,9 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [longIntroEnabled, setLongIntroEnabled] = useState(true);
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
   const [isIntroComplete, setIsIntroComplete] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [voiceSpeed, setVoiceSpeed] = useState(1.2);
+  const [selectedVoice, setSelectedVoice] = useState(null);
 
   useEffect(() => {
     const savedItems = localStorage.getItem('colorGameSelectedItems');
@@ -37,6 +40,19 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     }
     const savedLongIntro = localStorage.getItem('gameLongIntro');
     setLongIntroEnabled(savedLongIntro !== 'false');
+
+    const savedName = localStorage.getItem('userPreferencesName') || '';
+    const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2;
+    const savedVoiceName = localStorage.getItem('userPreferencesVoiceName');
+    
+    setUserName(DOMPurify.sanitize(savedName));
+    setVoiceSpeed(savedVoiceSpeed);
+
+    if (savedVoiceName && window.speechSynthesis) {
+      const voices = window.speechSynthesis.getVoices();
+      const voice = voices.find(v => v.name === DOMPurify.sanitize(savedVoiceName));
+      setSelectedVoice(voice || null);
+    }
   }, []);
 
   const handleVoiceCommand = useCallback((command, currentItem, speak, selectNewItem, endGame, gameType) => {
@@ -167,6 +183,15 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     localStorage.setItem('gameLongIntro', DOMPurify.sanitize(String(longIntroEnabled)));
   }, [longIntroEnabled]);
 
+  const handleUpdateUserPreferences = useCallback((newName, newVoiceSpeed, newVoice) => {
+    setUserName(newName);
+    setVoiceSpeed(newVoiceSpeed);
+    setSelectedVoice(newVoice);
+    localStorage.setItem('userPreferencesName', DOMPurify.sanitize(newName));
+    localStorage.setItem('userPreferencesVoiceSpeed', DOMPurify.sanitize(newVoiceSpeed.toString()));
+    localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(newVoice?.name || ''));
+  }, []);
+
   return (
     <BaseGame
       GameSettings={(props) => (
@@ -190,9 +215,12 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       isIntroComplete={isIntroComplete}
       setIsIntroComplete={setIsIntroComplete}
       backgroundMode="light"
+      userName={userName}
+      voiceSpeed={voiceSpeed}
+      selectedVoice={selectedVoice}
+      onUpdateUserPreferences={handleUpdateUserPreferences}
     />
   )
 });
 
 export default ColorGame;
-

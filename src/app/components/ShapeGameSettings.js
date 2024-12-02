@@ -5,12 +5,15 @@ import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import DOMPurify from 'isomorphic-dompurify'
 import Image from 'next/image'
+import { Switch } from '@/components/ui/switch'
 
 const ShapeGameSettings = React.memo(function ShapeGameSettings({ 
   onClose, 
   onSave: onSaveSettings, 
   itemTable, 
   selectedItems: selectedShapes,
+  longIntroEnabled,
+  setLongIntroEnabled
 }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedShapes)
   const modalRef = React.useRef(null)
@@ -31,8 +34,8 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({
 
   const onSave = React.useCallback(() => {
     onClose()
-    onSaveSettings(localSelectedItems)
-  }, [onClose, onSaveSettings, localSelectedItems])
+    onSaveSettings(localSelectedItems, longIntroEnabled)
+  }, [onClose, onSaveSettings, localSelectedItems, longIntroEnabled])
 
   const handleReset = React.useCallback(() => {
     setLocalSelectedItems(Object.keys(itemTable))
@@ -73,6 +76,14 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({
             </button>
           </div>
           
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm font-medium">Enable Long Intro</span>
+            <Switch
+              checked={longIntroEnabled}
+              onCheckedChange={setLongIntroEnabled}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4 mb-6">
             {Object.entries(itemTable).map(([item, shape]) => (
               <label
