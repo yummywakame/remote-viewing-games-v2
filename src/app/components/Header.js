@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { motion } from 'framer-motion'
+import { motion, useAnimation } from 'framer-motion'
 import { Settings, User } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -49,10 +49,16 @@ const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSett
                     onClick={onOpenGameSettings}
                     className="text-gray-400 hover:text-white transition-colors"
                     aria-label="Open game settings"
-                    whileHover={{ rotate: 90 }}
-                    transition={{ duration: 0.2 }}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <Settings size={24} />
+                    <motion.div
+                      animate={{ rotate: 0 }}
+                      whileHover={{ rotate: 180 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Settings size={24} />
+                    </motion.div>
                   </motion.button>
                 )}
               </>

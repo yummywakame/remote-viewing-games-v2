@@ -121,7 +121,7 @@ const ColorGameSettings = React.memo(function ColorGameSettings({ onClose, onSav
             </button>
             <button
               onClick={onSave}
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white hover:from-[var(--purple-700)] hover:to-[var(--blue-700)] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-[var(--purple-600)] to-[var(--blue-600)] text-white hover:bg-black transition-all duration-500 bg-[length:200%_200%] bg-[100%] hover:bg-[0%] shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
               Save Changes
             </button>
