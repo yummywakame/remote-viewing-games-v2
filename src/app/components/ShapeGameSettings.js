@@ -35,7 +35,7 @@ const ShapeGameSettings = React.memo(function ShapeGameSettings({
   }, [onClose, onSaveSettings, localSelectedItems])
 
   const handleReset = React.useCallback(() => {
-    setLocalSelectedItems(Object.keys(itemTable))
+    setLocalSelectedItems(Object.keys(itemTable));
   }, [itemTable])
 
   const handleOutsideClick = React.useCallback((e) => {

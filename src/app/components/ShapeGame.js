@@ -9,17 +9,11 @@ import DOMPurify from 'isomorphic-dompurify'
 
 const itemTable = {
   'triangle': '/shapes/triangle.svg',
-  'triangle-outline': '/shapes/triangle-outline.svg',
   'square': '/shapes/square.svg',
-  'square-outline': '/shapes/square-outline.svg',
   'circle': '/shapes/circle.svg',
-  'circle-outline': '/shapes/circle-outline.svg',
   'oval': '/shapes/oval.svg',
-  'oval-outline': '/shapes/oval-outline.svg',
   'diamond': '/shapes/diamond.svg',
-  'diamond-outline': '/shapes/diamond-outline.svg',
   'star': '/shapes/star.svg',
-  'star-outline': '/shapes/star-outline.svg',
 };
 
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
@@ -35,11 +29,15 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     if (savedItems) {
       try {
         const parsedItems = JSON.parse(savedItems);
-        if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
-          setSelectedItems(parsedItems);
+        const validItems = parsedItems.filter(item => Object.keys(itemTable).includes(item));
+        if (validItems.length >= 2) {
+          setSelectedItems(validItems);
+        } else {
+          setSelectedItems(Object.keys(itemTable));
         }
       } catch (error) {
         console.error('Error parsing saved items:', error);
+        setSelectedItems(Object.keys(itemTable));
       }
     }
     const savedLongIntro = localStorage.getItem('gameLongIntro');
