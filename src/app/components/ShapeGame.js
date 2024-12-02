@@ -18,7 +18,8 @@ const itemTable = {
 
 // Helper function to determine the correct article
 const getArticle = (shape) => {
-  return ['oval'].includes(shape) ? 'an' : 'a';
+  const vowels = ['a', 'e', 'i', 'o', 'u'];
+  return vowels.includes(shape.toLowerCase()[0]) ? 'an' : 'a';
 };
 
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
@@ -82,14 +83,12 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       console.log(`${gameType} hint requested for:`, currentItem)
       const article = getArticle(currentItem);
       speak(`It's ${article} ${currentItem}.`)
-    } else if (/\b(?:show(?:\s+me)?|show)\s+(?:a|an?|and)?\s*(\w+)\b/.test(lowerCommand)) {
-      const match = lowerCommand.match(/\b(?:show(?:\s+me)?|show)\s+(?:a|an?|and)?\s*(\w+)\b/)
-      let requestedItem = match[1]
+    } else if (/\b(?:show(?:\s+me)?|show)\s+(?:a|an?|n)?\s*(.+)\b/i.test(lowerCommand)) {
+      const match = lowerCommand.match(/\b(?:show(?:\s+me)?|show)\s+(?:a|an?|n)?\s*(.+)\b/i)
+      let requestedItem = match[1].trim().toLowerCase()
       
-      // Special handling for "an oval"
-      if (requestedItem === 'n' && lowerCommand.includes('oval')) {
-        requestedItem = 'oval'
-      }
+      // Remove "a", "an", or "n" if it's at the beginning of the requestedItem
+      requestedItem = requestedItem.replace(/^(a|an?|n)\s+/, '')
       
       console.log(`Show ${gameType} requested:`, requestedItem)
       if (Object.prototype.hasOwnProperty.call(itemTable, requestedItem)) {
@@ -97,7 +96,8 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
         speak(`Showing ${article} ${requestedItem}.`)
         return requestedItem
       } else {
-        speak(`Sorry, ${requestedItem} is not in my shape list.`)
+        const article = getArticle(requestedItem);
+        speak(`Sorry, ${article} ${requestedItem} is not in my shape list.`)
       }
     } else if (/\b(thanks|thank\s*you)\b/i.test(lowerCommand)) {
       const responses = ["You're welcome!", "Any time!", "I'm here for you!"];
