@@ -163,9 +163,10 @@ export default function BaseGame({
       stopListening()
       console.log('Started speaking')
       const utterance = new SpeechSynthesisUtterance(DOMPurify.sanitize(text))
-      if (selectedVoice) {
-        utterance.voice = selectedVoice
-      }
+      const voices = speechSynthesis.current.getVoices()
+      const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
+      const savedVoice = voices.find(v => v.name === savedVoiceName)
+      utterance.voice = savedVoice || voices[0]
       utterance.rate = voiceSpeed
       utterance.onend = () => {
         console.log('Finished speaking')
@@ -251,8 +252,13 @@ export default function BaseGame({
       const loadVoices = () => {
         const voices = speechSynthesis.current.getVoices()
         if (voices.length > 0) {
-          const utterance = new SpeechSynthesisUtterance()
-          utterance.voice = voices[0]
+          const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
+          if (savedVoiceName) {
+            const savedVoice = voices.find(v => v.name === savedVoiceName)
+            if (savedVoice) {
+              selectedVoice = savedVoice
+            }
+          }
         }
       }
       loadVoices()
@@ -305,6 +311,12 @@ export default function BaseGame({
 
     return () => setExitGame(null)
   }, [setExitGame, endGame])
+
+  useEffect(() => {
+    if (selectedVoice) {
+      localStorage.setItem('userPreferencesVoiceName', selectedVoice.name)
+    }
+  }, [selectedVoice])
 
   // Render
   return (
