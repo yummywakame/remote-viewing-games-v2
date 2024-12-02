@@ -67,7 +67,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       console.log('Next command detected')
       const newItem = selectNewItem()
       console.log(`New ${gameType} after next command:`, newItem)
-      speak(`What ${gameType.toLowerCase()} is this?`)
+      speak(`What ${DOMPurify.sanitize(gameType.toLowerCase())} is this?`)
       return newItem
     } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
       console.log('Stop command detected')
@@ -129,7 +129,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
             animate={{ y: 0 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
           >
-            {gameType} Game
+            {DOMPurify.sanitize(gameType)} Game
           </motion.h2>
           <motion.p 
             className="game-description text-white mb-8"
@@ -207,7 +207,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
           setLongIntroEnabled={setLongIntroEnabled}
         />
       )}
-      gameType="Shape"
+      gameType={DOMPurify.sanitize("Shape")}
       onGameStateChange={onGameStateChange}
       renderGameContent={renderGameContent}
       handleVoiceCommand={handleVoiceCommand}
@@ -228,3 +228,4 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
 });
 
 export default ShapeGame;
+
