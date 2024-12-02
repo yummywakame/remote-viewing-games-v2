@@ -219,4 +219,3 @@ const UserPreferences = memo(function UserPreferences({ isOpen, onClose }) {
 UserPreferences.displayName = 'UserPreferences';
 
 export default UserPreferences;
-

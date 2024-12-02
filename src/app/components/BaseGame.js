@@ -18,7 +18,6 @@ export default function BaseGame({
     handleVoiceCommand,
     selectNewItem,
     itemTable,
-    longIntroEnabled,
     backgroundMode,
     isIntroComplete,
     setIsIntroComplete
@@ -53,6 +52,7 @@ export default function BaseGame({
   const [voiceSpeed, setVoiceSpeed] = useState(1.2)
   const [selectedVoice, setSelectedVoice] = useState(null)
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
+  const [longIntroEnabled, setLongIntroEnabled] = useState(true)
 
   // Core utility functions
   const setAndLogGameState = useCallback((newState, action) => {
@@ -247,11 +247,7 @@ export default function BaseGame({
       `${gameType.toLowerCase()}GameSelectedItems`, 
       DOMPurify.sanitize(JSON.stringify(selectedItems))
     )
-    localStorage.setItem(
-      `${gameType.toLowerCase()}GameLongIntro`, 
-      DOMPurify.sanitize(longIntroEnabled.toString())
-    )
-  }, [userName, voiceSpeed, selectedVoice, selectedItems, longIntroEnabled, gameType])
+  }, [userName, voiceSpeed, selectedVoice, selectedItems, gameType])
 
   // Effects
   useEffect(() => {
@@ -274,9 +270,11 @@ export default function BaseGame({
     const savedName = localStorage.getItem('userPreferencesName') || ''
     const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2
     const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
+    const savedLongIntro = localStorage.getItem('gameLongIntro')
     
     setUserName(DOMPurify.sanitize(savedName))
     setVoiceSpeed(savedVoiceSpeed)
+    setLongIntroEnabled(savedLongIntro !== 'false')
 
     if (savedVoiceName && speechSynthesis.current) {
       const voices = speechSynthesis.current.getVoices()
@@ -382,7 +380,6 @@ export default function BaseGame({
             onSave={handleSaveSettings}
             itemTable={itemTable}
             selectedItems={selectedItems}
-            longIntroEnabled={longIntroEnabled}
           />
         )}
       </AnimatePresence>
@@ -396,4 +393,3 @@ export default function BaseGame({
     </div>
   )
 }
-
