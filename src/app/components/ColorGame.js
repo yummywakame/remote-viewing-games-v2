@@ -2,51 +2,41 @@
 
 import React, { useCallback, useState, useEffect, memo } from 'react'
 import BaseGame from './BaseGame'
-import ShapeGameSettings from './ShapeGameSettings'
+import ColorGameSettings from './ColorGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
 import DOMPurify from 'isomorphic-dompurify'
 
 const itemTable = {
-  'triangle': '/shapes/triangle.svg',
-  'triangle-outline': '/shapes/triangle-outline.svg',
-  'square': '/shapes/square.svg',
-  'square-outline': '/shapes/square-outline.svg',
-  'circle': '/shapes/circle.svg',
-  'circle-outline': '/shapes/circle-outline.svg',
-  'oval': '/shapes/oval.svg',
-  'oval-outline': '/shapes/oval-outline.svg',
-  'diamond': '/shapes/diamond.svg',
-  'diamond-outline': '/shapes/diamond-outline.svg',
-  'star': '/shapes/star.svg',
-  'star-outline': '/shapes/star-outline.svg',
+  yellow: '#FFD700',
+  green: '#008000',
+  blue: '#1E90FF',
+  purple: '#6A5ACD',
+  pink: '#FF00FF',
+  red: '#DC143C',
+  orange: '#FF7F50',
 };
 
-const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
+const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
+  const [longIntroEnabled, setLongIntroEnabled] = useState(true);
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
   const [isIntroComplete, setIsIntroComplete] = useState(false);
-  const [longIntroEnabled, setLongIntroEnabled] = useState(false); // Added state for long intro
 
   useEffect(() => {
-    const savedItems = localStorage.getItem('shapeGameSelectedItems');
+    const savedItems = localStorage.getItem('colorGameSelectedItems');
     if (savedItems) {
       try {
         const parsedItems = JSON.parse(savedItems);
         if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
           setSelectedItems(parsedItems);
+          console.log("Loaded selected items:", parsedItems);
         }
       } catch (error) {
         console.error('Error parsing saved items:', error);
       }
     }
-    const savedLongIntro = localStorage.getItem('shapeGameLongIntro');
-    if (savedLongIntro) {
-      try {
-        setLongIntroEnabled(JSON.parse(savedLongIntro));
-      } catch (error) {
-        console.error('Error parsing saved long intro:', error);
-      }
-    }
+    const savedLongIntro = localStorage.getItem('gameLongIntro');
+    setLongIntroEnabled(savedLongIntro !== 'false');
   }, []);
 
   const handleVoiceCommand = useCallback((command, currentItem, speak, selectNewItem, endGame, gameType) => {
@@ -131,7 +121,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
           </motion.p>
           <motion.button
             onClick={startGame}
-            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-green-500 text-white font-medium text-lg hover:from-blue-700 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -156,7 +146,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
         >
           <motion.button
             onClick={endGame}
-            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-green-500 text-white font-medium text-lg hover:from-blue-700 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -172,21 +162,23 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const handleSaveSettings = useCallback((newSelectedItems) => {
     console.log("Saving new selected items:", newSelectedItems);
     setSelectedItems(newSelectedItems);
-    localStorage.setItem('shapeGameSelectedItems', JSON.stringify(newSelectedItems));
+    localStorage.setItem('colorGameSelectedItems', JSON.stringify(newSelectedItems));
     
-    localStorage.setItem('shapeGameLongIntro', DOMPurify.sanitize(String(longIntroEnabled)));
+    localStorage.setItem('gameLongIntro', DOMPurify.sanitize(String(longIntroEnabled)));
   }, [longIntroEnabled]);
 
   return (
     <BaseGame
       GameSettings={(props) => (
-        <ShapeGameSettings
+        <ColorGameSettings
           {...props}
           selectedItems={selectedItems}
           onSave={handleSaveSettings}
+          longIntroEnabled={longIntroEnabled}
+          setLongIntroEnabled={setLongIntroEnabled}
         />
       )}
-      gameType="Shape"
+      gameType="Color"
       onGameStateChange={onGameStateChange}
       renderGameContent={renderGameContent}
       handleVoiceCommand={handleVoiceCommand}
@@ -197,10 +189,10 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       onSaveSettings={handleSaveSettings}
       isIntroComplete={isIntroComplete}
       setIsIntroComplete={setIsIntroComplete}
-      backgroundMode="dark"
+      backgroundMode="light"
     />
   )
 });
 
-export default ShapeGame;
+export default ColorGame;
 

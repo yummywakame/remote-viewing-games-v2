@@ -25,7 +25,7 @@ const itemTable = {
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
   const [isIntroComplete, setIsIntroComplete] = useState(false);
-  const [longIntroEnabled, setLongIntroEnabled] = useState(false); // Added state for long intro
+  const [longIntroEnabled, setLongIntroEnabled] = useState(false);
 
   useEffect(() => {
     const savedItems = localStorage.getItem('shapeGameSelectedItems');
@@ -39,14 +39,8 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
         console.error('Error parsing saved items:', error);
       }
     }
-    const savedLongIntro = localStorage.getItem('shapeGameLongIntro');
-    if (savedLongIntro) {
-      try {
-        setLongIntroEnabled(JSON.parse(savedLongIntro));
-      } catch (error) {
-        console.error('Error parsing saved long intro:', error);
-      }
-    }
+    const savedLongIntro = localStorage.getItem('gameLongIntro');
+    setLongIntroEnabled(savedLongIntro !== 'false');
   }, []);
 
   const handleVoiceCommand = useCallback((command, currentItem, speak, selectNewItem, endGame, gameType) => {
@@ -174,7 +168,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     setSelectedItems(newSelectedItems);
     localStorage.setItem('shapeGameSelectedItems', JSON.stringify(newSelectedItems));
     
-    localStorage.setItem('shapeGameLongIntro', DOMPurify.sanitize(String(longIntroEnabled)));
+    localStorage.setItem('gameLongIntro', DOMPurify.sanitize(String(longIntroEnabled)));
   }, [longIntroEnabled]);
 
   return (
