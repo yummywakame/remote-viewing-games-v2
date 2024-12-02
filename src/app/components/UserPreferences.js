@@ -11,31 +11,43 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, selectedVoice,
   const [speed, setSpeed] = useState(1.2)
   const [voice, setVoice] = useState(selectedVoice?.name || '')
   const [voices, setVoices] = useState([])
-  const [longIntroEnabled, setLongIntroEnabled] = useState(true) // Update 1: Initial state of longIntroEnabled
+  const [longIntroEnabled, setLongIntroEnabled] = useState(true) 
   const modalRef = useRef(null)
 
   useEffect(() => {
-    setName(userName || '')
-    setSpeed(typeof voiceSpeed === 'number' ? voiceSpeed : 1.2)
-    setVoice(selectedVoice?.name || '')
-
+    const savedName = localStorage.getItem('userPreferencesName') || ''
+    const savedSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2
+    const savedVoice = localStorage.getItem('userPreferencesVoiceName') || ''
     const savedLongIntro = localStorage.getItem('gameLongIntro')
-    setLongIntroEnabled(savedLongIntro === 'false' ? false : true) // Update 2: Updated useEffect hook
+
+    setName(DOMPurify.sanitize(savedName))
+    setSpeed(savedSpeed)
+    setVoice(savedVoice)
+    setLongIntroEnabled(savedLongIntro === 'false' ? false : true)
 
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       const loadVoices = () => {
         const availableVoices = window.speechSynthesis.getVoices()
         setVoices(availableVoices)
+        if (savedVoice) {
+          const selectedVoice = availableVoices.find(v => v.name === savedVoice)
+          if (selectedVoice) {
+            setVoice(selectedVoice.name)
+          }
+        }
       }
 
       loadVoices()
       window.speechSynthesis.onvoiceschanged = loadVoices
     }
-  }, [userName, voiceSpeed, selectedVoice])
+  }, [])
 
   const handleSave = useCallback(() => {
     const newVoice = voices.find(v => v.name === voice) || null
     onUpdatePreferences(name, speed, newVoice)
+    localStorage.setItem('userPreferencesName', DOMPurify.sanitize(name))
+    localStorage.setItem('userPreferencesVoiceSpeed', DOMPurify.sanitize(speed.toString()))
+    localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(voice))
     localStorage.setItem('gameLongIntro', DOMPurify.sanitize(longIntroEnabled.toString()))
     onClose()
   }, [name, speed, voice, voices, longIntroEnabled, onUpdatePreferences, onClose])
