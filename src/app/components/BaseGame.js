@@ -48,7 +48,7 @@ export default function BaseGame({
   const [currentItem, setCurrentItem] = useState(null)
   const [isListening, setIsListeningLocal] = useState(false)
   const [isSpeakingLocal, setIsSpeakingLocal] = useState(false)
-  const [lastHeardWord, setLastHeardWord] = useState('')
+  const [lastHeardWord, setLastHeardWord] = useState('') // Added
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
@@ -97,15 +97,17 @@ export default function BaseGame({
     setGlobalIsSpeaking,
     setGlobalIsListening,
     setIsListeningLocal,
-    handleVoiceCommand,
+    handleVoiceCommand: (command, ...args) => {
+      setLastHeardWord(command);
+      return handleVoiceCommand(command, ...args);
+    },
     currentItemRef,
     selectedItems,
     updateCurrentItem,
     endGame,
     gameType,
     voiceSpeed,
-    selectedVoice,
-    selectNewItem  // Add this line
+    selectedVoice
 })
 
   // Core utility functions
@@ -225,8 +227,8 @@ export default function BaseGame({
           />
         )}
       </AnimatePresence>
-      {gameState !== 'initial' && (
-        <FloatingBubble word={lastHeardWord} />
+      {gameState !== 'initial' && ( // Updated
+        <FloatingBubble word={lastHeardWord} /> // Updated
       )}
       <UserPreferences
         isOpen={isUserPreferencesOpen}
