@@ -10,6 +10,7 @@ import { GameStateContext } from '../layout'
 import DOMPurify from 'isomorphic-dompurify'
 import Promise from 'promise';
 import { sanitizeInput, selectNewItem } from '@/utils/gameUtils'
+import SpeechHandler from './SpeechHandler'
 
 export default function BaseGame({ 
   GameSettings,
@@ -40,10 +41,7 @@ export default function BaseGame({
   const router = useRouter()
 
   // Refs
-  const speechSynthesis = useRef(null)
-  const recognition = useRef(null)
   const currentItemRef = useRef(null)
-  const startListeningRef = useRef(null)
 
   // State
   const [gameState, setGameState] = useState('initial')
@@ -55,6 +53,12 @@ export default function BaseGame({
   const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
 
+  const updateCurrentItem = useCallback((newItem) => {
+    console.log('Updating current item from:', currentItem, 'to:', newItem)
+    setCurrentItem(newItem)
+    currentItemRef.current = newItem
+  }, [currentItem])
+
   // Core utility functions
   const setAndLogGameState = useCallback((newState, action) => {
     setGameState(newState)
@@ -64,149 +68,14 @@ export default function BaseGame({
     setIsGamePlaying(newState === 'intro' || newState === 'playing')
   }, [onGameStateChange, setIsGamePlaying])
 
-  const updateCurrentItem = useCallback((newItem) => {
-    console.log('Updating current item from:', currentItem, 'to:', newItem)
-    setCurrentItem(newItem)
-    currentItemRef.current = newItem
-  }, [currentItem])
-
-  // Speech control functions
-  const stopListening = useCallback(() => {
-    if (recognition.current) {
-      recognition.current.stop()
-    }
-    console.log('Setting isListening to false')
-    setGlobalIsListening(false)
-    setIsListeningLocal(false)
-  }, [setGlobalIsListening])
-
-  const cancelSpeech = useCallback(() => {
-    if (speechSynthesis.current) {
-      speechSynthesis.current.cancel()
-    }
-    setGlobalIsSpeaking(false)
-    setIsSpeakingLocal(false)
-  }, [setGlobalIsSpeaking])
-
-  // Initialize startListening ref early
-  startListeningRef.current = () => {
-    if (gameState !== 'playing' || isSpeakingLocal) {
-      console.log('Not starting listening because game state is not playing or is currently speaking')
-      return
-    }
-
-    if (!recognition.current) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      recognition.current = new SpeechRecognition()
-      recognition.current.continuous = false 
-      recognition.current.interimResults = false
-      recognition.current.lang = 'en-US'
-
-      recognition.current.onresult = (event) => {
-        const last = event.results.length - 1
-        const transcript = event.results[last][0].transcript.trim().toLowerCase()
-        setLastHeardWord(transcript)
-        console.log('Voice command received with current item:', currentItemRef.current)
-        const newItem = handleVoiceCommand(
-          transcript, 
-          currentItemRef.current, 
-          speak, 
-          () => selectNewItem(selectedItems, currentItemRef.current, updateCurrentItem),
-          endGame,
-          gameType
-        )
-        if (newItem) {
-          console.log('Updating item from voice command to:', newItem)
-          updateCurrentItem(newItem)
-        }
-      }
-
-      recognition.current.onstart = () => {
-        console.log('Speech recognition started')
-        setGlobalIsListening(true)
-        setIsListeningLocal(true)
-      }
-
-      recognition.current.onend = () => {
-        console.log('Speech recognition ended')
-        setGlobalIsListening(false)
-        setIsListeningLocal(false)
-        if (gameState === 'playing' && !isSpeakingLocal) {
-          startListeningRef.current()
-        }
-      }
-
-      recognition.current.onerror = (event) => {
-        console.log('Speech recognition error:', event.error)
-        // Only handle non-no-speech errors
-        if (event.error !== 'no-speech') {
-          console.error('Speech recognition error:', event.error)
-          setGlobalIsListening(false)
-          setIsListeningLocal(false)
-          if (gameState === 'playing' && !isSpeakingLocal) {
-            startListeningRef.current()
-          }
-        }
-      }
-    }
-
-    if (!isListening && !isSpeakingLocal && gameState === 'playing') {
-      console.log('Starting speech recognition')
-      try {
-        recognition.current.start()
-      } catch (error) {
-        if (error.name === 'InvalidStateError') {
-          console.log('Speech recognition is already started')
-        } else {
-          console.error('Error starting speech recognition:', error)
-          setGlobalIsListening(false)
-          setIsListeningLocal(false)
-        }
-      }
-    }
-  }
-
-  // Define speak function with access to startListeningRef
-  const speak = useCallback((text) => {
-    return new Promise((resolve) => {
-      if (typeof window === 'undefined' || !speechSynthesis.current) {
-        resolve()
-        return
-      }
-      setGlobalIsSpeaking(true)
-      setIsSpeakingLocal(true)
-      stopListening()
-      console.log('Started speaking')
-      const utterance = new SpeechSynthesisUtterance(sanitizeInput(text))
-      const voices = speechSynthesis.current.getVoices()
-      const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
-      const savedVoice = voices.find(v => v.name === savedVoiceName)
-      utterance.voice = savedVoice || voices[0]
-      utterance.rate = voiceSpeed
-      utterance.onend = () => {
-        console.log('Finished speaking')
-        setGlobalIsSpeaking(false)
-        setIsSpeakingLocal(false)
-        if (gameState === 'playing') {
-          setTimeout(() => {
-            startListeningRef.current()
-          }, 100) 
-        }
-        resolve()
-      }
-      speechSynthesis.current.speak(utterance)
-    })
-  }, [selectedVoice, voiceSpeed, setGlobalIsSpeaking, stopListening, gameState])
-
-  // Game control functions
   const endGame = useCallback(async () => {
     console.log('Ending game...')
-    cancelSpeech()
-    stopListening()
+    if (cancelSpeech) cancelSpeech()
+    if (stopListening) stopListening()
     setAndLogGameState('ending', 'end game')
     updateCurrentItem(null)
     setLastHeardWord('')
-    await speak("Thank you for playing!")
+    if (speak) await speak("Thank you for playing!")
     setAndLogGameState('initial', 'game ended')
     setIsIntroComplete(false)
     
@@ -217,14 +86,32 @@ export default function BaseGame({
       }
     }
     
-    if (recognition.current) {
-      recognition.current.onend = null
-      recognition.current.stop()
-      recognition.current = null
-    }
-    
     router.push('/')
-  }, [cancelSpeech, stopListening, setAndLogGameState, speak, router, updateCurrentItem, setIsIntroComplete])
+  }, [setAndLogGameState, updateCurrentItem, setIsIntroComplete, router])
+
+  // Speech control functions
+  const { speak, stopListening, cancelSpeech, startListening } = SpeechHandler({
+    gameState,
+    isSpeakingLocal,
+    setIsSpeakingLocal,
+    setGlobalIsSpeaking,
+    setGlobalIsListening,
+    setIsListeningLocal,
+    handleVoiceCommand,
+    currentItemRef,
+    selectedItems,
+    updateCurrentItem,
+    endGame,
+    gameType,
+    voiceSpeed,
+    selectedVoice,
+    selectNewItem  // Add this line
+})
+
+  // Core utility functions
+
+
+  // Initialize startListening ref early
 
   const handleNextItem = useCallback(async () => {
     if (gameState === 'playing' && !isSpeakingLocal) {
@@ -247,10 +134,14 @@ export default function BaseGame({
     const newItem = await selectNewItem(selectedItems, currentItem, updateCurrentItem)
     updateCurrentItem(newItem)
     await speak(`What ${gameType.toLowerCase()} is this?`)
-    startListeningRef.current()
+    startListening()
   }, [setAndLogGameState, speak, selectNewItem, userName, gameType, selectedItems, currentItem, updateCurrentItem, longIntroEnabled, setIsIntroComplete])
 
-  // Event handlers
+
+  // Speech control functions
+
+  // Game control functions
+
   const handleBackgroundClick = useCallback(() => {
     if (gameState === 'playing') {
       console.log('Background clicked, triggering next item')
@@ -264,52 +155,10 @@ export default function BaseGame({
 
   // Effects
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      speechSynthesis.current = window.speechSynthesis
-      const loadVoices = () => {
-        const voices = speechSynthesis.current.getVoices()
-        if (voices.length > 0) {
-          const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
-          if (savedVoiceName) {
-            const savedVoice = voices.find(v => v.name === savedVoiceName)
-            if (savedVoice) {
-              selectedVoice = savedVoice
-            }
-          }
-        }
-      }
-      loadVoices()
-      speechSynthesis.current.onvoiceschanged = loadVoices
+    if (selectedVoice) {
+      localStorage.setItem('userPreferencesVoiceName', selectedVoice.name)
     }
-
-    return () => {
-      if (speechSynthesis.current) {
-        speechSynthesis.current.cancel()
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (recognition.current) {
-        recognition.current.stop()
-      }
-      if (speechSynthesis.current) {
-        speechSynthesis.current.cancel()
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (gameState === 'playing' && !isListening && !isSpeakingLocal) {
-      console.log('Starting listening')
-      startListeningRef.current()
-    }
-  }, [gameState, isListening, isSpeakingLocal])
-
-  useEffect(() => {
-    console.log('isListening state changed:', isListening)
-  }, [isListening])
+  }, [selectedVoice])
 
   useEffect(() => {
     setOnOpenGameSettings(() => () => setIsSettingsOpen(true))
@@ -325,11 +174,17 @@ export default function BaseGame({
     return () => setExitGame(null)
   }, [setExitGame, endGame])
 
+
   useEffect(() => {
-    if (selectedVoice) {
-      localStorage.setItem('userPreferencesVoiceName', selectedVoice.name)
+    if (gameState === 'playing' && !isListening && !isSpeakingLocal) {
+      console.log('Starting listening')
+      startListening()
     }
-  }, [selectedVoice])
+  }, [gameState, isListening, isSpeakingLocal])
+
+  useEffect(() => {
+    console.log('isListening state changed:', isListening)
+  }, [isListening])
 
   // Render
   return (
