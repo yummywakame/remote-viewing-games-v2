@@ -9,6 +9,7 @@ import GameDisplay from './GameDisplay'
 import { GameStateContext } from '../layout'
 import DOMPurify from 'isomorphic-dompurify'
 import Promise from 'promise';
+import { sanitizeInput, selectNewItem } from '@/utils/gameUtils'
 
 export default function BaseGame({ 
   GameSettings,
@@ -16,7 +17,6 @@ export default function BaseGame({
   onGameStateChange = () => {},
   renderGameContent,
   handleVoiceCommand,
-  selectNewItem,
   itemTable,
   backgroundMode,
   isIntroComplete,
@@ -177,7 +177,7 @@ export default function BaseGame({
       setIsSpeakingLocal(true)
       stopListening()
       console.log('Started speaking')
-      const utterance = new SpeechSynthesisUtterance(DOMPurify.sanitize(text))
+      const utterance = new SpeechSynthesisUtterance(sanitizeInput(text))
       const voices = speechSynthesis.current.getVoices()
       const savedVoiceName = localStorage.getItem('userPreferencesVoiceName')
       const savedVoice = voices.find(v => v.name === savedVoiceName)

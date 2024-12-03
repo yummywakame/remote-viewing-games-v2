@@ -5,7 +5,7 @@ import BaseGame from './BaseGame'
 import ColorGameSettings from './ColorGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeInput } from '@/utils/gameUtils'
 
 const itemTable = {
   yellow: '#FFD700',
@@ -45,12 +45,12 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2;
     const savedVoiceName = localStorage.getItem('userPreferencesVoiceName');
     
-    setUserName(DOMPurify.sanitize(savedName));
+    setUserName(sanitizeInput(savedName));
     setVoiceSpeed(savedVoiceSpeed);
 
     if (savedVoiceName && window.speechSynthesis) {
       const voices = window.speechSynthesis.getVoices();
-      const voice = voices.find(v => v.name === DOMPurify.sanitize(savedVoiceName));
+      const voice = voices.find(v => v.name === sanitizeInput(savedVoiceName));
       setSelectedVoice(voice || null);
     }
   }, []);
@@ -104,16 +104,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     return null
   }, [])
 
-  const selectNewItem = useCallback((selectedItems, currentItem, setCurrentItem) => {
-    console.log('Selecting new item. Current item:', currentItem)
-    console.log('Available items:', selectedItems)
-    
-    const newItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
-    
-    console.log('New item selected:', newItem)
-    setCurrentItem(newItem)
-    return newItem
-  }, [])
 
   const renderGameContent = useCallback(({ gameState, startGame, endGame, isButtonAnimated, gameType }) => {
     if (gameState === 'initial') {
@@ -184,16 +174,16 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     setSelectedItems(newSelectedItems);
     localStorage.setItem('colorGameSelectedItems', JSON.stringify(newSelectedItems));
     
-    localStorage.setItem('gameLongIntro', DOMPurify.sanitize(String(longIntroEnabled)));
+    localStorage.setItem('gameLongIntro', sanitizeInput(String(longIntroEnabled)));
   }, [longIntroEnabled]);
 
   const handleUpdateUserPreferences = useCallback((newName, newVoiceSpeed, newVoice) => {
     setUserName(newName);
     setVoiceSpeed(newVoiceSpeed);
     setSelectedVoice(newVoice);
-    localStorage.setItem('userPreferencesName', DOMPurify.sanitize(newName));
-    localStorage.setItem('userPreferencesVoiceSpeed', DOMPurify.sanitize(newVoiceSpeed.toString()));
-    localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(newVoice?.name || ''));
+    localStorage.setItem('userPreferencesName', sanitizeInput(newName));
+    localStorage.setItem('userPreferencesVoiceSpeed', sanitizeInput(newVoiceSpeed.toString()));
+    localStorage.setItem('userPreferencesVoiceName', sanitizeInput(newVoice?.name || ''));
   }, []);
 
   return (
@@ -211,7 +201,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       onGameStateChange={onGameStateChange}
       renderGameContent={renderGameContent}
       handleVoiceCommand={handleVoiceCommand}
-      selectNewItem={selectNewItem}
       itemTable={itemTable}
       longIntroEnabled={longIntroEnabled}
       selectedItems={selectedItems}

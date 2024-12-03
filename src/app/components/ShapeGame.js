@@ -5,7 +5,7 @@ import BaseGame from './BaseGame'
 import ShapeGameSettings from './ShapeGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
-import DOMPurify from 'isomorphic-dompurify'
+import { getArticle, sanitizeInput } from '@/utils/gameUtils'
 
 const itemTable = {
   'triangle': '/shapes/triangle.svg',
@@ -16,11 +16,6 @@ const itemTable = {
   'star': '/shapes/star.svg',
 };
 
-// Helper function to determine the correct article
-const getArticle = (shape) => {
-  const vowels = ['a', 'e', 'i', 'o', 'u'];
-  return vowels.includes(shape.toLowerCase()[0]) ? 'an' : 'a';
-};
 
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
@@ -53,12 +48,12 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     const savedVoiceSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2;
     const savedVoiceName = localStorage.getItem('userPreferencesVoiceName');
     
-    setUserName(DOMPurify.sanitize(savedName));
+    setUserName(sanitizeInput(savedName));
     setVoiceSpeed(savedVoiceSpeed);
 
     if (savedVoiceName && window.speechSynthesis) {
       const voices = window.speechSynthesis.getVoices();
-      const voice = voices.find(v => v.name === DOMPurify.sanitize(savedVoiceName));
+      const voice = voices.find(v => v.name === sanitizeInput(savedVoiceName));
       setSelectedVoice(voice || null);
     }
   }, []);
@@ -145,7 +140,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
             animate={{ y: 0 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
           >
-            {DOMPurify.sanitize(gameType)} Game
+            {sanitizeInput(gameType)} Game
           </motion.h2>
           <motion.p 
             className="game-description text-white mb-8"
@@ -200,16 +195,16 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     setSelectedItems(newSelectedItems);
     localStorage.setItem('shapeGameSelectedItems', JSON.stringify(newSelectedItems));
     
-    localStorage.setItem('gameLongIntro', DOMPurify.sanitize(String(longIntroEnabled)));
+    localStorage.setItem('gameLongIntro', sanitizeInput(String(longIntroEnabled)));
   }, [longIntroEnabled]);
 
   const handleUpdateUserPreferences = useCallback((newName, newVoiceSpeed, newVoice) => {
     setUserName(newName);
     setVoiceSpeed(newVoiceSpeed);
     setSelectedVoice(newVoice);
-    localStorage.setItem('userPreferencesName', DOMPurify.sanitize(newName));
-    localStorage.setItem('userPreferencesVoiceSpeed', DOMPurify.sanitize(newVoiceSpeed.toString()));
-    localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(newVoice?.name || ''));
+    localStorage.setItem('userPreferencesName', sanitizeInput(newName));
+    localStorage.setItem('userPreferencesVoiceSpeed', sanitizeInput(newVoiceSpeed.toString()));
+    localStorage.setItem('userPreferencesVoiceName', sanitizeInput(newVoice?.name || ''));
   }, []);
 
   return (
@@ -223,7 +218,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
           setLongIntroEnabled={setLongIntroEnabled}
         />
       )}
-      gameType={DOMPurify.sanitize("Shape")}
+      gameType={sanitizeInput("Shape")}
       onGameStateChange={onGameStateChange}
       renderGameContent={renderGameContent}
       handleVoiceCommand={handleVoiceCommand}
