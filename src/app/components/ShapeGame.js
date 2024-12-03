@@ -5,7 +5,7 @@ import BaseGame from './BaseGame'
 import ShapeGameSettings from './ShapeGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { getArticle, sanitizeInput } from '@/utils/gameUtils'
+import { sanitizeInput, getArticle, handleCommonVoiceCommands } from '@/utils/gameUtils'
 
 const itemTable = {
   'triangle': '/shapes/triangle.svg',
@@ -62,19 +62,12 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     console.log(`Voice command received for ${gameType} game:`, command, 'Current item:', currentItem)
     const lowerCommand = command.toLowerCase()
   
-    if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
-      console.log('Next command detected')
-      const newItem = selectNewItem()
-      console.log(`New ${gameType} after next command:`, newItem)
-      speak(`What shape is this?`)
-      return newItem
-    } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
-      console.log('Stop command detected')
-      endGame()
-    } else if (/\b(help|instructions)\b/.test(lowerCommand)) {
-      console.log('Help requested')
-      speak(`To proceed to the next shape say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what shape is it?'. To display any shape say 'show me', followed by the shape you want to see.`)
-    } else if (/\b(what|which)(?:\s+(?:shape|is|it))?/.test(lowerCommand)) {
+    const commonResult = handleCommonVoiceCommands(command, speak, selectNewItem, endGame, gameType)
+    if (commonResult.action !== 'none') {
+      return commonResult.newItem
+    }
+
+    if (/\b(what|which)(?:\s+(?:shape|is|it))?/.test(lowerCommand)) {
       console.log(`${gameType} hint requested for:`, currentItem)
       const article = getArticle(currentItem);
       speak(`It's ${article} ${currentItem}.`)
@@ -94,10 +87,6 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
         const article = getArticle(requestedItem);
         speak(`Sorry, ${article} ${requestedItem} is not in my shape list.`)
       }
-    } else if (/\b(thanks|thank\s*you)\b/i.test(lowerCommand)) {
-      const responses = ["You're welcome!", "Any time!", "I'm here for you!"];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      speak(randomResponse);
     } else {
       const itemGuess = Object.keys(itemTable).find(item => lowerCommand.includes(item))
       if (itemGuess) {

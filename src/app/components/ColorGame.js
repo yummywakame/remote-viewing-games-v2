@@ -5,7 +5,7 @@ import BaseGame from './BaseGame'
 import ColorGameSettings from './ColorGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { sanitizeInput } from '@/utils/gameUtils'
+import { sanitizeInput, handleCommonVoiceCommands } from '@/utils/gameUtils'
 
 const itemTable = {
   yellow: '#FFD700',
@@ -59,19 +59,12 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     console.log(`Voice command received for ${gameType} game:`, command, 'Current item:', currentItem)
     const lowerCommand = command.toLowerCase()
     
-    if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
-      console.log('Next command detected')
-      const newItem = selectNewItem()
-      console.log(`New ${gameType} after next command:`, newItem)
-      speak(`What ${gameType.toLowerCase()} is this?`)
-      return newItem
-    } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
-      console.log('Stop command detected')
-      endGame()
-    } else if (/\b(help|instructions)\b/.test(lowerCommand)) {
-      console.log('Help requested')
-      speak(`To proceed to the next ${gameType} say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what ${gameType} is it?'. To display any ${gameType} say 'show me', followed by the ${gameType} you want to see.`)
-    } else if (new RegExp(`\\b(what|which)(?:\\s+(?:${gameType}|is|it))?\\b`).test(lowerCommand)) {
+    const commonResult = handleCommonVoiceCommands(command, speak, selectNewItem, endGame, gameType)
+    if (commonResult.action !== 'none') {
+      return commonResult.newItem
+    }
+   
+    if (new RegExp(`\\b(what|which)(?:\\s+(?:${gameType}|is|it))?\\b`).test(lowerCommand)) {
       console.log(`${gameType} hint requested for:`, currentItem)
       speak(`The current ${gameType} is ${currentItem}.`)
     } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
@@ -84,10 +77,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       } else {
         speak(`Sorry, ${requestedItem} is not in my ${gameType} list.`)
       }
-    } else if (/\b(thanks|thank\s*you)\b/i.test(lowerCommand)) {
-      const responses = ["You're welcome!", "Any time!", "I'm here for you!"];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      speak(randomResponse);
     } else {
       const itemGuess = Object.keys(itemTable).find(item => lowerCommand.includes(item))
       if (itemGuess) {
