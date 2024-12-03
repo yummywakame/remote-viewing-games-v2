@@ -98,7 +98,7 @@ export default function BaseGame({
     if (!recognition.current) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
       recognition.current = new SpeechRecognition()
-      recognition.current.continuous = true
+      recognition.current.continuous = false 
       recognition.current.interimResults = false
       recognition.current.lang = 'en-US'
 
@@ -135,6 +135,19 @@ export default function BaseGame({
           startListeningRef.current()
         }
       }
+
+      recognition.current.onerror = (event) => {
+        console.log('Speech recognition error:', event.error)
+        // Only handle non-no-speech errors
+        if (event.error !== 'no-speech') {
+          console.error('Speech recognition error:', event.error)
+          setGlobalIsListening(false)
+          setIsListeningLocal(false)
+          if (gameState === 'playing' && !isSpeakingLocal) {
+            startListeningRef.current()
+          }
+        }
+      }
     }
 
     if (!isListening && !isSpeakingLocal && gameState === 'playing') {
@@ -146,6 +159,8 @@ export default function BaseGame({
           console.log('Speech recognition is already started')
         } else {
           console.error('Error starting speech recognition:', error)
+          setGlobalIsListening(false)
+          setIsListeningLocal(false)
         }
       }
     }
@@ -173,7 +188,9 @@ export default function BaseGame({
         setGlobalIsSpeaking(false)
         setIsSpeakingLocal(false)
         if (gameState === 'playing') {
-          startListeningRef.current()
+          setTimeout(() => {
+            startListeningRef.current()
+          }, 100) 
         }
         resolve()
       }
@@ -285,12 +302,8 @@ export default function BaseGame({
 
   useEffect(() => {
     if (gameState === 'playing' && !isListening && !isSpeakingLocal) {
-      console.log('Setting up timeout to start listening')
-      const timeoutId = setTimeout(() => {
-        console.log('Timeout finished, calling startListening')
-        startListeningRef.current()
-      }, 100)
-      return () => clearTimeout(timeoutId)
+      console.log('Starting listening')
+      startListeningRef.current()
     }
   }, [gameState, isListening, isSpeakingLocal])
 
