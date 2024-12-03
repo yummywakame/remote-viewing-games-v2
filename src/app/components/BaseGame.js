@@ -8,8 +8,7 @@ import UserPreferences from './UserPreferences'
 import GameDisplay from './GameDisplay'
 import { GameStateContext } from '../layout'
 import DOMPurify from 'isomorphic-dompurify'
-import Promise from 'promise';
-import { sanitizeInput, selectNewItem } from '@/utils/gameUtils'
+import { selectNewItem } from '@/utils/gameUtils'
 import SpeechHandler from './SpeechHandler'
 
 export default function BaseGame({ 
@@ -28,7 +27,8 @@ export default function BaseGame({
   userName,
   voiceSpeed,
   selectedVoice,
-  onUpdateUserPreferences
+  onUpdateUserPreferences,
+  selectNewItem // Add this prop
 }) {
   // Context and Router
   const { 
@@ -107,7 +107,8 @@ export default function BaseGame({
     endGame,
     gameType,
     voiceSpeed,
-    selectedVoice
+    selectedVoice,
+    selectNewItem // Add this prop
 })
 
   // Core utility functions

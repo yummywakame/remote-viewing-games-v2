@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useRef, useEffect } from 'react'
+import { useCallback, useRef, useEffect } from 'react'
 import { sanitizeInput } from '@/utils/gameUtils'
 
 const SpeechHandler = ({ 
@@ -18,17 +18,13 @@ const SpeechHandler = ({
   gameType,
   voiceSpeed,
   selectedVoice,
-  selectNewItem  // Add this line
+  selectNewItem
 }) => {
-  // Add null checks at the start of the component
-  if (!setGlobalIsListening || !setGlobalIsSpeaking || !setIsListeningLocal || !setIsSpeakingLocal) {
-    console.warn('Required setter functions not provided to SpeechHandler')
-    return { speak: () => {}, stopListening: () => {}, cancelSpeech: () => {}, startListening: () => {} }
-  }
-  
+  // Initialize refs at the top level
   const speechSynthesis = useRef(null)
   const recognition = useRef(null)
 
+  // Define all callbacks at the top level
   const stopListening = useCallback(() => {
     if (recognition.current) {
       recognition.current.stop()
@@ -125,13 +121,17 @@ const SpeechHandler = ({
 
       recognition.current.onerror = (event) => {
         console.log('Speech recognition error:', event.error)
-        if (event.error !== 'no-speech') {
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
           console.error('Speech recognition error:', event.error)
           setGlobalIsListening(false)
           setIsListeningLocal(false)
           if (gameState === 'playing' && !isSpeakingLocal) {
             startListening()
           }
+        } else if (event.error === 'aborted') {
+          console.log('Speech recognition aborted')
+          // Optionally restart listening here if needed
+          // startListening()
         }
       }
     }
@@ -150,8 +150,22 @@ const SpeechHandler = ({
         }
       }
     }
-  }, [gameState, isSpeakingLocal, setGlobalIsListening, setIsListeningLocal, handleVoiceCommand, currentItemRef, selectedItems, updateCurrentItem, endGame, gameType, selectNewItem])
+  }, [
+    gameState,
+    isSpeakingLocal,
+    setGlobalIsListening,
+    setIsListeningLocal,
+    handleVoiceCommand,
+    currentItemRef,
+    selectedItems,
+    updateCurrentItem,
+    endGame,
+    gameType,
+    speak,
+    selectNewItem  
+  ])
 
+  // Setup effects at the top level
   useEffect(() => {
     if (typeof window !== 'undefined') {
       speechSynthesis.current = window.speechSynthesis
@@ -196,6 +210,7 @@ const SpeechHandler = ({
     }
   }, [gameState, isSpeakingLocal, startListening])
 
+  // Return the necessary functions
   return { speak, stopListening, cancelSpeech, startListening }
 }
 

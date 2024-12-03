@@ -8,7 +8,7 @@ import DOMPurify from 'isomorphic-dompurify'
 
 const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, selectedVoice, onUpdatePreferences }) => {
   const [name, setName] = useState(userName || '')
-  const [speed, setSpeed] = useState(1.2)
+  const [speed, setSpeed] = useState(voiceSpeed || 1.2)
   const [voice, setVoice] = useState(selectedVoice?.name || '')
   const [voices, setVoices] = useState([])
   const [longIntroEnabled, setLongIntroEnabled] = useState(true) 
