@@ -13,7 +13,7 @@
     "@radix-ui/react-switch": "^1.1.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "dompurify": "^3.2.2",
+    "dompurify": "^3.2.4",
     "framer-motion": "^10.16.4",
     "isomorphic-dompurify": "^1.13.0",
     "lodash.debounce": "^4.0.8",
