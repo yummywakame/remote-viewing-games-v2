@@ -19,7 +19,7 @@ const itemTable = {
 
 const ColorGame = memo(function ColorGame({ 
   onGameStateChange = () => {},
-  speak = () => {},
+  speak: parentSpeak = () => {},
   endGame = () => {},
 }) {
   const [selectedItems, setSelectedItems] = useState(['yellow', 'green', 'blue', 'purple', 'pink', 'red', 'orange'])
@@ -29,20 +29,102 @@ const ColorGame = memo(function ColorGame({
   const [userName, setUserName] = useState('')
   const [voiceSpeed, setVoiceSpeed] = useState(1)
   const [selectedVoice, setSelectedVoice] = useState(null)
+  const [gameState, setGameState] = useState('initial')
+  const [isListening, setIsListening] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const currentItemRef = React.useRef(null)
 
-  // Initialize currentItem when the game starts
-  useEffect(() => {
-    if (!currentItem && selectedItems.length > 0) {
-      const initialItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
-      setCurrentItem(initialItem)
-      console.log('Initial color selected:', initialItem)
+  // Create a wrapped speak function that ensures logging
+  const speak = useCallback((text) => {
+    if (!text) {
+      console.warn('[ColorGame] Attempted to speak empty text');
+      return Promise.resolve();
     }
-  }, [currentItem, selectedItems])
+    
+    console.log('[ColorGame] Speaking:', text);
+    setIsSpeaking(true);
+    
+    // Return a promise that ensures speech completes
+    return new Promise((resolve, reject) => {
+      try {
+        // Call the parent speak function
+        const result = parentSpeak(text);
+        
+        // If it's a Promise, handle it properly
+        if (result && typeof result.then === 'function') {
+          result.then((res) => {
+            // Add a delay after speech completes before resolving
+            setTimeout(() => {
+              setIsSpeaking(false);
+              resolve(res);
+            }, 500); // Add delay to ensure speech completes
+          }).catch((error) => {
+            console.error('[ColorGame] Error in speak:', error);
+            setIsSpeaking(false);
+            reject(error);
+          });
+        } else {
+          // If it's not a Promise, add delay before resolving
+          setTimeout(() => {
+            setIsSpeaking(false);
+            resolve(result);
+          }, 500); // Add delay to ensure speech completes
+        }
+      } catch (error) {
+        console.error('[ColorGame] Error in speak:', error);
+        setIsSpeaking(false);
+        reject(error);
+      }
+    });
+  }, [parentSpeak]);
 
   const updateCurrentItem = useCallback((newItem) => {
-    console.log('Updating current item to:', newItem)
-    setCurrentItem(newItem)
-  }, [])
+    if (gameState === 'playing' && newItem) {
+      console.log('ColorGame updateCurrentItem called with:', newItem)
+      setCurrentItem(newItem)
+      currentItemRef.current = newItem // Update ref immediately
+      // Update background color immediately
+      if (itemTable[newItem]) {
+        console.log('Setting background color to:', itemTable[newItem])
+        document.body.style.backgroundColor = itemTable[newItem]
+      }
+      return newItem // Return the item that was set
+    }
+    return null
+  }, [gameState, itemTable])
+
+  // Only initialize currentItem when game starts
+  useEffect(() => {
+    if (gameState === 'playing' && selectedItems.length > 0 && isIntroComplete) {
+      if (!currentItem) {
+        const initialItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
+        console.log('Setting initial color:', initialItem)
+        currentItemRef.current = initialItem // Set ref immediately
+        setCurrentItem(initialItem)
+        updateCurrentItem(initialItem)
+        console.log('Speaking: What color is this?')
+        speak(`What color is this?`).catch(error => {
+          console.error('[ColorGame] Error speaking:', error);
+        });
+      }
+    } else if (gameState === 'initial') {
+      currentItemRef.current = null // Reset ref
+      setCurrentItem(null)
+      document.body.style.backgroundColor = ''
+    }
+  }, [gameState, currentItem, selectedItems, isIntroComplete, updateCurrentItem, speak])
+
+  // Reset background color when game is not playing
+  useEffect(() => {
+    if (gameState !== 'playing') {
+      document.body.style.backgroundColor = ''
+      return
+    }
+
+    if (currentItem && gameState === 'playing' && isIntroComplete) {
+      document.body.style.backgroundColor = itemTable[currentItem] || currentItem
+    }
+  }, [currentItem, gameState, itemTable, isIntroComplete])
 
   useEffect(() => {
     const savedItems = localStorage.getItem('colorGameSelectedItems');
@@ -51,7 +133,6 @@ const ColorGame = memo(function ColorGame({
         const parsedItems = JSON.parse(savedItems);
         if (Array.isArray(parsedItems) && parsedItems.length >= 2) {
           setSelectedItems(parsedItems);
-          console.log("Loaded selected items:", parsedItems);
         }
       } catch (error) {
         console.error('Error parsing saved items:', error);
@@ -74,86 +155,129 @@ const ColorGame = memo(function ColorGame({
     }
   }, []);
 
-  useEffect(() => {
-    if (currentItem) {
-      console.log('Setting background color to:', itemTable[currentItem] || currentItem)
-      document.body.style.backgroundColor = itemTable[currentItem] || currentItem
-    } else {
-      console.log('Resetting background color')
-      document.body.style.backgroundColor = ''
-    }
-
-    return () => {
-      document.body.style.backgroundColor = ''
-    }
-  }, [currentItem])
-
-  const selectNewItem = useCallback((selectedItems, currentItem, setCurrentItem) => {
-    console.log('Selecting new item. Current item:', currentItem)
-    console.log('Available items:', selectedItems)
+  const selectNewItem = useCallback((selectedItems, currentItem) => {
+    if (!selectedItems || selectedItems.length === 0) return null
     
     let newItem
     do {
       newItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
     } while (newItem === currentItem && selectedItems.length > 1)
     
-    console.log('New item selected:', newItem)
-    setCurrentItem(newItem)
+    if (newItem) {
+      console.log('New item selected:', newItem)
+    }
     return newItem
   }, [])
 
-  const handleNextItem = useCallback(() => {
-    selectNewItem(selectedItems, currentItem, setCurrentItem)
-  }, [selectNewItem, selectedItems, currentItem])
+  const handleNextItem = useCallback(async () => {
+    if (gameState === 'playing') {
+      const newItem = selectNewItem(selectedItems, currentItem)
+      if (newItem) {
+        console.log('handleNextItem selected:', newItem)
+        const updatedItem = updateCurrentItem(newItem)
+        if (updatedItem) {
+          await speak(`What color is this?`)
+        }
+      }
+    }
+  }, [gameState, selectNewItem, selectedItems, currentItem, updateCurrentItem, speak])
 
   const handleVoiceCommand = useCallback((command) => {
-    const gameType = 'Color'
-    console.log('Processing voice command:', command, 'Current color:', currentItem)
+    const gameType = 'Color';
+    console.log('Processing voice command:', command, 'Current color:', currentItemRef.current);
 
-    // Handle common commands first
-    const commonResult = handleCommonVoiceCommands(command, speak, selectNewItem, endGame, gameType)
+    // Check if the command matches any color in our list first
+    const matchedColor = selectedItems.find(color => 
+      command.toLowerCase().includes(color.toLowerCase())
+    );
+
+    // If we have a color match, handle it before other commands
+    if (matchedColor) {
+      console.log('Found matching color:', matchedColor);
+      
+      // Always use currentItemRef.current for current color state
+      const currentColor = currentItemRef.current;
+      console.log('Current color from ref:', currentColor);
+      
+      // Compare the guessed color with the current color
+      const isCorrect = currentColor && matchedColor.toLowerCase() === currentColor.toLowerCase();
+      console.log('Color comparison:', { matched: matchedColor, current: currentColor, isCorrect });
+      
+      if (isCorrect) {
+        console.log('Speaking: Correct!');
+        speak('Correct!').then(() => {
+          // Increased delay before next prompt
+          setTimeout(async () => {
+            const newItem = selectNewItem(selectedItems, matchedColor);
+            console.log('Selected new item after correct guess:', newItem);
+            if (newItem) {
+              updateCurrentItem(newItem);
+              // Add delay before asking next question
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              console.log('Speaking: What color is this?');
+              await speak(`What color is this?`);
+            }
+          }, 1500); // Increased delay
+        }).catch(error => {
+          console.error('[ColorGame] Error speaking:', error);
+        });
+      } else {
+        console.log('Speaking: Try again');
+        speak('Try again').catch(error => {
+          console.error('[ColorGame] Error speaking:', error);
+        });
+      }
+      return;
+    }
+
+    // Handle common commands if no color match
+    const commonResult = handleCommonVoiceCommands(command, speak, selectNewItem, endGame, gameType);
     if (commonResult.action !== 'none') {
-      return
+      if (commonResult.action === 'next') {
+        handleNextItem();
+      }
+      return;
     }
 
     // Check for "show me" commands
-    const showMatch = command.match(/show\s+(?:me\s+)?(?:the\s+)?(?:color\s+)?(\w+)/)
+    const showMatch = command.match(/show\s+(?:me\s+)?(?:the\s+)?(?:color\s+)?(\w+)/);
     if (showMatch) {
-      const requestedColor = showMatch[1].toLowerCase()
-      const matchedColor = selectedItems.find(color => 
+      const requestedColor = showMatch[1].toLowerCase();
+      const validColor = selectedItems.find(color => 
         color.toLowerCase() === requestedColor
-      )
+      );
       
-      if (matchedColor) {
-        updateCurrentItem(matchedColor)
-        speak(`Showing you ${matchedColor}`)
+      if (validColor) {
+        updateCurrentItem(validColor);
+        console.log(`Speaking: Showing you ${validColor}`);
+        speak(`Showing you ${validColor}`).catch(error => {
+          console.error('[ColorGame] Error speaking:', error);
+        });
       } else {
-        speak(`Sorry, ${requestedColor} is not a valid color. Available colors are: ${selectedItems.join(', ')}`)
+        const message = `Sorry, ${requestedColor} is not a valid color. Available colors are: ${selectedItems.join(', ')}`;
+        console.log('Speaking:', message);
+        speak(message).catch(error => {
+          console.error('[ColorGame] Error speaking:', error);
+        });
       }
-    } else {
-      // Check if the command matches any color in our list
-      const matchedColor = selectedItems.find(color => 
-        command.includes(color.toLowerCase())
-      )
-      
-      if (matchedColor) {
-        console.log('Color guess:', matchedColor, 'Current color:', currentItem)
-        if (!currentItem) {
-          speak('Please wait a moment while I select a color.')
-          const newItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
-          updateCurrentItem(newItem)
-          speak(`What color is this?`)
-        } else if (matchedColor.toLowerCase() === currentItem.toLowerCase()) {
-          speak('Correct!')
-          selectNewItem(selectedItems, currentItem, setCurrentItem)
-        } else {
-          speak('Try again')
-        }
-      } else {
-        speak(`I didn't understand that. Please say a ${gameType} or say 'help' for instructions.`)
-      }
+      return;
     }
-  }, [currentItem, selectedItems, endGame, updateCurrentItem, speak, selectNewItem])
+
+    // If no valid command was found
+    const message = `I didn't understand that. Please say a ${gameType} or say 'help' for instructions.`;
+    console.log('Speaking:', message);
+    speak(message).catch(error => {
+      console.error('[ColorGame] Error speaking:', error);
+    });
+  }, [currentItemRef, selectedItems, endGame, updateCurrentItem, speak, selectNewItem, handleNextItem]);
+
+  // Add an effect to ensure currentItemRef stays in sync
+  useEffect(() => {
+    if (currentItem) {
+      currentItemRef.current = currentItem;
+      console.log('Updated currentItemRef to:', currentItem);
+    }
+  }, [currentItem]);
 
   const renderGameContent = useCallback(({ gameState, startGame, endGame, isButtonAnimated, gameType }) => {
     if (gameState === 'initial') {
@@ -236,35 +360,53 @@ const ColorGame = memo(function ColorGame({
     localStorage.setItem('userPreferencesVoiceName', sanitizeInput(newVoice?.name || ''));
   }, []);
 
+  // Add a useEffect to ensure speech functions are properly initialized
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      // Load voices
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          const englishVoice = voices.find(v => v.lang.startsWith('en-'));
+          setSelectedVoice(englishVoice || voices[0]);
+        }
+      };
+
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+
+      return () => {
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    }
+  }, []);
+
   return (
     <BaseGame
-      GameSettings={(props) => (
-        <ColorGameSettings
-          {...props}
-          selectedItems={selectedItems}
-          onSave={handleSaveSettings}
-          longIntroEnabled={longIntroEnabled}
-          setLongIntroEnabled={setLongIntroEnabled}
-        />
-      )}
+      GameSettings={ColorGameSettings}
       gameType="Color"
       onGameStateChange={onGameStateChange}
       renderGameContent={renderGameContent}
       handleVoiceCommand={handleVoiceCommand}
-      selectNewItem={selectNewItem}  
       itemTable={itemTable}
-      longIntroEnabled={longIntroEnabled}
-      selectedItems={selectedItems}
-      onSaveSettings={handleSaveSettings}
+      backgroundMode="color"
       isIntroComplete={isIntroComplete}
       setIsIntroComplete={setIsIntroComplete}
-      backgroundMode="light"
+      selectedItems={selectedItems}
+      onSaveSettings={handleSaveSettings}
       userName={userName}
       voiceSpeed={voiceSpeed}
       selectedVoice={selectedVoice}
       onUpdateUserPreferences={handleUpdateUserPreferences}
+      selectNewItemProp={selectNewItem}
       speak={speak}
-      updateCurrentItem={updateCurrentItem}
+      onCurrentItemUpdate={updateCurrentItem}
+      currentItem={currentItem}
+      isListening={isListening}
+      setIsListening={setIsListening}
+      isSpeaking={isSpeaking}
+      setIsSpeaking={setIsSpeaking}
+      longIntroEnabled={longIntroEnabled}
     />
   )
 });

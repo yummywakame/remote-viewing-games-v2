@@ -1,13 +1,29 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 
-export default function GameDisplay({ gameType, currentItem, itemTable, onClick, gameState, isIntroComplete }) {
-  const renderItem = () => {
+// Wrap the entire component in React.memo to reduce re-renders
+const GameDisplay = React.memo(function GameDisplay({ 
+  gameType, 
+  currentItem, 
+  itemTable, 
+  onClick, 
+  gameState, 
+  isIntroComplete 
+}) {
+  // Only log color changes once when they happen, not on every render
+  useEffect(() => {
+    if (gameType === 'Color' && currentItem && itemTable?.[currentItem]) {
+      console.log(`[GameDisplay] Color updated: ${currentItem} (${itemTable[currentItem]})`);
+    }
+  }, [gameType, currentItem, itemTable]);
+
+  // Memoize the renderItem function to prevent unnecessary recalculations
+  const renderedItem = useMemo(() => {
     if (gameType === 'Color') {
-      return null
+      return null;
     }
 
     const style = {
@@ -20,7 +36,7 @@ export default function GameDisplay({ gameType, currentItem, itemTable, onClick,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-    }
+    };
 
     if (gameType === 'Shape' && currentItem) {
       return (
@@ -33,7 +49,7 @@ export default function GameDisplay({ gameType, currentItem, itemTable, onClick,
             style={{ filter: isIntroComplete ? 'invert(1)' : 'none' }}
           />
         </div>
-      )
+      );
     }
 
     return (
@@ -45,32 +61,46 @@ export default function GameDisplay({ gameType, currentItem, itemTable, onClick,
       >
         {currentItem}
       </motion.div>
-    )
-  }
+    );
+  }, [gameType, currentItem, itemTable, isIntroComplete]);
 
-  const getBackgroundColor = () => {
+  // Simplify the background color logic - BaseGame is now handling this directly
+  // We'll just provide a className that the stylesheet can target
+  const backgroundColor = useMemo(() => {
+    if (gameType === 'Color' && currentItem && itemTable?.[currentItem]) {
+      return itemTable[currentItem];
+    }
+    
     if (gameState === 'initial' || gameState === 'intro') {
-      return 'transparent'
+      return 'transparent';
     }
-    if (gameType === 'Color') {
-      return itemTable[currentItem]
-    }
+    
     if (isIntroComplete && gameState === 'playing') {
-      return 'black'
+      return 'black';
     }
-    return 'transparent'
-  }
+    
+    return 'transparent';
+  }, [gameType, currentItem, itemTable, gameState, isIntroComplete]);
 
-  const backgroundColor = getBackgroundColor()
+  // Add a key to force re-creation when color changes for better updates
+  const displayKey = `${gameType}-${currentItem}-${gameState}`;
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center transition-colors duration-500"
+      key={displayKey}
+      className="game-display fixed inset-0 flex items-center justify-center transition-colors duration-500"
       style={{ backgroundColor }}
       onClick={onClick}
+      data-current-item={currentItem}
+      data-game-state={gameState}
     >
-      {renderItem()}
+      {renderedItem}
     </div>
-  )
-}
+  );
+});
+
+// Add a display name for debugging
+GameDisplay.displayName = 'GameDisplay';
+
+export default GameDisplay;
 

@@ -32,42 +32,112 @@ export default function SpeechHandler({
   const [isSpeakingLocal, setIsSpeakingLocal] = useState(false)
   const [isListeningLocal, setIsListeningLocal] = useState(false)
   const [lastHeardWord, setLastHeardWord] = useState('')
+  const [isInitialized, setIsInitialized] = useState(false)
 
   // Initialize refs at the top level
   const speechSynthesis = useRef(null)
   const recognition = useRef(null)
 
-  // Initialize speech synthesis
+  // Initialize speech synthesis only when needed
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !isInitialized) {
+      // Initialize speech synthesis silently
       speechSynthesis.current = window.speechSynthesis
       
-      // Force load voices
+      // Force load voices silently
       window.speechSynthesis.getVoices()
 
-      const loadVoices = () => {
-        const voices = window.speechSynthesis.getVoices()
-        console.log('Available voices:', voices.length)
-        if (voices.length > 0) {
-          // If no voice is selected, use the first available voice
-          if (!selectedVoice) {
-            const defaultVoice = voices[0]
-            console.log('Setting default voice:', defaultVoice.name)
-            selectedVoice = defaultVoice
+      // Initialize speech recognition
+      if ('webkitSpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+        recognition.current = new SpeechRecognition()
+        recognition.current.continuous = false
+        recognition.current.interimResults = false
+        recognition.current.lang = 'en-US'
+        
+        recognition.current.onstart = () => {
+          if (gameState === 'playing') {
+            console.log('Speech recognition started')
+          }
+          setIsListeningLocal(true)
+          setParentListeningLocal(true)
+          setParentIsListening(true)
+          setGlobalIsListening(true)
+        }
+        
+        recognition.current.onend = () => {
+          if (gameState === 'playing') {
+            console.log('Speech recognition ended')
+          }
+          setIsListeningLocal(false)
+          setParentListeningLocal(false)
+          setParentIsListening(false)
+          setGlobalIsListening(false)
+          
+          // Restart listening if we're still in playing state
+          if (gameState === 'playing' && !isSpeakingLocal) {
+            startListening()
+          }
+        }
+        
+        recognition.current.onresult = (event) => {
+          const last = event.results.length - 1
+          const command = event.results[last][0].transcript.trim().toLowerCase()
+          if (gameState === 'playing') {
+            console.log('Voice command received:', command)
+          }
+          setLastHeardWord(command)
+          handleVoiceCommand(command)
+        }
+
+        recognition.current.onerror = (event) => {
+          if (gameState === 'playing') {
+            console.error('Speech recognition error:', event.error)
+            if (event.error === 'no-speech') {
+              console.log('No speech detected')
+            }
           }
         }
       }
-
-      loadVoices()
-      window.speechSynthesis.onvoiceschanged = loadVoices
+      
+      setIsInitialized(true)
     }
 
     return () => {
       if (speechSynthesis.current) {
         speechSynthesis.current.cancel()
       }
+      if (recognition.current) {
+        try {
+          recognition.current.stop()
+        } catch (error) {
+          // Ignore errors when stopping recognition
+        }
+      }
     }
-  }, [])
+  }, [gameState, isInitialized, isSpeakingLocal, setGlobalIsListening, setParentIsListening, setParentListeningLocal, handleVoiceCommand])
+
+  // Reset state when game returns to initial
+  useEffect(() => {
+    if (gameState === 'initial') {
+      setIsListeningLocal(false)
+      setIsSpeakingLocal(false)
+      setParentListeningLocal(false)
+      setParentIsSpeaking(false)
+      setGlobalIsListening(false)
+      setGlobalIsSpeaking(false)
+      if (recognition.current) {
+        try {
+          recognition.current.stop()
+        } catch (error) {
+          console.log('Recognition already stopped')
+        }
+      }
+      if (speechSynthesis.current) {
+        speechSynthesis.current.cancel()
+      }
+    }
+  }, [gameState, setGlobalIsListening, setGlobalIsSpeaking, setParentListeningLocal, setParentIsSpeaking])
 
   // Sync isSpeakingLocal with parent
   useEffect(() => {
@@ -108,11 +178,9 @@ export default function SpeechHandler({
     }
     
     if (gameState !== 'playing' || isSpeakingLocal) {
-      console.log('Not starting listening:', { gameState, isSpeakingLocal })
       return
     }
 
-    console.log('Starting listening...')
     try {
       recognition.current.start()
       setIsListeningLocal(true)
@@ -121,7 +189,7 @@ export default function SpeechHandler({
       setGlobalIsListening(true)
     } catch (error) {
       if (error.name === 'InvalidStateError') {
-        console.log('Speech recognition is already started')
+        // Silently handle already started state
       } else {
         console.error('Error starting speech recognition:', error)
         setIsListeningLocal(false)
@@ -149,21 +217,20 @@ export default function SpeechHandler({
     return new Promise((resolve) => {
       const utterance = new SpeechSynthesisUtterance(sanitizeInput(text))
       
-      // Set a safe default rate
-      utterance.rate = 1.0
+      // Set voice properties
+      utterance.rate = Math.max(0.1, Math.min(10, voiceSpeed || 1))
+      utterance.volume = 1
+      utterance.pitch = 1
       
-      // Only set custom rate if it's a valid number
-      if (typeof voiceSpeed === 'number' && isFinite(voiceSpeed) && voiceSpeed > 0) {
-        utterance.rate = Math.max(0.1, Math.min(10, voiceSpeed))
-      }
+      // Get available voices and select one
+      const voices = speechSynthesis.current.getVoices()
+      console.log('Available voices:', voices.length)
       
-      // Get available voices
-      const voices = window.speechSynthesis.getVoices()
-      console.log('Available voices for speaking:', voices.length)
-      
-      // Try to find the selected voice, fallback to the first available voice
+      // Try to find the selected voice, fallback to the first English voice
       if (voices.length > 0) {
-        utterance.voice = voices.find(voice => voice.name === selectedVoice?.name) || voices[0]
+        utterance.voice = selectedVoice || 
+          voices.find(voice => voice.lang.startsWith('en-')) || 
+          voices[0]
         console.log('Using voice:', utterance.voice?.name)
       }
 
@@ -175,14 +242,12 @@ export default function SpeechHandler({
         resolve()
         // Start listening after speech ends if we're in playing state
         if (gameState === 'playing') {
-          setTimeout(() => {
-            startListening()
-          }, 100)
+          setTimeout(startListening, 500) // Increased delay to prevent overlap
         }
       }
 
       utterance.onerror = (event) => {
-        console.error('Speech error:', event)
+        console.error('Speech synthesis error:', event)
         setIsSpeakingLocal(false)
         setParentIsSpeaking(false)
         setGlobalIsSpeaking(false)
@@ -190,7 +255,6 @@ export default function SpeechHandler({
       }
 
       try {
-        console.log('Starting speech synthesis...')
         speechSynthesis.current.speak(utterance)
       } catch (error) {
         console.error('Error speaking:', error)
@@ -200,76 +264,15 @@ export default function SpeechHandler({
         resolve()
       }
     })
-  }, [voiceSpeed, setGlobalIsSpeaking, setIsSpeakingLocal, setParentIsSpeaking, stopListeningInternal, sanitizeInput, selectedVoice, gameState, startListening])
-
-  // Initialize speech recognition after all functions are defined
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      if (!SpeechRecognition) {
-        console.error('Speech recognition not supported in this browser')
-        return
-      }
-      
-      recognition.current = new SpeechRecognition()
-      recognition.current.continuous = false
-      recognition.current.interimResults = false
-      recognition.current.lang = 'en-US'
-
-      recognition.current.onresult = (event) => {
-        const last = event.results.length - 1
-        const transcript = event.results[last][0].transcript.trim().toLowerCase()
-        console.log('Voice command received:', transcript)
-        handleVoiceCommand(transcript)
-      }
-
-      recognition.current.onstart = () => {
-        console.log('Speech recognition started')
-        setIsListeningLocal(true)
-        setParentListeningLocal(true)
-        setParentIsListening(true)
-        setGlobalIsListening(true)
-      }
-
-      recognition.current.onend = () => {
-        console.log('Speech recognition ended')
-        setIsListeningLocal(false)
-        setParentListeningLocal(false)
-        setParentIsListening(false)
-        setGlobalIsListening(false)
-        // Only restart if we're still in playing state and not speaking
-        if (gameState === 'playing' && !isSpeakingLocal) {
-          setTimeout(startListening, 100)
-        }
-      }
-
-      recognition.current.onerror = (event) => {
-        console.log('Speech recognition error:', event.error)
-        if (event.error !== 'no-speech' && event.error !== 'aborted') {
-          console.error('Speech recognition error:', event.error)
-          setIsListeningLocal(false)
-          setParentListeningLocal(false)
-          setParentIsListening(false)
-          setGlobalIsListening(false)
-        }
-      }
-    }
-
-    return () => {
-      if (recognition.current) {
-        stopListeningInternal()
-      }
-    }
-  }, [gameState, isSpeakingLocal, setGlobalIsListening, setParentIsListening, setParentListeningLocal, handleVoiceCommand, stopListeningInternal])
+  }, [gameState, voiceSpeed, selectedVoice, stopListeningInternal, setGlobalIsSpeaking, setParentIsSpeaking, startListening])
 
   // Auto-start listening when in playing state
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (gameState === 'playing' && !isSpeakingLocal) {
-        console.log('Auto-starting listening')
         startListening()
       }
-    }, 100)
+    }, 500) // Increased delay to prevent overlap
     return () => clearTimeout(timeoutId)
   }, [gameState, isSpeakingLocal, startListening])
 

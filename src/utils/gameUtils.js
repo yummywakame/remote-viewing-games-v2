@@ -16,17 +16,20 @@ export const formatTime = (time) => {
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`
 }
 
-export const selectNewItem = (selectedItems, currentItem, updateCurrentItem) => {
-  console.log('Selecting new item. Current item:', currentItem)
-  console.log('Available items:', selectedItems)
+export const selectNewItem = (selectedItems, currentItem) => {
+  console.log('Selecting initial item from:', selectedItems)
   
+  if (!selectedItems || selectedItems.length === 0) {
+    console.error('No items available to select from')
+    return null
+  }
+
   let newItem
   do {
     newItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
   } while (newItem === currentItem && selectedItems.length > 1)
   
-  console.log('New item selected:', newItem)
-  updateCurrentItem(newItem)
+  console.log('Selected item:', newItem)
   return newItem
 }
 

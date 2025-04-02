@@ -9,17 +9,36 @@ import DOMPurify from 'isomorphic-dompurify'
 export default function Home() {
   const [userName, setUserName] = useState('')
   const [games, setGames] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const savedName = localStorage.getItem('userPreferencesName') || ''
-    setUserName(DOMPurify.sanitize(savedName))
+    const initializePage = async () => {
+      try {
+        const savedName = localStorage.getItem('userPreferencesName') || ''
+        setUserName(DOMPurify.sanitize(savedName))
 
-    setGames([
-      { name: 'Color Game', href: '/color-game', icon: Eye, color: 'from-purple-600 to-blue-600', available: true },
-      { name: 'Shape Game', href: '/shape-game', icon: Shapes, color: 'from-blue-600 to-green-500', available: true },
-      { name: 'Number Game', href: '#', icon: Hash, color: 'from-orange-600 to-red-600', available: false },
-    ])
+        setGames([
+          { name: 'Color Game', href: '/color-game', icon: Eye, color: 'from-purple-600 to-blue-600', available: true },
+          { name: 'Shape Game', href: '/shape-game', icon: Shapes, color: 'from-blue-600 to-green-500', available: true },
+          { name: 'Number Game', href: '#', icon: Hash, color: 'from-orange-600 to-red-600', available: false },
+        ])
+      } catch (error) {
+        console.error('Error initializing page:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    initializePage()
   }, [])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+        <div className="text-white text-2xl">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="overflow-auto">
