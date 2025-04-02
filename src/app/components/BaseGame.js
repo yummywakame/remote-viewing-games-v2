@@ -23,12 +23,12 @@ export default function BaseGame({
   setIsIntroComplete,
   selectedItems,
   onSaveSettings,
-  longIntroEnabled,
   userName,
   voiceSpeed,
   selectedVoice,
   onUpdateUserPreferences,
-  selectNewItem // Add this prop
+  selectNewItemProp,
+  speak
 }) {
   // Context and Router
   const { 
@@ -46,12 +46,27 @@ export default function BaseGame({
   // State
   const [gameState, setGameState] = useState('initial')
   const [currentItem, setCurrentItem] = useState(null)
-  const [isListening, setIsListeningLocal] = useState(false)
+  const [isListeningLocal, setIsListeningLocal] = useState(false)
   const [isSpeakingLocal, setIsSpeakingLocal] = useState(false)
-  const [lastHeardWord, setLastHeardWord] = useState('') // Added
+  const [lastHeardWord, setLastHeardWord] = useState('')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
+  const [longIntroEnabled, setLongIntroEnabled] = useState(true)
+
+  // Create refs for speech functions
+  const speechFunctionsRef = useRef({
+    speak: null,
+    stopListening: null,
+    cancelSpeech: null,
+    startListening: null
+  })
+
+  // Create a stable reference to the speak function
+  const speakRef = useRef(speak)
+  useEffect(() => {
+    speakRef.current = speak
+  }, [speak])
 
   const updateCurrentItem = useCallback((newItem) => {
     console.log('Updating current item from:', currentItem, 'to:', newItem)
@@ -70,15 +85,16 @@ export default function BaseGame({
 
   const endGame = useCallback(async () => {
     console.log('Ending game...')
-    if (cancelSpeech) cancelSpeech()
-    if (stopListening) stopListening()
+    if (speechFunctionsRef.current.cancelSpeech) speechFunctionsRef.current.cancelSpeech()
+    if (speechFunctionsRef.current.stopListening) speechFunctionsRef.current.stopListening()
     setAndLogGameState('ending', 'end game')
     updateCurrentItem(null)
     setLastHeardWord('')
-    if (speak) await speak("Thank you for playing!")
+    if (speechFunctionsRef.current.speak) await speechFunctionsRef.current.speak("Thank you for playing!")
     setAndLogGameState('initial', 'game ended')
     setIsIntroComplete(false)
     
+    // Clear any pending timeouts
     if (window) {
       const highestTimeoutId = window.setTimeout(() => {}, 0)
       for (let i = 0; i < highestTimeoutId; i++) {
@@ -86,62 +102,76 @@ export default function BaseGame({
       }
     }
     
+    // Ensure we're not listening or speaking when navigating away
+    setGlobalIsListening(false)
+    setGlobalIsSpeaking(false)
+    setIsListeningLocal(false)
+    setIsSpeakingLocal(false)
+    
     router.push('/')
-  }, [setAndLogGameState, updateCurrentItem, setIsIntroComplete, router])
+  }, [setAndLogGameState, updateCurrentItem, setIsIntroComplete, router, setGlobalIsListening, setGlobalIsSpeaking, setIsListeningLocal, setIsSpeakingLocal])
 
-  // Speech control functions
-  const { speak, stopListening, cancelSpeech, startListening } = SpeechHandler({
+  // Initialize SpeechHandler after endGame is defined
+  const speechHandler = SpeechHandler({
     gameState,
-    isSpeakingLocal,
-    setIsSpeakingLocal,
-    setGlobalIsSpeaking,
-    setGlobalIsListening,
-    setIsListeningLocal,
-    handleVoiceCommand: (command, ...args) => {
-      setLastHeardWord(command);
-      return handleVoiceCommand(command, ...args);
-    },
-    currentItemRef,
+    gameType,
+    currentItem,
     selectedItems,
     updateCurrentItem,
+    setAndLogGameState,
+    setIsIntroComplete,
+    setGlobalIsListening,
+    setGlobalIsSpeaking,
+    isListeningLocal,
+    setIsListeningLocal,
+    isSpeakingLocal,
+    setIsSpeakingLocal,
+    setParentIsListening: setIsListeningLocal,
+    setParentIsSpeaking: setIsSpeakingLocal,
+    handleVoiceCommand,
+    currentItemRef,
     endGame,
-    gameType,
+    router,
+    userName,
+    longIntroEnabled,
+    setLongIntroEnabled,
     voiceSpeed,
     selectedVoice,
-    selectNewItem // Add this prop
-})
+    selectNewItem: selectNewItemProp || selectNewItem,
+    speak: speakRef.current
+  })
 
-  // Core utility functions
-
-
-  // Initialize startListening ref early
+  // Update speech functions ref when SpeechHandler is initialized
+  useEffect(() => {
+    if (speechHandler) {
+      speechFunctionsRef.current = speechHandler
+    }
+  }, [speechHandler])
 
   const handleNextItem = useCallback(async () => {
     if (gameState === 'playing' && !isSpeakingLocal) {
-      const newItem = await selectNewItem(selectedItems, currentItemRef.current, updateCurrentItem)
+      const newItem = await (selectNewItemProp || selectNewItem)(selectedItems, currentItemRef.current, updateCurrentItem)
       console.log('Next item selected:', newItem)
       updateCurrentItem(newItem)
-      speak(`What ${gameType.toLowerCase()} is this?`)
+      speechFunctionsRef.current.speak(`What ${gameType.toLowerCase()} is this?`)
     }
-  }, [gameState, isSpeakingLocal, selectNewItem, selectedItems, updateCurrentItem, speak, gameType])
+  }, [gameState, isSpeakingLocal, selectNewItemProp, selectNewItem, selectedItems, updateCurrentItem, gameType])
 
   const startGame = useCallback(async () => {
+    console.log('Starting game...')
     setAndLogGameState('intro', 'start game')
     if (longIntroEnabled) {
-      await speak(`Welcome to the ${gameType} Game ${userName || ''}! When prompted, say the ${gameType.toLowerCase()} you think it is, or say 'help' at any time for further instructions. Good luck!`)
+      await speechFunctionsRef.current.speak(`Welcome to the ${gameType} Game ${userName || ''}! When prompted, say the ${gameType.toLowerCase()} you think it is, or say 'help' at any time for further instructions. Good luck!`)
     } else {
-      await speak("Let's begin!")
+      await speechFunctionsRef.current.speak("Let's begin!")
     }
     setIsIntroComplete(true)
     setAndLogGameState('playing', 'game started')
-    const newItem = await selectNewItem(selectedItems, currentItem, updateCurrentItem)
+    const newItem = await (selectNewItemProp || selectNewItem)(selectedItems, currentItem, updateCurrentItem)
     updateCurrentItem(newItem)
-    await speak(`What ${gameType.toLowerCase()} is this?`)
-    startListening()
-  }, [setAndLogGameState, speak, selectNewItem, userName, gameType, selectedItems, currentItem, updateCurrentItem, longIntroEnabled, setIsIntroComplete])
-
-
-  // Speech control functions
+    await speechFunctionsRef.current.speak(`What ${gameType.toLowerCase()} is this?`)
+    speechFunctionsRef.current.startListening()
+  }, [setAndLogGameState, selectNewItemProp, selectNewItem, userName, gameType, selectedItems, currentItem, updateCurrentItem, longIntroEnabled, setIsIntroComplete])
 
   // Game control functions
 
@@ -179,15 +209,15 @@ export default function BaseGame({
 
 
   useEffect(() => {
-    if (gameState === 'playing' && !isListening && !isSpeakingLocal) {
+    if (gameState === 'playing' && !isListeningLocal && !isSpeakingLocal) {
       console.log('Starting listening')
-      startListening()
+      speechFunctionsRef.current.startListening()
     }
-  }, [gameState, isListening, isSpeakingLocal])
+  }, [gameState, isListeningLocal, isSpeakingLocal])
 
   useEffect(() => {
-    console.log('isListening state changed:', isListening)
-  }, [isListening])
+    console.log('isListening state changed:', isListeningLocal)
+  }, [isListeningLocal])
 
   // Render
   return (
@@ -228,8 +258,8 @@ export default function BaseGame({
           />
         )}
       </AnimatePresence>
-      {gameState !== 'initial' && ( // Updated
-        <FloatingBubble word={lastHeardWord} /> // Updated
+      {gameState !== 'initial' && (
+        <FloatingBubble word={lastHeardWord} />
       )}
       <UserPreferences
         isOpen={isUserPreferencesOpen}
