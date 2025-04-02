@@ -5,7 +5,7 @@ import BaseGame from './BaseGame'
 import ColorGameSettings from './ColorGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { sanitizeInput } from '@/utils/gameUtils'
+import { sanitizeInput, handleCommonVoiceCommands } from '@/utils/gameUtils'
 
 const itemTable = {
   yellow: '#FFD700',
@@ -22,24 +22,26 @@ const ColorGame = memo(function ColorGame({
   speak = () => {},
   endGame = () => {},
 }) {
-  const [longIntroEnabled, setLongIntroEnabled] = useState(true);
-  const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable));
-  const [isIntroComplete, setIsIntroComplete] = useState(false);
-  const [userName, setUserName] = useState('');
-  const [voiceSpeed, setVoiceSpeed] = useState(1.2);
-  const [selectedVoice, setSelectedVoice] = useState(null);
-  const [currentItem, setCurrentItem] = useState(null);
+  const [selectedItems, setSelectedItems] = useState(['yellow', 'green', 'blue', 'purple', 'pink', 'red', 'orange'])
+  const [currentItem, setCurrentItem] = useState(null)
+  const [longIntroEnabled, setLongIntroEnabled] = useState(true)
+  const [isIntroComplete, setIsIntroComplete] = useState(false)
+  const [userName, setUserName] = useState('')
+  const [voiceSpeed, setVoiceSpeed] = useState(1)
+  const [selectedVoice, setSelectedVoice] = useState(null)
+
+  // Initialize currentItem when the game starts
+  useEffect(() => {
+    if (!currentItem && selectedItems.length > 0) {
+      const initialItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
+      setCurrentItem(initialItem)
+      console.log('Initial color selected:', initialItem)
+    }
+  }, [currentItem, selectedItems])
 
   const updateCurrentItem = useCallback((newItem) => {
     console.log('Updating current item to:', newItem)
-    const normalizedColor = newItem.toLowerCase()
-    if (itemTable[normalizedColor]) {
-      setCurrentItem(normalizedColor)
-      return true
-    } else {
-      console.warn('Invalid color requested:', newItem)
-      return false
-    }
+    setCurrentItem(newItem)
   }, [])
 
   useEffect(() => {
@@ -106,50 +108,49 @@ const ColorGame = memo(function ColorGame({
 
   const handleVoiceCommand = useCallback((command) => {
     const gameType = 'Color'
-    console.log('Processing voice command:', command)
-    const lowerCommand = command.toLowerCase().trim()
+    console.log('Processing voice command:', command, 'Current color:', currentItem)
 
-    const speakFn = handleVoiceCommand.speak || speak || (() => {
-      console.warn('Speak function not available')
-    })
+    // Handle common commands first
+    const commonResult = handleCommonVoiceCommands(command, speak, selectNewItem, endGame, gameType)
+    if (commonResult.action !== 'none') {
+      return
+    }
 
-    if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
-      console.log('Next command detected')
-      selectNewItem(selectedItems, currentItem, setCurrentItem)
-    } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
-      console.log('Stop command detected')
-      endGame()
-    } else if (/\b(help|instructions)\b/.test(lowerCommand)) {
-      console.log('Help command detected')
-      speakFn(`To proceed to the next ${gameType} say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint you can ask 'what ${gameType} is it?'. To display any ${gameType} say 'show me', followed by the ${gameType} you want to see.`)
-    } else if (new RegExp(`\\b(what|which)(?:\\s+(?:${gameType}|is|it))?\\b`).test(lowerCommand)) {
-      console.log(`${gameType} hint requested for:`, currentItem)
-      speakFn(`The current ${gameType} is ${currentItem}.`)
-    } else if (/\b(show(?:\s+me)?)\s+(\w+)\b/.test(lowerCommand)) {
-      const match = lowerCommand.match(/\b(show(?:\s+me)?)\s+(\w+)\b/)
-      const requestedColor = match[2]
-      console.log('Show command detected for color:', requestedColor)
-      if (updateCurrentItem(requestedColor)) {
-        speakFn(`Showing ${requestedColor}`)
+    // Check for "show me" commands
+    const showMatch = command.match(/show\s+(?:me\s+)?(?:the\s+)?(?:color\s+)?(\w+)/)
+    if (showMatch) {
+      const requestedColor = showMatch[1].toLowerCase()
+      const matchedColor = selectedItems.find(color => 
+        color.toLowerCase() === requestedColor
+      )
+      
+      if (matchedColor) {
+        updateCurrentItem(matchedColor)
+        speak(`Showing you ${matchedColor}`)
       } else {
-        speakFn(`Sorry, ${requestedColor} is not a valid color. Available colors are: ${selectedItems.join(', ')}`)
+        speak(`Sorry, ${requestedColor} is not a valid color. Available colors are: ${selectedItems.join(', ')}`)
       }
     } else {
       // Check if the command matches any color in our list
       const matchedColor = selectedItems.find(color => 
-        lowerCommand.includes(color.toLowerCase())
+        command.includes(color.toLowerCase())
       )
       
       if (matchedColor) {
         console.log('Color guess:', matchedColor, 'Current color:', currentItem)
-        if (matchedColor.toLowerCase() === currentItem.toLowerCase()) {
-          speakFn('Correct!')
+        if (!currentItem) {
+          speak('Please wait a moment while I select a color.')
+          const newItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
+          updateCurrentItem(newItem)
+          speak(`What color is this?`)
+        } else if (matchedColor.toLowerCase() === currentItem.toLowerCase()) {
+          speak('Correct!')
           selectNewItem(selectedItems, currentItem, setCurrentItem)
         } else {
-          speakFn('Try again')
+          speak('Try again')
         }
       } else {
-        speakFn(`I didn't understand that. Please say a ${gameType} or say 'help' for instructions.`)
+        speak(`I didn't understand that. Please say a ${gameType} or say 'help' for instructions.`)
       }
     }
   }, [currentItem, selectedItems, endGame, updateCurrentItem, speak, selectNewItem])

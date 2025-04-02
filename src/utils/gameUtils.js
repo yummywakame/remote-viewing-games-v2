@@ -20,22 +20,23 @@ export const selectNewItem = (selectedItems, currentItem, updateCurrentItem) => 
   console.log('Selecting new item. Current item:', currentItem)
   console.log('Available items:', selectedItems)
   
-  const newItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
+  let newItem
+  do {
+    newItem = selectedItems[Math.floor(Math.random() * selectedItems.length)]
+  } while (newItem === currentItem && selectedItems.length > 1)
   
   console.log('New item selected:', newItem)
   updateCurrentItem(newItem)
   return newItem
 }
 
-export const handleCommonVoiceCommands = (command, speak, selectNewItem, endGame, gameType) => {
+export const handleCommonVoiceCommands = (command, speak, selectNewItemFn, endGame, gameType) => {
   const lowerCommand = command.toLowerCase()
 
   if (/\b(next|skip|forward)\b/.test(lowerCommand)) {
     console.log('Next command detected')
-    const newItem = selectNewItem()
-    console.log(`New ${gameType} after next command:`, newItem)
     speak(`What ${gameType.toLowerCase()} is this?`)
-    return { action: 'next', newItem }
+    return { action: 'next' }
   } else if (/\b(stop|end|quit|exit)\b/.test(lowerCommand)) {
     console.log('Stop command detected')
     endGame()
