@@ -8,9 +8,7 @@ const nextConfig = {
     // Consider removing this to catch TypeScript errors during build
     // ignoreBuildErrors: true
   },
-  experimental: {
-    typedRoutes: false
-  },
+  typedRoutes: false,
   async headers() {
     return [
       {

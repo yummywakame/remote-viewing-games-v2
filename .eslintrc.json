@@ -14,7 +14,8 @@
   "rules": {
     "react-hooks/exhaustive-deps": "off",
     "@next/next/no-img-element": "error",
-    "no-undef": "error"
+    "no-undef": "error",
+    "no-unused-vars": "warn"
   },
   "parserOptions": {
     "ecmaVersion": 2018,
