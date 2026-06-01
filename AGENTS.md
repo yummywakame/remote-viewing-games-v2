@@ -80,13 +80,20 @@ www/                          # Repo root
 
 ## About the App
 
-The app provides solo practice games for MindSight development:
+The app provides solo practice games for MindSight development. All games are **stateless** — no user accounts, no saved progress.
 
-- **Color Game** (`/color-game`) — Trains perception of colors while blindfolded
-- **Shape Game** (`/shape-game`) — Trains perception of shapes while blindfolded
-- **Voice features** — Audio interaction support (see `VOICE_SETUP_INSTRUCTIONS.md`)
+| Game | Route | Status |
+|---|---|---|
+| Color Game | `/color-game` | Live |
+| Shape Game | `/shape-game` | Live |
+| Number Game | `/number-game` | Planned |
+| Object Game | `/object-game` | Planned |
+| Word Game | `/word-game` | Planned |
+| Scene Game | `/scene-game` | Planned |
 
-The games are designed to be used with a physical blindfold or sleep mask. The user puts on the blindfold, then attempts to perceive what is shown on screen through MindSight. The app provides feedback and progression.
+Each game is designed to be used with a physical blindfold or sleep mask. The user puts on the blindfold, then attempts to perceive what is shown on screen through MindSight. The app provides feedback and progression.
+
+**Voice features** — Audio interaction support is available (see `VOICE_SETUP_INSTRUCTIONS.md`).
 
 ## Development
 
