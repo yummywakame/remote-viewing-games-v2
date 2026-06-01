@@ -111,6 +111,31 @@ npm run lint    # Lint
 - Framer Motion for any animations beyond Tailwind's built-ins
 - `isomorphic-dompurify` is present — use it whenever rendering any user-supplied or external HTML
 
+## Voice Architecture
+
+Voice logic is split across two files — both need to be understood before editing either:
+- `src/app/components/SpeechHandler.js` — the main voice component (STT + TTS)
+- `src/app/components/BaseGame.js` — also contains a duplicate speech recognition singleton (lines ~480–585); this should eventually be consolidated into `SpeechHandler.js`
+
+Current TTS (`window.speechSynthesis`) works. Current STT (`webkitSpeechRecognition`) is broken — returns a "network" error because it depends on Google's servers. See `VOICE_SETUP_INSTRUCTIONS.md` for full context and the migration plan.
+
+## Active Work in Progress
+
+### Voice Migration — branch: `feature/voice-openai-whisper`
+
+**Goal:** Replace broken Web Speech API STT with OpenAI Whisper via a protected Next.js API route.
+
+**Decisions made:**
+- **STT:** OpenAI Whisper (`gpt-4o-mini-transcribe`, $0.003/min) — send captured audio clips to `/api/transcribe` route
+- **TTS:** Keep existing `window.speechSynthesis` for now; optionally upgrade to OpenAI `gpt-4o-mini-tts` later
+- **Security:** API key lives in `.env.local` and is called only from server-side API routes — never exposed to the browser
+- **Word matching:** Whisper returns full transcript as plain text; use `transcript.toLowerCase().includes(targetWord)` to find the answer word anywhere in the phrase (handles "hmm is it yellow?", background chatter, etc.)
+- **Approach:** Pre-recorded/batch (not streaming) — capture clip after silence, send to Whisper, get transcript back in ~300ms. Cheaper and sufficient for this use case.
+
+**OpenAI account status:** Account exists at platform.openai.com. Billing credits need to be added before the API will work. API key needs to be created and added to `.env.local` as `OPENAI_API_KEY`.
+
+**Full implementation checklist:** See `VOICE_SETUP_INSTRUCTIONS.md`
+
 ## Deployment
 
 Currently on Vercel. When the `mindsight.training` domain is connected, update:
