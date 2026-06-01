@@ -79,7 +79,16 @@ www/                          # Repo root
 
 ## About the App
 
-The app provides solo practice games for MindSight development. All games are **stateless** — no user accounts, no saved progress.
+The app provides solo practice games for MindSight development. All games are **stateless** — no user accounts, no server-side saved progress.
+
+**Note on localStorage:** The app is stateless server-side, but does persist user preferences locally in the browser via `localStorage` (never sent to a server). Managed in `src/app/components/UserPreferences.js`.
+
+| localStorage key | Value |
+|---|---|
+| `userPreferencesName` | User's name (used in voice intro) |
+| `userPreferencesVoiceSpeed` | TTS playback speed (default 1.2) |
+| `userPreferencesVoiceName` | Selected browser voice name |
+| `gameLongIntro` | `"true"` / `"false"` — full vs brief welcome message |
 
 | Game | Route | Status |
 |---|---|---|
