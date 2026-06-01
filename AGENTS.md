@@ -17,7 +17,6 @@ This is a companion app to the coaching site at **mindsight.coach**. Where minds
   git config --local user.name "yummywakame"
   git config --local user.email "5927823+yummywakame@users.noreply.github.com"
   ```
-  Find the exact noreply address at: GitHub → Settings → Emails → "Keep my email address private"
 
 ## Tech Stack
 
