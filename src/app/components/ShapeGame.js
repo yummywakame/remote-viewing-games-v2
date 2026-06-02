@@ -22,7 +22,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [longIntroEnabled, setLongIntroEnabled] = useState(false)
   const [userName, setUserName] = useState('')
   const [voiceSpeed, setVoiceSpeed] = useState(1.2)
-  const [voiceName, setVoiceName] = useState('coral')
+  const [voiceName, setVoiceName] = useState('echo')
   const [currentItem, setCurrentItem] = useState(null)
   const currentItemRef = useRef(null)
 
@@ -42,7 +42,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
 
     setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
     setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
-    setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'coral')
+    setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
   }, [])
 
   const updateCurrentItem = useCallback((newItem) => {
@@ -64,7 +64,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
         const article = getArticle(currentItem)
         speak(`It's ${article} ${currentItem}.`)
       }
-      return true
+      return currentItem || true
     }
 
     const showMatch = command.match(/\b(?:show(?:\s+me)?)\s+(?:a\s+|an\s+)?(.+)\b/i)
@@ -78,7 +78,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
         const article = getArticle(requested)
         speak(`Sorry, ${article} ${requested} is not in my shape list.`)
       }
-      return true
+      return requested
     }
 
     const itemGuess = Object.keys(itemTable).find((item) => command.includes(item))
@@ -89,7 +89,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       } else {
         speak('Try again!')
       }
-      return true
+      return itemGuess
     }
   }, [updateCurrentItem])
 

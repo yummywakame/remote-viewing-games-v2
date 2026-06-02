@@ -6,13 +6,13 @@ const openai = new OpenAI()
 const VALID_VOICES = new Set([
   'alloy', 'ash', 'ballad', 'coral', 'echo', 'fable', 'onyx', 'nova', 'sage', 'shimmer',
 ])
-const DEFAULT_VOICE = 'coral'
+const DEFAULT_VOICE = 'echo'
 const MAX_TEXT_LENGTH = 500
 
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { text, voice = DEFAULT_VOICE, speed = 1.0 } = body
+    const { text, voice = DEFAULT_VOICE, speed = 1.2 } = body
 
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return NextResponse.json({ error: 'Text required' }, { status: 400 })
@@ -32,9 +32,10 @@ export async function POST(request) {
       speed: safeSpeed,
       response_format: 'mp3',
       instructions:
-        'Speak in a warm, curious, and encouraging tone — like a supportive coach ' +
-        'who is genuinely excited to help someone develop their intuition. ' +
-        'Be clear and calm, with a sense of wonder.',
+        'Speak in a jovial, upbeat, and playful tone — like an enthusiastic friend ' +
+        'who finds the whole thing genuinely fun and exciting. ' +
+        'Be energetic and light-hearted, with a smile in your voice. ' +
+        'Give extra vocal stress and emphasis to any words written in ALL CAPS.',
     })
 
     const buffer = Buffer.from(await mp3.arrayBuffer())

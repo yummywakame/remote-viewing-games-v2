@@ -19,7 +19,7 @@ const OPENAI_VOICES = [
   { id: 'shimmer', label: 'Shimmer' },
 ]
 
-const DEFAULT_VOICE = 'coral'
+const DEFAULT_VOICE = 'echo'
 
 const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onUpdatePreferences }) => {
   const [name, setName] = useState(userName || '')

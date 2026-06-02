@@ -17,6 +17,47 @@ const itemTable = {
   orange: '#FF7F50',
 }
 
+const COLOR_ALIASES = {
+  red:    ['raid', 'reed', 'read', 'rad', 'bread', 'rick', 'great'],
+  yellow: ['gielo', 'jello'],
+  purple: ['pebble', 'pebbles'],
+  orange: ['french'],
+  blue:   ['okay'],
+}
+
+const matchesAlias = (command, color) =>
+  COLOR_ALIASES[color]?.some(alias => new RegExp(`\\b${alias}\\b`).test(command))
+
+const QUESTION_VARIANTS = [
+  'What color is this?',
+  'What color do you see?',
+  'Can you tell what color this is?',
+  'What about this one?',
+  'And this one?',
+  'How about this one?',
+  'What do you sense?',
+]
+
+const CORRECT_RESPONSES = [
+  (c) => `Correct! It IS ${c}!`,
+  (c) => `Yes, it's ${c}!`,
+  (c) => `Well done! ${c.charAt(0).toUpperCase() + c.slice(1)}!`,
+  (c) => `Yes, ${c}!`,
+  (c) => `You nailed it! It's ${c}!`,
+  (c) => `Yep, it's ${c}!`,
+  (c) => `It IS ${c}!`,
+  (c) => `${c.charAt(0).toUpperCase() + c.slice(1)} it is!`,
+]
+
+const TRY_AGAIN_RESPONSES = [
+  'Not this time — keep sensing!',
+  'Almost! Give it another go.',
+  "Keep going, you've got this!",
+  'Not quite — what else do you pick up?',
+  'Give it another try!',
+  "You're getting there — try again!",
+]
+
 const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(['yellow', 'green', 'blue', 'purple', 'pink', 'red', 'orange'])
   const [currentItem, setCurrentItem] = useState(null)
@@ -24,8 +65,9 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [isIntroComplete, setIsIntroComplete] = useState(false)
   const [userName, setUserName] = useState('')
   const [voiceSpeed, setVoiceSpeed] = useState(1.2)
-  const [voiceName, setVoiceName] = useState('coral')
+  const [voiceName, setVoiceName] = useState('echo')
   const currentItemRef = React.useRef(null)
+  const correctIndexRef = React.useRef(0)
 
   useEffect(() => {
     const savedItems = localStorage.getItem('colorGameSelectedItems')
@@ -41,7 +83,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
 
     setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
     setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
-    setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'coral')
+    setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
   }, [])
 
   const updateCurrentItem = useCallback((newItem) => {
@@ -79,24 +121,35 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
 
   // handleVoiceCommand receives (command, speak) from BaseGame
   const handleVoiceCommand = useCallback((command, speak) => {
-    const matchedColor = selectedItems.find((c) => command.includes(c))
+    const matchedColor = selectedItems.find((c) => command.includes(c) || matchesAlias(command, c))
+    const anyKnownColor = !matchedColor && Object.keys(itemTable).find((c) => command.includes(c) || matchesAlias(command, c))
 
     if (matchedColor) {
       const currentColor = currentItemRef.current
       const isCorrect = currentColor && matchedColor === currentColor
 
       if (isCorrect) {
-        speak('Correct!').then(async () => {
+        const correctText = CORRECT_RESPONSES[correctIndexRef.current](matchedColor)
+        correctIndexRef.current = (correctIndexRef.current + 1) % CORRECT_RESPONSES.length
+        speak(correctText).then(async () => {
           const newItem = selectNewItem(selectedItems, matchedColor)
           if (newItem) {
             updateCurrentItem(newItem)
-            await speak(`What color is this?`)
+            const question = QUESTION_VARIANTS[Math.floor(Math.random() * QUESTION_VARIANTS.length)]
+            await speak(question)
           }
         })
       } else {
-        speak('Try again')
+        const tryAgain = TRY_AGAIN_RESPONSES[Math.floor(Math.random() * TRY_AGAIN_RESPONSES.length)]
+        speak(tryAgain)
       }
-      return true
+      return matchedColor
+    }
+
+    if (anyKnownColor) {
+      const tryAgain = TRY_AGAIN_RESPONSES[Math.floor(Math.random() * TRY_AGAIN_RESPONSES.length)]
+      speak(tryAgain)
+      return anyKnownColor
     }
 
     const showMatch = command.match(/show\s+(?:me\s+)?(?:the\s+)?(?:color\s+)?(\w+)/)
@@ -108,13 +161,13 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       } else {
         speak(`Sorry, ${requested} is not in the color list. Available colors are: ${selectedItems.join(', ')}`)
       }
-      return true
+      return requested
     }
 
     if (/\b(what|which)/.test(command)) {
       const current = currentItemRef.current
       if (current) speak(`It's ${current}`)
-      return true
+      return current || true
     }
   }, [selectedItems, selectNewItem, updateCurrentItem])
 
@@ -206,6 +259,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       userName={userName}
       voiceSpeed={voiceSpeed}
       voiceName={voiceName}
+      questionVariants={QUESTION_VARIANTS}
       onUpdateUserPreferences={handleUpdateUserPreferences}
       selectNewItemProp={selectNewItem}
       onCurrentItemUpdate={updateCurrentItem}

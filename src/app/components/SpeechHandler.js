@@ -4,9 +4,9 @@ import { useCallback, useRef, useEffect, useState } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
 
 // VAD tuning constants
-const SPEECH_THRESHOLD = 20       // RMS above this → possible speech
-const MIN_SPEECH_MS = 250         // must stay above threshold this long before counting as real speech (250ms allows short words like "red")
-const SILENCE_DURATION_MS = 1500  // ms of silence after speech → send clip
+const SPEECH_THRESHOLD = 15       // RMS above this → possible speech (lower catches plosive-onset words like "pink")
+const MIN_SPEECH_MS = 100         // time since first onset before counting as real speech
+const SILENCE_DURATION_MS = 800   // ms of silence after speech → send clip
 const VAD_INTERVAL_MS = 100
 const MAX_CLIP_MS = 10000         // force-rotate recording after this long
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000  // stop listening after 5 min of no confirmed speech
@@ -24,8 +24,8 @@ const HALLUCINATIONS = new Set([
 
 export default function useSpeech({
   gameState,
-  voiceName = 'coral',
-  voiceSpeed = 1.0,
+  voiceName = 'echo',
+  voiceSpeed = 1.2,
   onTranscript,        // (transcript: string) => void
   onListeningChange,   // (bool) => void
   onSpeakingChange,    // (bool) => void
@@ -44,8 +44,10 @@ export default function useSpeech({
   // Voice preference refs so speak() always uses the latest values without needing them in deps
   const voiceNameRef = useRef(voiceName)
   const voiceSpeedRef = useRef(voiceSpeed)
-  useEffect(() => { voiceNameRef.current = voiceName }, [voiceName])
-  useEffect(() => { voiceSpeedRef.current = voiceSpeed }, [voiceSpeed])
+  // TTS cache: text → Blob. Cleared when voice or speed changes so stale audio is never replayed.
+  const audioCacheRef = useRef(new Map())
+  useEffect(() => { voiceNameRef.current = voiceName; audioCacheRef.current.clear() }, [voiceName])
+  useEffect(() => { voiceSpeedRef.current = voiceSpeed; audioCacheRef.current.clear() }, [voiceSpeed])
 
   const gameStateRef = useRef(gameState)
   useEffect(() => { gameStateRef.current = gameState }, [gameState])
@@ -60,6 +62,7 @@ export default function useSpeech({
 
   // Playback
   const currentAudioRef = useRef(null)
+  const currentAudioUrlRef = useRef(null)
 
   // State mirror refs (avoids stale closures in intervals/callbacks)
   const isListeningRef = useRef(false)
@@ -104,7 +107,11 @@ export default function useSpeech({
       if (!clean) return
       // Discard if every sentence is a known Whisper hallucination (catches repetitions like "thank you. thank you.")
       const sentences = clean.split(/[.!?]+/).map(s => s.trim()).filter(Boolean)
-      if (sentences.length > 0 && sentences.every(s => HALLUCINATIONS.has(s))) return
+      if (sentences.length > 0 && sentences.every(s => HALLUCINATIONS.has(s))) {
+        console.log('[STT] discarded hallucination:', clean)
+        return
+      }
+      console.log('[STT] heard:', clean)
       onTranscriptRef.current?.(clean)
     } catch (err) {
       console.error('[STT]', err)
@@ -194,22 +201,25 @@ export default function useSpeech({
         const rms = Math.sqrt(freqData.reduce((s, v) => s + v * v, 0) / freqData.length)
 
         if (rms > SPEECH_THRESHOLD) {
-          // Start timing this speech burst
+          // Note first onset of this burst
           if (!speechStartTimeRef.current) speechStartTimeRef.current = Date.now()
-          // Only count as real speech once it's sustained MIN_SPEECH_MS
-          if (!hasSpeechRef.current && Date.now() - speechStartTimeRef.current >= MIN_SPEECH_MS) {
-            hasSpeechRef.current = true
-          }
           silenceStartRef.current = null
         } else {
-          // Below threshold: reset the burst timer so a brief noise dip resets
-          speechStartTimeRef.current = null
-          if (hasSpeechRef.current) {
-            if (!silenceStartRef.current) silenceStartRef.current = Date.now()
-            if (Date.now() - silenceStartRef.current >= SILENCE_DURATION_MS) {
-              rotateRecording(stream)
-            }
+          if (!silenceStartRef.current) silenceStartRef.current = Date.now()
+          const silenceDuration = Date.now() - silenceStartRef.current
+          // Only reset burst timer after sustained silence — brief dips during short
+          // crisp words ("pink", "next") must not interrupt accumulation
+          if (silenceDuration > 150) speechStartTimeRef.current = null
+          if (hasSpeechRef.current && silenceDuration >= SILENCE_DURATION_MS) {
+            rotateRecording(stream)
           }
+        }
+
+        // Confirm speech based on elapsed time since first onset — checked outside
+        // both branches so brief dips below threshold don't block confirmation
+        if (speechStartTimeRef.current && !hasSpeechRef.current &&
+            Date.now() - speechStartTimeRef.current >= MIN_SPEECH_MS) {
+          hasSpeechRef.current = true
         }
 
         // Idle timeout: stop listening if no speech has been sent in IDLE_TIMEOUT_MS
@@ -233,8 +243,11 @@ export default function useSpeech({
   const cancelSpeech = useCallback(() => {
     if (currentAudioRef.current) {
       currentAudioRef.current.pause()
-      currentAudioRef.current.src = ''
       currentAudioRef.current = null
+    }
+    if (currentAudioUrlRef.current) {
+      URL.revokeObjectURL(currentAudioUrlRef.current)
+      currentAudioUrlRef.current = null
     }
     setSpeaking(false)
   }, [setSpeaking])
@@ -247,25 +260,38 @@ export default function useSpeech({
     setSpeaking(true)
 
     try {
-      const res = await fetch('/api/speak', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: DOMPurify.sanitize(text),
-          voice: voiceNameRef.current,
-          speed: voiceSpeedRef.current,
-        }),
-      })
+      const cacheKey = DOMPurify.sanitize(text)
+      let blob = audioCacheRef.current.get(cacheKey)
 
-      if (!res.ok) throw new Error(`TTS ${res.status}`)
-
-      const blob = await res.blob()
+      if (!blob) {
+        const res = await fetch('/api/speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: cacheKey,
+            voice: voiceNameRef.current,
+            speed: voiceSpeedRef.current,
+          }),
+        })
+        if (!res.ok) throw new Error(`TTS ${res.status}`)
+        blob = await res.blob()
+        audioCacheRef.current.set(cacheKey, blob)
+        console.log('[TTS] fetched and cached:', cacheKey)
+      } else {
+        console.log('[TTS] playing from cache:', cacheKey)
+      }
       const url = URL.createObjectURL(blob)
+      currentAudioUrlRef.current = url
       const audio = new Audio(url)
       currentAudioRef.current = audio
 
       await new Promise((resolve) => {
-        const finish = () => { URL.revokeObjectURL(url); setSpeaking(false); resolve() }
+        const finish = () => {
+          URL.revokeObjectURL(url)
+          currentAudioUrlRef.current = null
+          setSpeaking(false)
+          resolve()
+        }
         audio.onended = finish
         audio.onerror = finish
         audio.play().catch((err) => { console.error('[TTS] play:', err); finish() })

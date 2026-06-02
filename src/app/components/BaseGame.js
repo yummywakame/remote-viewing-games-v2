@@ -11,6 +11,13 @@ import DOMPurify from 'isomorphic-dompurify'
 import { selectNewItem } from '@/utils/gameUtils'
 import useSpeech from './SpeechHandler'
 
+const OUTRO_RESPONSES = [
+  (name) => name ? `Thanks ${name}! That was fun.` : 'Thank you for playing!',
+  (name) => name ? `Thanks ${name}! I hope we play again soon.` : 'Great session — thanks for playing!',
+  (name) => name ? `That was a good practice session, ${name}!` : 'That was a great practice session!',
+]
+const TIMEOUT_MESSAGE = "I haven't heard from you in a while. Goodbye!"
+
 export default function BaseGame({
   GameSettings,
   gameType,
@@ -26,6 +33,7 @@ export default function BaseGame({
   userName,
   voiceName = 'coral',
   voiceSpeed = 1.0,
+  questionVariants,
   onUpdateUserPreferences,
   selectNewItemProp,
   onCurrentItemUpdate,
@@ -41,6 +49,7 @@ export default function BaseGame({
   const router = useRouter()
 
   const currentItemRef = useRef(null)
+  const outroIndexRef = useRef(0)
   const gameStateRef = useRef('initial')
   const lockStateChangeRef = useRef(false)
   const isUnmountingRef = useRef(false)
@@ -56,6 +65,13 @@ export default function BaseGame({
     () => typeof window !== 'undefined' ? localStorage.getItem('gameLongIntro') !== 'false' : true
   )
 
+  // Auto-clear the speech bubble after 2 seconds
+  useEffect(() => {
+    if (!lastHeardWord) return
+    const t = setTimeout(() => setLastHeardWord(''), 2000)
+    return () => clearTimeout(t)
+  }, [lastHeardWord])
+
   // Keep gameStateRef in sync
   useEffect(() => { gameStateRef.current = gameState }, [gameState])
 
@@ -66,7 +82,6 @@ export default function BaseGame({
 
   const handleTranscript = useCallback((transcript) => {
     if (!transcript) return
-    setLastHeardWord(transcript)
     // Don't reset inactivity timer here — only reset on recognised commands/items
     // so background noise that gets transcribed doesn't keep the game alive.
 
@@ -77,7 +92,6 @@ export default function BaseGame({
     }
     if (/\b(next|skip|forward)\b/.test(transcript)) {
       setLastInteraction(Date.now())
-      speakRef.current?.(`What ${gameType.toLowerCase()} is this?`)
       handleNextItemRef.current?.()
       return
     }
@@ -89,9 +103,12 @@ export default function BaseGame({
       )
       return
     }
-    // Game-specific handling — only reset timer if the game recognised something
-    const matched = handleVoiceCommand?.(transcript, speakRef.current)
-    if (matched) setLastInteraction(Date.now())
+    // Game-specific handling — only show bubble and reset timer if a word was recognised
+    const matchedWord = handleVoiceCommand?.(transcript, speakRef.current)
+    if (matchedWord) {
+      setLastHeardWord(typeof matchedWord === 'string' ? matchedWord : transcript)
+      setLastInteraction(Date.now())
+    }
   }, [gameType, handleVoiceCommand])
 
   const { speak, stopListening, cancelSpeech } = useSpeech({
@@ -139,13 +156,20 @@ export default function BaseGame({
 
   // ----- Game flow -----
 
-  const endGame = useCallback(async () => {
+  const endGame = useCallback(async (isTimeout = false) => {
     cancelSpeech()
     stopListening()
     setAndLogGameState('ending', 'end game')
     updateCurrentItem(null)
     setLastHeardWord('')
-    await speak('Thank you for playing!')
+    const outroText = isTimeout
+      ? TIMEOUT_MESSAGE
+      : (() => {
+          const text = OUTRO_RESPONSES[outroIndexRef.current](userName)
+          outroIndexRef.current = (outroIndexRef.current + 1) % OUTRO_RESPONSES.length
+          return text
+        })()
+    await speak(outroText)
     setAndLogGameState('initial', 'game ended')
     setIsIntroComplete(false)
     setGlobalIsListening(false)
@@ -153,7 +177,7 @@ export default function BaseGame({
     router.push('/')
   }, [
     cancelSpeech, stopListening, setAndLogGameState, updateCurrentItem,
-    speak, setIsIntroComplete, router, setGlobalIsListening, setGlobalIsSpeaking,
+    speak, setIsIntroComplete, router, setGlobalIsListening, setGlobalIsSpeaking, userName,
   ])
 
   // Stable ref so handleTranscript can call endGame without it being in the dep array
@@ -170,8 +194,11 @@ export default function BaseGame({
     if (!newItem) return
 
     updateCurrentItem(newItem)
-    await speak(`What ${gameType.toLowerCase()} is this?`)
-  }, [gameState, cancelSpeech, stopListening, selectNewItemProp, selectedItems, updateCurrentItem, speak, gameType])
+    const question = questionVariants?.length
+      ? questionVariants[Math.floor(Math.random() * questionVariants.length)]
+      : `What ${gameType.toLowerCase()} is this?`
+    await speak(question)
+  }, [gameState, cancelSpeech, stopListening, selectNewItemProp, selectedItems, updateCurrentItem, speak, gameType, questionVariants])
 
   // Stable ref so handleTranscript can call handleNextItem
   const handleNextItemRef = useRef(handleNextItem)
@@ -186,7 +213,7 @@ export default function BaseGame({
     await new Promise((r) => setTimeout(r, 500))
 
     const introText = longIntroEnabled
-      ? `Welcome${userName ? ` ${userName}` : ''} to the ${gameType} Game! I will show you different ${gameType.toLowerCase()}s, and you need to tell me what they are. Are you ready?`
+      ? `Welcome${userName ? ` ${userName}` : ''} to the ${gameType} Game! I will show you different ${gameType.toLowerCase()}s, and you need to tell me the ${gameType.toLowerCase()} you see. Say "Help" at any time for more controls. Are you ready?`
       : `Let's play the ${gameType} Game!`
 
     await speak(introText)
@@ -216,9 +243,9 @@ export default function BaseGame({
     }
   }, [gameState, handleNextItem])
 
-  const handleSaveSettings = useCallback(() => {
-    onSaveSettings(selectedItems)
-  }, [selectedItems, onSaveSettings])
+  const handleSaveSettings = useCallback((newItems) => {
+    onSaveSettings(newItems)
+  }, [onSaveSettings])
 
   // Clear any leftover color-game-style element when the game ends
   useEffect(() => {
@@ -235,7 +262,7 @@ export default function BaseGame({
   useEffect(() => {
     if (gameState !== 'playing') return
     const timer = setTimeout(() => {
-      endGameRef.current?.()
+      endGameRef.current?.(true)
     }, 2 * 60 * 1000)
     return () => clearTimeout(timer)
   }, [gameState, lastInteraction])
