@@ -1,20 +1,12 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import ColorGame from '../components/ColorGame'
 import { motion } from 'framer-motion'
 import { Sparkles, Eye, Brain, Shapes } from 'lucide-react'
 
 export default function ColorGamePage() {
-  const [gameState, setGameState] = useState('initial')
-
-  const handleGameStateChange = useCallback((newState) => {
-    setGameState(newState)
-  }, [])
-
-  const handleEndGame = useCallback(() => {
-    setGameState('initial')
-  }, [])
+  const handleGameStateChange = useCallback(() => {}, [])
 
   return (
     <>
@@ -58,10 +50,7 @@ export default function ColorGamePage() {
 
       {/* Color Game component */}
       <div className="relative min-h-screen flex items-center justify-center">
-        <ColorGame 
-          onGameStateChange={handleGameStateChange}
-          endGame={handleEndGame}
-        />
+        <ColorGame onGameStateChange={handleGameStateChange} />
       </div>
 
       {/* Decorative bottom gradient */}
