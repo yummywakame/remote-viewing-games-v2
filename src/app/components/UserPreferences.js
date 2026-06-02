@@ -6,73 +6,90 @@ import { motion } from 'framer-motion'
 import { Switch } from '@/components/ui/switch'
 import DOMPurify from 'isomorphic-dompurify'
 
-const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, selectedVoice, onUpdatePreferences }) => {
+const OPENAI_VOICES = [
+  { id: 'alloy',   label: 'Alloy'   },
+  { id: 'ash',     label: 'Ash'     },
+  { id: 'ballad',  label: 'Ballad'  },
+  { id: 'coral',   label: 'Coral'   },
+  { id: 'echo',    label: 'Echo'    },
+  { id: 'fable',   label: 'Fable'   },
+  { id: 'nova',    label: 'Nova'    },
+  { id: 'onyx',    label: 'Onyx'    },
+  { id: 'sage',    label: 'Sage'    },
+  { id: 'shimmer', label: 'Shimmer' },
+]
+
+const DEFAULT_VOICE = 'coral'
+
+const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onUpdatePreferences }) => {
   const [name, setName] = useState(userName || '')
   const [speed, setSpeed] = useState(voiceSpeed || 1.2)
-  const [voice, setVoice] = useState(selectedVoice?.name || '')
-  const [voices, setVoices] = useState([])
-  const [longIntroEnabled, setLongIntroEnabled] = useState(true) 
+  const [voice, setVoice] = useState(voiceName || DEFAULT_VOICE)
+  const [longIntroEnabled, setLongIntroEnabled] = useState(true)
+  const [isPreviewing, setIsPreviewing] = useState(false)
+  const previewAudioRef = useRef(null)
   const modalRef = useRef(null)
 
   useEffect(() => {
-    const savedName = localStorage.getItem('userPreferencesName') || ''
-    const savedSpeed = parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2
-    const savedVoice = localStorage.getItem('userPreferencesVoiceName') || ''
+    if (!isOpen) return
+    setName(DOMPurify.sanitize(localStorage.getItem('userPreferencesName') || ''))
+    setSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
+    setVoice(localStorage.getItem('userPreferencesVoiceName') || DEFAULT_VOICE)
     const savedLongIntro = localStorage.getItem('gameLongIntro')
-
-    setName(DOMPurify.sanitize(savedName))
-    setSpeed(savedSpeed)
-    setVoice(savedVoice)
-    setLongIntroEnabled(savedLongIntro === 'false' ? false : true)
-
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      const loadVoices = () => {
-        const availableVoices = window.speechSynthesis.getVoices()
-        setVoices(availableVoices)
-        if (savedVoice) {
-          const selectedVoice = availableVoices.find(v => v.name === savedVoice)
-          if (selectedVoice) {
-            setVoice(selectedVoice.name)
-          }
-        }
-      }
-
-      loadVoices()
-      window.speechSynthesis.onvoiceschanged = loadVoices
-    }
-  }, [])
+    setLongIntroEnabled(savedLongIntro !== 'false')
+  }, [isOpen])
 
   const handleSave = useCallback(() => {
-    const newVoice = voices.find(v => v.name === voice) || null
-    onUpdatePreferences(name, speed, newVoice)
+    onUpdatePreferences(name, speed, voice)
     localStorage.setItem('userPreferencesName', DOMPurify.sanitize(name))
     localStorage.setItem('userPreferencesVoiceSpeed', DOMPurify.sanitize(speed.toString()))
     localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(voice))
     localStorage.setItem('gameLongIntro', DOMPurify.sanitize(longIntroEnabled.toString()))
     onClose()
-  }, [name, speed, voice, voices, longIntroEnabled, onUpdatePreferences, onClose])
+  }, [name, speed, voice, longIntroEnabled, onUpdatePreferences, onClose])
 
   const handleReset = useCallback(() => {
     setName('')
     setSpeed(1.2)
-    setVoice('')
+    setVoice(DEFAULT_VOICE)
     setLongIntroEnabled(true)
   }, [])
 
   const handleOutsideClick = useCallback((e) => {
-    if (modalRef.current && !modalRef.current.contains(e.target)) {
-      onClose()
-    }
+    if (modalRef.current && !modalRef.current.contains(e.target)) onClose()
   }, [onClose])
 
-  const previewVoice = useCallback(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      const utterance = new SpeechSynthesisUtterance("This is a preview of the selected voice and speed.")
-      utterance.voice = voices.find(v => v.name === voice) || null
-      utterance.rate = speed
-      window.speechSynthesis.speak(utterance)
+  const previewVoice = useCallback(async () => {
+    if (isPreviewing) {
+      previewAudioRef.current?.pause()
+      setIsPreviewing(false)
+      return
     }
-  }, [voice, speed, voices])
+
+    setIsPreviewing(true)
+    try {
+      const res = await fetch('/api/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: 'This is a preview of the selected voice and speed.',
+          voice,
+          speed,
+        }),
+      })
+      if (!res.ok) throw new Error('Preview failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      previewAudioRef.current = audio
+      audio.onended = () => { URL.revokeObjectURL(url); setIsPreviewing(false) }
+      audio.onerror = () => { URL.revokeObjectURL(url); setIsPreviewing(false) }
+      audio.play()
+    } catch (err) {
+      console.error('[Preview]', err)
+      setIsPreviewing(false)
+    }
+  }, [voice, speed, isPreviewing])
 
   if (!isOpen) return null
 
@@ -104,9 +121,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, selectedVoice,
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium mb-1">
-                Name
-              </label>
+              <label htmlFor="name" className="block text-sm font-medium mb-1">Name</label>
               <input
                 type="text"
                 id="name"
@@ -117,20 +132,15 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, selectedVoice,
             </div>
 
             <div>
-              <label htmlFor="voice" className="block text-sm font-medium mb-1">
-                Voice
-              </label>
+              <label htmlFor="voice" className="block text-sm font-medium mb-1">Voice</label>
               <select
                 id="voice"
                 value={voice}
                 onChange={(e) => setVoice(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Default</option>
-                {voices.map((v) => (
-                  <option key={v.name} value={v.name}>
-                    {v.name} ({v.lang})
-                  </option>
+                {OPENAI_VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>{v.label}</option>
                 ))}
               </select>
             </div>
@@ -153,7 +163,9 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, selectedVoice,
                   />
                   <button
                     onClick={previewVoice}
-                    className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center hover:bg-blue-600 transition-colors self-end"
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors self-end ${
+                      isPreviewing ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-500 hover:bg-blue-600'
+                    }`}
                     aria-label="Preview voice"
                   >
                     <Volume2 size={20} />
@@ -200,4 +212,3 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, selectedVoice,
 }
 
 export default UserPreferences
-

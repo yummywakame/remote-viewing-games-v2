@@ -77,12 +77,25 @@ Decide at implementation time whether to upgrade TTS or keep the free browser ve
 
 ## Implementation Checklist
 
-- [ ] Add billing credits to OpenAI account
-- [ ] Create OpenAI API key, add to `.env.local`
-- [ ] Create `src/app/api/transcribe/route.js` with rate limiting
-- [ ] Refactor `SpeechHandler.js` — replace `webkitSpeechRecognition` with fetch to `/api/transcribe`
-- [ ] Consolidate duplicate speech init in `BaseGame.js` into `SpeechHandler.js`
-- [ ] Add silence detection to capture clips (VAD — voice activity detection)
-- [ ] Implement word-matching in `handleVoiceCommand` (substring search)
+- [x] Add billing credits to OpenAI account
+- [x] Create OpenAI API key, add to `.env.local`
+- [x] Create `src/app/api/transcribe/route.js` (1 MB size cap, 200-byte minimum)
+- [x] Create `src/app/api/speak/route.js` (OpenAI TTS, `gpt-4o-mini-tts`, voice + speed validated)
+- [x] Rewrite `SpeechHandler.js` as `useSpeech` hook — VAD via AudioContext + AnalyserNode, MediaRecorder for capture, fetch to `/api/transcribe`
+- [x] Remove duplicate speech singleton from `BaseGame.js`; wire `useSpeech` hook in its place
+- [x] Silence detection (VAD) implemented — 1.5 s silence after speech triggers clip send
+- [x] Word-matching via Whisper full transcript (substring search handled by game handlers)
+- [x] Upgrade TTS to OpenAI `gpt-4o-mini-tts` (coral default; all OpenAI voices available)
+- [x] `UserPreferences.js` — browser voice list replaced with OpenAI voice picker; preview uses `/api/speak`
+- [x] Common voice commands (stop/next/help/thanks) centralised in `BaseGame.js`
+- [x] `handleVoiceCommand(command, speak)` interface unified across `ColorGame` and `ShapeGame`
+- [x] VAD hallucination filter — known Whisper false-positives discarded (bye, thank you, etc.)
+- [x] Minimum speech duration (250ms) to ignore brief noise spikes
+- [x] 5-minute VAD idle timeout — stops listening if no speech sent; resumes on tap/click
+- [x] 2-minute game inactivity timeout — ends game if no voice or tap in 2 minutes
+- [x] Voice tone instructions — warm, curious, encouraging coach style
+- [x] Content-Security-Policy — `media-src blob:` added to allow audio playback
+- [x] `distDir` moved outside OneDrive (`AppData\Local\Temp\nextjs-mindsight\.next`) to prevent symlink corruption
+- [ ] **BUG: `Cannot find module 'react/jsx-runtime'`** at runtime — distDir outside project root breaks Node module resolution for compiled pages. Needs investigation (revert distDir approach OR find alternative OneDrive exclusion).
 - [ ] Test on Chrome desktop, Safari iOS, Android Chrome
-- [ ] Optionally: create `src/app/api/speak/route.js` for OpenAI TTS upgrade
+- [ ] Add rate limiting per-IP (requires Upstash Redis or similar on Vercel)

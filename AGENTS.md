@@ -122,26 +122,44 @@ npm run lint    # Lint
 
 ## Voice Architecture
 
-Voice logic is split across two files — both need to be understood before editing either:
-- `src/app/components/SpeechHandler.js` — the main voice component (STT + TTS)
-- `src/app/components/BaseGame.js` — also contains a duplicate speech recognition singleton (lines ~480–585); this should eventually be consolidated into `SpeechHandler.js`
+All voice logic lives in two files:
+- `src/app/components/SpeechHandler.js` — `useSpeech` hook. Handles mic permission, VAD (voice activity detection), MediaRecorder clip capture, OpenAI TTS playback. Returns `{ speak, startListening, stopListening, cancelSpeech, isListening, isSpeaking }`.
+- `src/app/api/transcribe/route.js` — server-side POST route; receives audio blob, calls OpenAI Whisper (`whisper-1`), returns `{ transcript }`.
+- `src/app/api/speak/route.js` — server-side POST route; receives `{ text, voice, speed }`, calls OpenAI TTS (`gpt-4o-mini-tts`), returns `audio/mpeg`.
 
-Current TTS (`window.speechSynthesis`) works. Current STT (`webkitSpeechRecognition`) is broken — returns a "network" error because it depends on Google's servers. See `VOICE_SETUP_INSTRUCTIONS.md` for full context and the migration plan.
+**STT:** OpenAI Whisper via VAD-driven MediaRecorder. AudioContext + AnalyserNode detects speech onset; 1.5 s of silence after speech triggers the clip send.  
+**TTS:** OpenAI `gpt-4o-mini-tts`. Available voices: `alloy`, `ash`, `ballad`, `coral` (default), `echo`, `fable`, `nova`, `onyx`, `sage`, `shimmer`. Speed range 0.25–4.0.  
+**Security:** `OPENAI_API_KEY` in `.env.local`, used only server-side — never in client code or `NEXT_PUBLIC_` vars.
+
+### `handleVoiceCommand` interface
+
+BaseGame handles common commands centrally (stop/next/skip/help/thanks) and calls:
+```js
+handleVoiceCommand(transcript, speak)
+```
+Game components (`ColorGame`, `ShapeGame`) receive `speak` as a second argument and use their own `currentItemRef.current` for game state.
 
 ## Active Work in Progress
 
 ### Voice Migration — branch: `feature/voice-openai-whisper`
 
-**Goal:** Replace broken Web Speech API STT with OpenAI Whisper via a protected Next.js API route.
+**Status:** Implementation complete. Needs real-device testing and (optionally) rate limiting.
 
-**Decisions made:**
-- **STT:** OpenAI Whisper (`gpt-4o-mini-transcribe`, $0.003/min) — send captured audio clips to `/api/transcribe` route
-- **TTS:** Keep existing `window.speechSynthesis` for now; optionally upgrade to OpenAI `gpt-4o-mini-tts` later
-- **Security:** API key lives in `.env.local` and is called only from server-side API routes — never exposed to the browser
-- **Word matching:** Whisper returns full transcript as plain text; use `transcript.toLowerCase().includes(targetWord)` to find the answer word anywhere in the phrase (handles "hmm is it yellow?", background chatter, etc.)
-- **Approach:** Pre-recorded/batch (not streaming) — capture clip after silence, send to Whisper, get transcript back in ~300ms. Cheaper and sufficient for this use case.
+**Working:**
+- TTS via OpenAI `gpt-4o-mini-tts` (coral default, warm/curious/encouraging tone)
+- STT via OpenAI Whisper — VAD captures clips, sends to `/api/transcribe`
+- Hallucination filter (bye, thank you, etc. discarded)
+- Color background updates correctly on both voice and tap/click
+- 5-min VAD idle → stops listening (resumes on next interaction)
+- 2-min game inactivity → ends game (voice or tap resets timer)
+- CSP allows blob audio URLs
 
-**OpenAI account status:** Account exists at platform.openai.com. Billing credits need to be added before the API will work. API key needs to be created and added to `.env.local` as `OPENAI_API_KEY`.
+**Open bugs / remaining work:**
+- **BUG:** `Cannot find module 'react/jsx-runtime'` — `distDir` outside project root (`AppData\Local\Temp`) breaks Node module resolution at runtime. Needs a different fix for the OneDrive `.next` corruption problem (e.g. Windows junction point, or OneDrive selective sync exclusion).
+- Short single-word answers ("red", "blue") should work — MIN_SPEECH_MS is 250ms — needs live testing to confirm
+- Test on Chrome desktop, Safari iOS, Android Chrome
+- Add rate limiting per-IP (requires Upstash Redis — see `VOICE_SETUP_INSTRUCTIONS.md`)
+- Commit everything on `feature/voice-openai-whisper` branch, PR into main when stable
 
 **Full implementation checklist:** See `VOICE_SETUP_INSTRUCTIONS.md`
 
