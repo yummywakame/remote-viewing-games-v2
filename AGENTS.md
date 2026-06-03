@@ -11,7 +11,7 @@ This is a companion app to the coaching site at **mindsight.coach**. Where minds
 - **GitHub:** https://github.com/yummywakame/mindsight-training-webapp
   (Previously named `remote-viewing-games-v2`)
 - **Production domain:** https://mindsight.training (not yet live)
-- **Current deployment:** Vercel (`remote-viewing-games-v2.vercel.app`)
+- **Current deployment:** localhost only — Vercel removed, Mochahost migration in progress
 - **GitHub account:** `yummywakame`
   ```
   git config --local user.name "yummywakame"
@@ -32,7 +32,7 @@ This is a companion app to the coaching site at **mindsight.coach**. Where minds
 | HTML sanitization | `isomorphic-dompurify` |
 | Performance | `lodash.debounce` |
 | Linting | ESLint with Next.js config |
-| Deployment | Vercel (temporary — migrating to Mochahost) |
+| Deployment | Mochahost mochaBusiness via Phusion Passenger (migration in progress — not yet live) |
 | STT | Deepgram Nova-2 (batch REST via `/api/transcribe`) |
 | TTS | OpenAI `gpt-4o-mini-tts` (via `/api/speak`) |
 
@@ -43,7 +43,7 @@ www/                          # Repo root
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── speak/        # POST: OpenAI gpt-4o-mini-tts → audio/mpeg
+│   │   │   ├── speak/        # POST: OpenAI gpt-4o-mini-tts → audio/mpeg (fallback for dynamic phrases)
 │   │   │   └── transcribe/   # POST: audio blob → Deepgram Nova-2 transcript
 │   │   ├── color-game/       # Color perception training game
 │   │   ├── shape-game/       # Shape perception training game
@@ -55,15 +55,23 @@ www/                          # Repo root
 │   │   └── page.js           # Home / landing page
 │   ├── components/
 │   │   ├── BaseGame.js       # Shared game shell — owns all prefs state, voice flow, buttons, settings modal
-│   │   ├── ColorGame.js      # Color game — provides matchItem, itemTable, COLOR_ALIASES, QUESTION_VARIANTS
-│   │   ├── ShapeGame.js      # Shape game — provides matchItem, itemTable, SHAPE_ALIASES, QUESTION_VARIANTS
-│   │   ├── GameSettings.js   # Shared settings modal shell (new — replaces duplicate in each game)
+│   │   ├── ColorGame.js      # Color game — provides matchItem, COLOR_ALIASES; imports itemTable/variants from gameConstants
+│   │   ├── ShapeGame.js      # Shape game — provides matchItem, SHAPE_ALIASES; imports itemTable/variants from gameConstants
+│   │   ├── GameSettings.js   # Shared settings modal shell
 │   │   ├── ColorGameSettings.js  # Thin wrapper: passes renderItem (color swatch) to GameSettings
 │   │   ├── ShapeGameSettings.js  # Thin wrapper: passes renderItem (shape SVG) to GameSettings
 │   │   └── ui/               # Radix UI-based primitive components
-│   ├── lib/                  # Shared library utilities
-│   └── utils/                # Utility/helper functions
-├── public/                   # Static assets (images, icons, etc.)
+│   ├── lib/
+│   │   └── gameConstants.js  # Single source of truth for ALL phrases, item tables, phrase builders
+│   └── utils/                # Utility/helper functions (sanitizeInput, getArticle, selectNewItem, etc.)
+├── scripts/
+│   ├── phraseList.mjs        # Shared phrase list builder (derives 147 phrases from gameConstants)
+│   ├── generate-audio.mjs    # Generates static MP3s for all voices — run with audio:sync
+│   └── check-audio.mjs       # Audits manifests vs phrase list — run with audio:check
+├── public/
+│   └── audio/                # Per-voice static TTS files (gitignored MP3s + committed manifests)
+│       └── {voice}/manifest.json
+├── server.js                 # Phusion Passenger entry point (required for Mochahost)
 ├── source/                   # Source/reference assets
 ├── .github/
 │   └── workflows/            # GitHub Actions CI (Dependabot auto-merge etc.)
@@ -72,6 +80,7 @@ www/                          # Repo root
 ├── postcss.config.mjs        # PostCSS config (locked to v8.5.10 for compat)
 ├── components.json           # shadcn/ui component config
 ├── jsconfig.json             # JS path aliases
+├── HANDOFF.md                # Latest session handoff — read this first
 ├── VOICE_SETUP_INSTRUCTIONS.md  # Instructions for voice/audio feature setup
 ├── AGENTS.md                 # This file
 └── CLAUDE.md                 # Points to this file
@@ -118,10 +127,12 @@ Each game is designed to be used with a physical blindfold or sleep mask. The us
 ## Development
 
 ```bash
-npm run dev     # Start dev server at http://localhost:3000
-npm run build   # Production build
-npm run start   # Run production server
-npm run lint    # Lint
+npm run dev          # Start dev server (port 3000 or next available)
+npm run build        # Production build
+npm run start        # Run production server
+npm run lint         # Lint
+npm run audio:check  # Audit static TTS cache — no API key needed
+npm run audio:sync   # Generate/update static TTS audio files (requires .env.local)
 ```
 
 **Key conventions:**
@@ -155,7 +166,7 @@ All voice logic lives in these files:
 
 **STT:** Deepgram Nova-2 via batch REST. Browser VAD (AudioContext + AnalyserNode) detects speech onset; 800ms of silence triggers clip send to `/api/transcribe`, which proxies to Deepgram. No browser WebSocket — all API calls are server-side. Transcription latency ~300ms (vs ~1.5s with Whisper).
 **TTS:** OpenAI `gpt-4o-mini-tts`. Default voice: `echo`. Speed default: 1.2. Available voices: `alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `nova`, `onyx`, `sage`, `shimmer`. Speed range 0.25–4.0. Tone: jovial, upbeat, playful — emphasises ALL CAPS words.
-**TTS cache:** `speak()` caches audio `Blob` objects in memory keyed by text. Repeated phrases (question variants, try-again, outro) cost 0 API calls after the first play. Cache is cleared when voice or speed changes.
+**TTS cache:** `speak()` resolves audio in three steps: (1) check in-memory cache, (2) check static pre-generated file via the voice's `manifest.json` in `public/audio/{voice}/`, (3) fall back to the `/api/speak` API. Static files cover all known game phrases (~147 per voice, pre-generated with `audio:sync`). Only dynamic phrases (name-bearing intro/outro) hit the API. Cache is cleared when voice or speed changes.
 **Security:** `OPENAI_API_KEY` and `DEEPGRAM_API_KEY` in `.env.local`, used only server-side — never in client code or `NEXT_PUBLIC_` vars.
 **Expected latency:** ~800ms VAD silence wait + ~300ms Deepgram transcription = ~1.1s total (down from ~2.3s with Whisper).
 
@@ -186,7 +197,7 @@ const matched = matchItem(transcript, speak)
 
 - `isCorrect === true` → BaseGame speaks a CORRECT_RESPONSES entry, then advances to next item and asks the next question.
 - `isCorrect === false` → BaseGame speaks a TRY_AGAIN_RESPONSES entry.
-- `isCorrect === null` → special command (show me / hint) already spoken inside `matchItem`; BaseGame just resets the inactivity timer.
+- `isCorrect === null` → special command (show me / reveal). If result includes `revealText`, BaseGame speaks it (and advances if auto-advance is on, or appends the advance hint once if off). BaseGame resets the inactivity timer.
 - `null` → nothing matched; inactivity timer is NOT reset.
 
 Game components also pass `displayItem` for grammatical articles (e.g. ShapeGame returns `displayItem: "a circle"` so correct responses say "It IS a circle!" not "It IS circle!").
@@ -195,10 +206,10 @@ The inactivity timer only resets on recognised game items or navigation commands
 
 ## Game Response Variations
 
-`CORRECT_RESPONSES` and `TRY_AGAIN_RESPONSES` live in `BaseGame.js` (shared). `COLOR_ALIASES` and `QUESTION_VARIANTS` live in `ColorGame.js`. `SHAPE_ALIASES` and `QUESTION_VARIANTS` live in `ShapeGame.js`.
+All phrase constants (`CORRECT_RESPONSES`, `TRY_AGAIN_RESPONSES`, `OUTRO_RESPONSES`, item tables, question variants, and phrase builder functions) live in **`src/lib/gameConstants.js`** — the single source of truth. Game components import from there. `COLOR_ALIASES` and `SHAPE_ALIASES` remain in their respective game files (STT-matching only, not used for audio generation).
 
 ### ColorGame — `COLOR_ALIASES`
-Whisper often mishears short color words. Aliases use word-boundary regex matching:
+Deepgram sometimes mishears short color words. Aliases use word-boundary regex matching:
 
 | Color | Aliases |
 |---|---|
@@ -206,11 +217,11 @@ Whisper often mishears short color words. Aliases use word-boundary regex matchi
 | yellow | gielo, jello |
 | purple | pebble, pebbles |
 | orange | french |
-| blue | okay |
+| blue | okay, play |
 
 Both active and inactive colors are checked — saying any color name (even a deselected one) triggers a "try again" response.
 
-### Correct responses — `BaseGame.js` (cycle in order, shared by all games)
+### Correct responses — `gameConstants.js` (cycle in order, shared by all games)
 Functions take `(item, display?)` — `display` is used when an article is needed (e.g. "a circle").
 1. `Correct! It IS [display]!`
 2. `Yes, it's [display]!`
@@ -221,16 +232,16 @@ Functions take `(item, display?)` — `display` is used when an article is neede
 7. `It IS [display]!`
 8. `[Display] it is!`
 
-### Try-again responses — `BaseGame.js` (random, shared by all games)
+### Try-again responses — `gameConstants.js` (random, shared by all games)
 Not this time — keep sensing! / Almost! Give it another go. / Not quite! Keep going, you've got this! / Not quite — what else do you pick up? / Give it another try! / You're getting there — try again!
 
 ### Question variants (random after first; first is always fixed)
 **ColorGame:** What color is this? / Next. What color do you see? / Next. Can you tell what color this is? / Next. What about this one? / Next. And this one? / Next. How about this one? / Next. What do you sense?
 **ShapeGame:** same set with "shape" in place of "color".
-The first question on game start is always hardcoded in `BaseGame.startGame` (`"What [gameType] is this?"`). Subsequent questions use the variants array randomly.
+The first question on game start uses `getFirstQuestion(gameType)` from `gameConstants.js`. Subsequent questions use the variants array randomly.
 
 ### ShapeGame — `SHAPE_ALIASES`
-Initial phonetic guesses — test and refine during real play (Deepgram may mishear differently):
+Initial phonetic guesses — refine during real play as needed:
 
 | Shape | Aliases |
 |---|---|
@@ -241,36 +252,37 @@ Initial phonetic guesses — test and refine during real play (Deepgram may mish
 | diamond | die man, diamonds, diemond |
 | star | store, scar, stare, start, stars |
 
-### Outro responses (`BaseGame.js` — cycles with name)
-- `Thanks [name]! That was fun.` / `Thank you for playing!`
+### Outro responses (`gameConstants.js` — cycles with name)
+- `Thanks [name]! Let's practice again soon.` / `Thank you for playing!`
 - `Thanks [name]! I hope we play again soon.` / `Great session — thanks for playing!`
 - `That was a good practice session, [name]!` / `That was a great practice session!`
 
-**Timeout:** always says `"I haven't heard from you in a while. Goodbye!"`
+**Timeout:** always says `"Goodbye!"`
 
 ### Timers
 - **2-min game inactivity** → ends game with timeout message (only resets on recognised items/commands, not background noise)
+- **30-sec no-recognition tip** → speaks single-word-answer tip once per session if no recognised interaction
 - **5-min VAD idle** → stops listening (restarts on next interaction)
 
 ## Alternative Voice Providers (for future consideration)
 
-### STT alternatives to OpenAI Whisper
+### STT — currently using Deepgram Nova-2
+Deepgram batch REST is the active STT provider. Future upgrade option:
+- **Deepgram streaming** — would eliminate the 800ms VAD silence window entirely (transcribes word-by-word). See https://developers.deepgram.com/docs/getting-started-with-live-streaming-audio
 
+Other alternatives evaluated:
 | Provider | Key advantage | Notes |
 |---|---|---|
-| **Deepgram** ⭐ | Real-time streaming — transcribes as you speak, no silence-wait delay | Would eliminate the 800ms VAD silence window; SDK available; comparable cost to Whisper |
-| **Groq + Whisper** | Same Whisper model, ~5–10× faster inference | Drop-in replacement for `/api/transcribe`; slightly cheaper |
-| **AssemblyAI** | Streaming available, good accuracy | Similar approach to Deepgram |
+| **Groq + Whisper** | ~5–10× faster Whisper inference | Drop-in for `/api/transcribe`; slightly cheaper |
+| **AssemblyAI** | Streaming available | Similar approach to Deepgram |
 
-**Recommended next:** Try **Deepgram streaming STT** — it would remove the post-speech silence wait almost entirely since it transcribes word-by-word as the user speaks. The VAD + MediaRecorder approach in `SpeechHandler.js` could be replaced with Deepgram's WebSocket-based streaming client. See https://developers.deepgram.com/docs/getting-started-with-live-streaming-audio
-
-### TTS alternatives to OpenAI gpt-4o-mini-tts
-
+### TTS — currently using OpenAI gpt-4o-mini-tts
+Static pre-generation via `audio:sync` eliminates most API calls during gameplay. Future alternatives:
 | Provider | Key advantage | Notes |
 |---|---|---|
-| **ElevenLabs** | Best naturalness/expressiveness available | More expensive; best quality if budget allows |
-| **Cartesia** | Very low latency (~100ms to first audio) | Good for real-time feel |
-| **OpenAI tts-1** | Cheaper than gpt-4o-mini-tts | Lower quality; use if cost is priority |
+| **ElevenLabs** | Best naturalness/expressiveness | More expensive; best quality if budget allows |
+| **Cartesia** | ~100ms to first audio | Good for real-time dynamic phrases |
+| **OpenAI tts-1** | Cheaper | Lower quality |
 
 ---
 
@@ -284,7 +296,7 @@ At the start of each dev session, ask: **"Would you like me to run `npm run audi
 
 ## Current State
 
-**Branch:** `main` — clean, fully merged.
+**Active branch:** `feature/static-audio-cache` — in progress, not yet merged. `main` is clean up to the docs/deployment update commit.
 
 ### Completed work
 - Hybrid voice stack (Deepgram Nova-2 STT + OpenAI gpt-4o-mini-tts) — merged from `feature/voice-hybrid`
