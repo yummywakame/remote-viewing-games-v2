@@ -3,16 +3,7 @@
 import React, { useCallback, useState, useEffect, memo } from 'react'
 import BaseGame from './BaseGame'
 import ColorGameSettings from './ColorGameSettings'
-
-const itemTable = {
-  yellow: '#FFD700',
-  green: '#008000',
-  blue: '#1E90FF',
-  purple: '#6A5ACD',
-  pink: '#FF00FF',
-  red: '#DC143C',
-  orange: '#FF7F50',
-}
+import { COLOR_ITEM_TABLE as itemTable, COLOR_QUESTION_VARIANTS as QUESTION_VARIANTS, getColorRevealText } from '@/lib/gameConstants'
 
 const COLOR_ALIASES = {
   red:    ['raid', 'reed', 'read', 'rad', 'bread', 'rick', 'great'],
@@ -24,16 +15,6 @@ const COLOR_ALIASES = {
 
 const matchesAlias = (command, color) =>
   COLOR_ALIASES[color]?.some(alias => new RegExp(`\\b${alias}\\b`).test(command))
-
-const QUESTION_VARIANTS = [
-  'What color is this?',
-  'Next. What color do you see?',
-  'Next. Can you tell what color this is?',
-  'Next. What about this one?',
-  'Next. And this one?',
-  'Next. How about this one?',
-  'Next. What do you sense?',
-]
 
 const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(['yellow', 'green', 'blue', 'purple', 'pink', 'red', 'orange'])
@@ -98,7 +79,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
 
     if (/\b(what|which)/.test(command)) {
       const current = currentItemRef.current
-      return { item: current || 'hint', isCorrect: null, revealText: current ? `It's ${current}` : null }
+      return { item: current || 'hint', isCorrect: null, revealText: current ? getColorRevealText(current) : null }
     }
 
     return null

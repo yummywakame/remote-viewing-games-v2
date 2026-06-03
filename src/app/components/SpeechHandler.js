@@ -49,6 +49,16 @@ export default function useSpeech({
   useEffect(() => { voiceNameRef.current = voiceName; audioCacheRef.current.clear() }, [voiceName])
   useEffect(() => { voiceSpeedRef.current = voiceSpeed; audioCacheRef.current.clear() }, [voiceSpeed])
 
+  // Static audio manifest: maps phrase text → MP3 filename for the current voice.
+  // Loaded once per voice change; speak() checks here before calling the API.
+  const audioManifestRef = useRef(null)
+  useEffect(() => {
+    fetch(`/audio/${voiceName}/manifest.json`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { audioManifestRef.current = data?.phrases ?? null })
+      .catch(() => { audioManifestRef.current = null })
+  }, [voiceName])
+
   const gameStateRef = useRef(gameState)
   useEffect(() => { gameStateRef.current = gameState }, [gameState])
 
@@ -264,6 +274,22 @@ export default function useSpeech({
       let blob = audioCacheRef.current.get(cacheKey)
 
       if (!blob) {
+        // Check static pre-generated file first
+        const staticFilename = audioManifestRef.current?.[cacheKey]
+        if (staticFilename) {
+          try {
+            const res = await fetch(`/audio/${voiceNameRef.current}/${staticFilename}`)
+            if (res.ok) {
+              blob = await res.blob()
+              audioCacheRef.current.set(cacheKey, blob)
+              console.log('[TTS] static:', cacheKey)
+            }
+          } catch { /* fall through to API */ }
+        }
+      }
+
+      if (!blob) {
+        // Fall back to API (name-bearing phrases, missing static files, etc.)
         const res = await fetch('/api/speak', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -276,9 +302,7 @@ export default function useSpeech({
         if (!res.ok) throw new Error(`TTS ${res.status}`)
         blob = await res.blob()
         audioCacheRef.current.set(cacheKey, blob)
-        console.log('[TTS] fetched and cached:', cacheKey)
-      } else {
-        console.log('[TTS] playing from cache:', cacheKey)
+        console.log('[TTS] api:', cacheKey)
       }
       const url = URL.createObjectURL(blob)
       currentAudioUrlRef.current = url

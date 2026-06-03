@@ -10,34 +10,11 @@ import GameDisplay from './GameDisplay'
 import { GameStateContext } from '../layout'
 import DOMPurify from 'isomorphic-dompurify'
 import { selectNewItem, sanitizeInput } from '@/utils/gameUtils'
+import {
+  CORRECT_RESPONSES, TRY_AGAIN_RESPONSES, OUTRO_RESPONSES, TIMEOUT_MESSAGE,
+  getHelpText, getTipText, getAdvanceHint, getFirstQuestion, getBriefIntro, getLongIntroNoName,
+} from '@/lib/gameConstants'
 import useSpeech from './SpeechHandler'
-
-const OUTRO_RESPONSES = [
-  (name) => name ? `Thanks ${name}! Let's practice again soon.` : 'Thank you for playing!',
-  (name) => name ? `Thanks ${name}! I hope we play again soon.` : 'Great session — thanks for playing!',
-  (name) => name ? `That was a good practice session, ${name}!` : 'That was a great practice session!',
-]
-const TIMEOUT_MESSAGE = 'Goodbye!'
-
-const CORRECT_RESPONSES = [
-  (item, display) => `Correct! It IS ${display ?? item}!`,
-  (item, display) => `Yes, it's ${display ?? item}!`,
-  (item, display) => `Well done! ${(display ?? item).charAt(0).toUpperCase() + (display ?? item).slice(1)}!`,
-  (item, display) => `Yes, ${display ?? item}!`,
-  (item, display) => `You nailed it! It's ${display ?? item}!`,
-  (item, display) => `Yep, it's ${display ?? item}!`,
-  (item, display) => `It IS ${display ?? item}!`,
-  (item, display) => `${(display ?? item).charAt(0).toUpperCase() + (display ?? item).slice(1)} it is!`,
-]
-
-const TRY_AGAIN_RESPONSES = [
-  'Not this time — keep sensing!',
-  'Almost! Give it another go.',
-  "Not quite! Keep going, you've got this!",
-  'Not quite — what else do you pick up?',
-  'Give it another try!',
-  "You're getting there — try again!",
-]
 
 export default function BaseGame({
   GameSettings,
@@ -154,10 +131,7 @@ export default function BaseGame({
     }
     if (/\b(help|instructions)\b/.test(transcript)) {
       setLastInteraction(Date.now())
-      speakRef.current?.(
-        `To proceed to the next ${gameType.toLowerCase()} say 'next', or click anywhere on the screen. ` +
-        `To end the game say 'stop'. For a hint ask 'what ${gameType.toLowerCase()} is it?'`
-      )
+      speakRef.current?.(getHelpText(gameType))
       return
     }
 
@@ -181,7 +155,7 @@ export default function BaseGame({
       } else {
         const needsHint = !hintShownRef.current
         hintShownRef.current = true
-        const hint = `Say 'next ${gameType.toLowerCase()}' or click the screen to advance when you're ready.`
+        const hint = getAdvanceHint(gameType)
         speakRef.current?.(needsHint ? `${correctText} ${hint}` : correctText)
       }
     } else if (matched?.isCorrect === false) {
@@ -205,7 +179,7 @@ export default function BaseGame({
         } else {
           const needsHint = !hintShownRef.current
           if (needsHint) hintShownRef.current = true
-          const hint = needsHint ? ` Say 'next ${gameType.toLowerCase()}' or click the screen to advance when you're ready.` : ''
+          const hint = needsHint ? ` ${getAdvanceHint(gameType)}` : ''
           speakRef.current?.(`${matched.revealText}${hint}`)
         }
       }
@@ -320,8 +294,10 @@ export default function BaseGame({
     await new Promise((r) => setTimeout(r, 500))
 
     const introText = longIntroEnabled
-      ? `Let's practice MindSight with ${gameType.toLowerCase()}s${userName ? `, ${userName}` : ''}! I'll show you different ${gameType.toLowerCase()}s, and you tell me what you sense. Say "Help" at any time for controls. Are you ready?`
-      : `Let's practice MindSight with ${gameType.toLowerCase()}s!`
+      ? (userName
+          ? `Let's practice MindSight with ${gameType.toLowerCase()}s, ${userName}! I'll show you different ${gameType.toLowerCase()}s, and you tell me what you sense. Say "Help" at any time for controls. Are you ready?`
+          : getLongIntroNoName(gameType))
+      : getBriefIntro(gameType)
 
     await speak(introText)
 
@@ -332,7 +308,7 @@ export default function BaseGame({
     const newItem = selectItemFunc(selectedItems, null)
     if (newItem) {
       updateCurrentItem(newItem)
-      await speak(`What ${gameType.toLowerCase()} is this?`)
+      await speak(getFirstQuestion(gameType))
     }
 
     lockStateChangeRef.current = false
@@ -380,9 +356,7 @@ export default function BaseGame({
     const timer = setTimeout(() => {
       if (!tipShownRef.current) {
         tipShownRef.current = true
-        speakRef.current?.(
-          `Sometimes I can't understand single word answers. Try telling me the ${gameType.toLowerCase()} in a sentence.`
-        )
+        speakRef.current?.(getTipText(gameType))
       }
     }, 30 * 1000)
     return () => clearTimeout(timer)
