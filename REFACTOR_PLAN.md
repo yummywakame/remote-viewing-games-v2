@@ -1,7 +1,7 @@
 # MindSight Training — Refactor Plan: `refactor/game-base`
 
 **Created:** 2026-06-03  
-**Status:** IN PROGRESS — Group 1 done, Group 2 in progress  
+**Status:** COMPLETE — all groups done, pending final test and merge to main  
 **Goal:** Move shared game logic from ColorGame/ShapeGame into BaseGame. Zero visible change to the user — same sounds, same look, same behaviour.
 
 ---
@@ -88,8 +88,8 @@ The following console.logs are intentional and must not be removed:
 | 16 | Settings | Create shared `GameSettings.js` modal component | `GameSettings.js` (new) | [x] | [x] | [x] | See detail below. Replaces duplicate modal shell in both settings files |
 | 17 | Settings | Refactor `ColorGameSettings` to use `GameSettings` | `ColorGameSettings.js` | [x] | [x] | [x] | Pass `renderItem` that shows colour swatch |
 | 18 | Settings | Refactor `ShapeGameSettings` to use `GameSettings` | `ShapeGameSettings.js` | [x] | [x] | [x] | Pass `renderItem` that shows shape SVG |
-| 19 | Misc | Move `isIntroComplete` / `setIsIntroComplete` state to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Currently managed in game component and passed down unnecessarily |
-| 20 | Misc | Fix home page name not updating on preferences change | `page.js` | [ ] | [ ] | [ ] | Add `preferencesUpdated` listener to re-read `userPreferencesName` |
+| 19 | Misc | Move `isIntroComplete` / `setIsIntroComplete` state to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Currently managed in game component and passed down unnecessarily |
+| 20 | Misc | Fix home page name not updating on preferences change | `page.js` | [x] | [x] | [x] | Add `preferencesUpdated` listener to re-read `userPreferencesName` |
 
 ---
 

@@ -46,8 +46,6 @@ export default function BaseGame({
   accentColor = 'from-purple-600 to-blue-600',
   matchItem,
   itemTable,
-  isIntroComplete,
-  setIsIntroComplete,
   selectedItems,
   onSaveSettings,
   questionVariants,
@@ -80,6 +78,7 @@ export default function BaseGame({
   const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
   const [longIntroEnabled, setLongIntroEnabled] = useState(true)
+  const [isIntroComplete, setIsIntroComplete] = useState(false)
   const [userName, setUserName] = useState('')
   const [voiceSpeed, setVoiceSpeed] = useState(1.2)
   const [voiceName, setVoiceName] = useState('echo')

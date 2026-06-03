@@ -38,7 +38,6 @@ const QUESTION_VARIANTS = [
 
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable))
-  const [isIntroComplete, setIsIntroComplete] = useState(false)
   const [currentItem, setCurrentItem] = useState(null)
   const currentItemRef = useRef(null)
 
@@ -125,8 +124,6 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       onSaveSettings={handleSaveSettings}
       questionVariants={QUESTION_VARIANTS}
       currentItem={currentItem}
-      isIntroComplete={isIntroComplete}
-      setIsIntroComplete={setIsIntroComplete}
       onCurrentItemUpdate={updateCurrentItem}
     />
   )

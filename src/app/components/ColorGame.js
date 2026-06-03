@@ -38,7 +38,6 @@ const QUESTION_VARIANTS = [
 const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(['yellow', 'green', 'blue', 'purple', 'pink', 'red', 'orange'])
   const [currentItem, setCurrentItem] = useState(null)
-  const [isIntroComplete, setIsIntroComplete] = useState(false)
   const currentItemRef = React.useRef(null)
 
   useEffect(() => {
@@ -66,15 +65,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   useEffect(() => {
     if (currentItem) currentItemRef.current = currentItem
   }, [currentItem])
-
-  // Reset background when game is not playing
-  useEffect(() => {
-    if (!isIntroComplete) {
-      document.body.style.backgroundColor = ''
-      currentItemRef.current = null
-      setCurrentItem(null)
-    }
-  }, [isIntroComplete])
 
   // matchItem receives (command, speak) from BaseGame; returns {item, isCorrect} or null
   const matchItem = useCallback((command, speak) => {
@@ -127,8 +117,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       onGameStateChange={onGameStateChange}
       matchItem={matchItem}
       itemTable={itemTable}
-      isIntroComplete={isIntroComplete}
-      setIsIntroComplete={setIsIntroComplete}
       selectedItems={selectedItems}
       onSaveSettings={handleSaveSettings}
       questionVariants={QUESTION_VARIANTS}
