@@ -194,13 +194,11 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       handleVoiceCommand={handleVoiceCommand}
       selectNewItemProp={selectNewItem}
       itemTable={itemTable}
-      longIntroEnabled={longIntroEnabled}
       selectedItems={selectedItems}
       onSaveSettings={handleSaveSettings}
       currentItem={currentItem}
       isIntroComplete={isIntroComplete}
       setIsIntroComplete={setIsIntroComplete}
-      backgroundMode="dark"
       userName={userName}
       voiceSpeed={voiceSpeed}
       voiceName={voiceName}

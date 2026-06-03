@@ -5,7 +5,7 @@ import BaseGame from './BaseGame'
 import ColorGameSettings from './ColorGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { sanitizeInput } from '@/utils/gameUtils'
+import { sanitizeInput, selectNewItem } from '@/utils/gameUtils'
 
 const itemTable = {
   yellow: '#FFD700',
@@ -123,14 +123,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     }
   }, [isIntroComplete])
 
-  const selectNewItem = useCallback((items, current) => {
-    if (!items?.length) return null
-    let next
-    do { next = items[Math.floor(Math.random() * items.length)] }
-    while (next === current && items.length > 1)
-    return next
-  }, [])
-
   // handleVoiceCommand receives (command, speak) from BaseGame
   const handleVoiceCommand = useCallback((command, speak) => {
     // Collect ALL color words mentioned — handles "is it blue or green?" correctly
@@ -183,7 +175,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       if (current) speak(`It's ${current}`)
       return current || true
     }
-  }, [selectedItems, selectNewItem, updateCurrentItem])
+  }, [selectedItems, updateCurrentItem])
 
   const renderGameContent = useCallback(({ gameState, startGame, endGame, isButtonAnimated, gameType }) => {
     if (gameState === 'initial') {
@@ -265,7 +257,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       renderGameContent={renderGameContent}
       handleVoiceCommand={handleVoiceCommand}
       itemTable={itemTable}
-      backgroundMode="color"
       isIntroComplete={isIntroComplete}
       setIsIntroComplete={setIsIntroComplete}
       selectedItems={selectedItems}
@@ -275,7 +266,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       voiceName={voiceName}
       questionVariants={QUESTION_VARIANTS}
       onUpdateUserPreferences={handleUpdateUserPreferences}
-      selectNewItemProp={selectNewItem}
       onCurrentItemUpdate={updateCurrentItem}
       currentItem={currentItem}
     />

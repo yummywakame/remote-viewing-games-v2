@@ -25,7 +25,6 @@ export default function BaseGame({
   renderGameContent,
   handleVoiceCommand,
   itemTable,
-  backgroundMode,
   isIntroComplete,
   setIsIntroComplete,
   selectedItems,
@@ -292,7 +291,6 @@ export default function BaseGame({
         itemTable={itemTable}
         onClick={handleBackgroundClick}
         gameState={gameState}
-        backgroundMode={backgroundMode}
         isIntroComplete={isIntroComplete}
       />
       <div className="fixed inset-0 pt-16 pointer-events-none">
