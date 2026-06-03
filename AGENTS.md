@@ -274,6 +274,10 @@ Initial phonetic guesses — test and refine during real play (Deepgram may mish
 
 ---
 
+## Session-start conventions
+
+At the start of each dev session, ask: **"Would you like me to run `npm run audio:check` to verify the static audio cache?"** This audits all voice manifests against the current phrase list and reports missing or stale files. Run `npm run audio:sync` to actually fetch missing files and remove stale ones. The audio files themselves are excluded from git (see `.gitignore`) and must be regenerated locally and uploaded to the server separately.
+
 ## Current State
 
 **Branch:** `main` — clean, fully merged.
@@ -286,6 +290,7 @@ Initial phonetic guesses — test and refine during real play (Deepgram may mish
   - Start/Stop buttons, settings modal shell, and `isIntroComplete` state all in BaseGame
   - SHAPE_ALIASES added; ShapeGame question variants added; longIntroEnabled reactivity bug fixed
   - Home page name updates immediately on preferences change (no reload needed)
+- UX improvements: auto-advance toggle, 30s single-word tip, reveal-then-advance flow
 
 ### Remaining items before public launch
 
@@ -294,14 +299,15 @@ Initial phonetic guesses — test and refine during real play (Deepgram may mish
 - [ ] Cross-browser testing: Chrome desktop, Safari iOS, Android Chrome
 - [ ] Rate limiting per-IP (Upstash Redis — see `VOICE_SETUP_INSTRUCTIONS.md`) — recommended before public launch to control API costs
 - [ ] CSP in `next.config.mjs`: `connect-src 'self'` is correct as-is — Deepgram is called server-side only, no browser-direct requests
-- [ ] Migrate from Vercel to Mochahost (see Deployment section below)
+- [ ] Complete Mochahost deployment (see Deployment section below)
+- [ ] Run `npm run audio:sync` before first deploy to generate all static TTS audio files
 
 ## Deployment
 
 ### Current state
-Temporarily on Vercel (`remote-viewing-games-v2.vercel.app`). Will migrate to Mochahost once the voice feature branch is finalised and merged.
+Vercel deployment has been removed. **Not yet live in production.** Mochahost migration is in progress — `server.js` has been created (see repo root) for Phusion Passenger, but the app has not yet been deployed. Development runs on localhost only.
 
-### Target hosting — Mochahost mochaBusiness (shared hosting)
+### Hosting — Mochahost mochaBusiness (shared hosting)
 
 | Item | Detail |
 |---|---|
@@ -318,14 +324,14 @@ Temporarily on Vercel (`remote-viewing-games-v2.vercel.app`). Will migrate to Mo
 
 **Important:** This is shared hosting, not a VPS. Node.js is managed by Phusion Passenger, not PM2 or systemd. You cannot run `npm start` as a persistent process — Passenger handles process lifecycle via the cPanel Node.js App manager.
 
-### Deployment steps (future)
+### Deployment steps (when ready to go live)
 
 1. Add `mindsight.training` as an addon domain in cPanel
 2. Set up the Node.js app in cPanel → Software → **Setup Node.js App**
-   - Node.js version: select 18.x or 20.x
+   - Node.js version: select 20.x or 24.x (match local version — currently v24)
    - Application root: path to the app under `/home/yummywak/`
-   - Application startup file: `server.js` (custom entry point required for Passenger — see `server.js` in repo root)
-3. Run `npm run build` locally, then upload the `.next/` build output and all required files to the server (or set up a Git-based deploy workflow)
-4. Set environment variables (`DEEPGRAM_API_KEY`, `OPENAI_API_KEY`, etc.) in the cPanel Node.js App config — **not** in a `.env.local` file
-5. Update `src/app/metadata.js` — set `metadataBase` to `https://mindsight.training`
-6. Remove the Vercel deployment once live on Mochahost
+   - Application startup file: `server.js` (already exists in repo root)
+3. Run `npm run audio:sync` locally to generate all static TTS audio files, then upload `public/audio/` to the server (audio is gitignored — must be transferred separately)
+4. Run `npm run build` locally, then upload the `.next/` build output and all required files
+5. Set environment variables (`DEEPGRAM_API_KEY`, `OPENAI_API_KEY`, etc.) in the cPanel Node.js App config — **not** in a `.env.local` file
+6. Update `src/app/metadata.js` — set `metadataBase` to `https://mindsight.training`

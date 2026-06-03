@@ -35,6 +35,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Static TTS audio cache — regenerate with: npm run audio:sync
+# Manifests (manifest.json) are committed; MP3s are not.
+public/audio/**/*.mp3
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
