@@ -18,12 +18,32 @@ const OUTRO_RESPONSES = [
 ]
 const TIMEOUT_MESSAGE = 'Goodbye!'
 
+const CORRECT_RESPONSES = [
+  (item, display) => `Correct! It IS ${display ?? item}!`,
+  (item, display) => `Yes, it's ${display ?? item}!`,
+  (item, display) => `Well done! ${(display ?? item).charAt(0).toUpperCase() + (display ?? item).slice(1)}!`,
+  (item, display) => `Yes, ${display ?? item}!`,
+  (item, display) => `You nailed it! It's ${display ?? item}!`,
+  (item, display) => `Yep, it's ${display ?? item}!`,
+  (item, display) => `It IS ${display ?? item}!`,
+  (item, display) => `${(display ?? item).charAt(0).toUpperCase() + (display ?? item).slice(1)} it is!`,
+]
+
+const TRY_AGAIN_RESPONSES = [
+  'Not this time — keep sensing!',
+  'Almost! Give it another go.',
+  "Keep going, you've got this!",
+  'Not quite — what else do you pick up?',
+  'Give it another try!',
+  "You're getting there — try again!",
+]
+
 export default function BaseGame({
   GameSettings,
   gameType,
   onGameStateChange = () => {},
   renderGameContent,
-  handleVoiceCommand,
+  matchItem,
   itemTable,
   isIntroComplete,
   setIsIntroComplete,
@@ -45,6 +65,8 @@ export default function BaseGame({
 
   const currentItemRef = useRef(null)
   const outroIndexRef = useRef(0)
+  const correctIndexRef = useRef(0)
+  const updateCurrentItemRef = useRef(null)
   const gameStateRef = useRef('initial')
   const lockStateChangeRef = useRef(false)
   const isUnmountingRef = useRef(false)
@@ -128,13 +150,32 @@ export default function BaseGame({
       )
       return
     }
-    // Game-specific handling — only show bubble and reset timer if a word was recognised
-    const matchedWord = handleVoiceCommand?.(transcript, speakRef.current)
-    if (matchedWord) {
-      setLastHeardWord(typeof matchedWord === 'string' ? matchedWord : transcript)
+
+    const matched = matchItem?.(transcript, speakRef.current)
+    if (matched?.isCorrect === true) {
+      setLastHeardWord(matched.item)
+      setLastInteraction(Date.now())
+      const correctText = CORRECT_RESPONSES[correctIndexRef.current](matched.item, matched.displayItem)
+      correctIndexRef.current = (correctIndexRef.current + 1) % CORRECT_RESPONSES.length
+      const selectItemFunc = selectNewItemProp || selectNewItem
+      speakRef.current?.(correctText).then(async () => {
+        const next = selectItemFunc(selectedItems, matched.item)
+        if (next) {
+          updateCurrentItemRef.current?.(next)
+          const variants = questionVariants?.length ? questionVariants : [`What ${gameType.toLowerCase()} is this?`]
+          await speakRef.current?.(variants[Math.floor(Math.random() * variants.length)])
+        }
+      })
+    } else if (matched?.isCorrect === false) {
+      setLastHeardWord(matched.item)
+      setLastInteraction(Date.now())
+      speakRef.current?.(TRY_AGAIN_RESPONSES[Math.floor(Math.random() * TRY_AGAIN_RESPONSES.length)])
+    } else if (matched?.item) {
+      // Special command (show me / hint) — already handled inside matchItem, just reset timer
+      setLastHeardWord(typeof matched.item === 'string' ? matched.item : '')
       setLastInteraction(Date.now())
     }
-  }, [gameType, handleVoiceCommand])
+  }, [gameType, matchItem, selectedItems, questionVariants, selectNewItemProp])
 
   const { speak, stopListening, cancelSpeech } = useSpeech({
     gameState,
@@ -178,6 +219,9 @@ export default function BaseGame({
       document.body.style.backgroundColor = itemTable[newItem]
     }
   }, [itemTable, onCurrentItemUpdate])
+
+  // Stable ref so handleTranscript can call updateCurrentItem without it being in the dep array
+  useEffect(() => { updateCurrentItemRef.current = updateCurrentItem }, [updateCurrentItem])
 
   // ----- Game flow -----
 

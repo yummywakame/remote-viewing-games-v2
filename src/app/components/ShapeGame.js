@@ -16,6 +16,18 @@ const itemTable = {
   star: '/shapes/star.svg',
 }
 
+const SHAPE_ALIASES = {
+  triangle: ['try angle', 'trying', 'try angel', 'tri angle'],
+  square:   ['scare', 'squire', 'swear', 'squared'],
+  circle:   ['surgical', 'surreal', 'circles', 'circled'],
+  oval:     ['over', 'opal', 'able', 'oh well'],
+  diamond:  ['die man', 'diamonds', 'diemond'],
+  star:     ['store', 'scar', 'stare', 'start', 'stars'],
+}
+
+const matchesAlias = (command, shape) =>
+  SHAPE_ALIASES[shape]?.some(alias => new RegExp(`\\b${alias}\\b`).test(command))
+
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable))
   const [isIntroComplete, setIsIntroComplete] = useState(false)
@@ -44,16 +56,16 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     return items[Math.floor(Math.random() * items.length)]
   }, [])
 
-  // handleVoiceCommand receives (command, speak) from BaseGame
-  const handleVoiceCommand = useCallback((command, speak) => {
-    const currentItem = currentItemRef.current
+  // matchItem receives (command, speak) from BaseGame; returns {item, isCorrect, displayItem?} or null
+  const matchItem = useCallback((command, speak) => {
+    const currentShape = currentItemRef.current
 
     if (/\b(what|which)(?:\s+(?:shape|is|it))?/.test(command)) {
-      if (currentItem) {
-        const article = getArticle(currentItem)
-        speak(`It's ${article} ${currentItem}.`)
+      if (currentShape) {
+        const article = getArticle(currentShape)
+        speak?.(`It's ${article} ${currentShape}.`)
       }
-      return currentItem || true
+      return { item: currentShape || 'hint', isCorrect: null }
     }
 
     const showMatch = command.match(/\b(?:show(?:\s+me)?)\s+(?:a\s+|an\s+)?(.+)\b/i)
@@ -61,25 +73,24 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       const requested = showMatch[1].trim().replace(/^(a|an)\s+/, '')
       if (Object.prototype.hasOwnProperty.call(itemTable, requested)) {
         const article = getArticle(requested)
-        speak(`Showing ${article} ${requested}.`)
+        speak?.(`Showing ${article} ${requested}.`)
         updateCurrentItem(requested)
       } else {
         const article = getArticle(requested)
-        speak(`Sorry, ${article} ${requested} is not in my shape list.`)
+        speak?.(`Sorry, ${article} ${requested} is not in my shape list.`)
       }
-      return requested
+      return { item: requested, isCorrect: null }
     }
 
-    const itemGuess = Object.keys(itemTable).find((item) => command.includes(item))
+    const itemGuess = Object.keys(itemTable).find(
+      (item) => command.includes(item) || matchesAlias(command, item)
+    )
     if (itemGuess) {
-      if (itemGuess === currentItem) {
-        const article = getArticle(currentItem)
-        speak(`Well done! It's ${article} ${currentItem}.`)
-      } else {
-        speak('Try again!')
-      }
-      return itemGuess
+      const isCorrect = itemGuess === currentShape
+      return { item: itemGuess, isCorrect, displayItem: `${getArticle(itemGuess)} ${itemGuess}` }
     }
+
+    return null
   }, [updateCurrentItem])
 
   const renderGameContent = useCallback(({ gameState, startGame, endGame, isButtonAnimated, gameType }) => {
@@ -156,7 +167,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       gameType="Shape"
       onGameStateChange={onGameStateChange}
       renderGameContent={renderGameContent}
-      handleVoiceCommand={handleVoiceCommand}
+      matchItem={matchItem}
       selectNewItemProp={selectNewItem}
       itemTable={itemTable}
       selectedItems={selectedItems}
