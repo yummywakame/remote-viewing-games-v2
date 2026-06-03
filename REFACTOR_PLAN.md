@@ -84,7 +84,7 @@ The following console.logs are intentional and must not be removed:
 | 12 | Game flow | Generalise `handleVoiceCommand` flow in BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Games provide `matchItem(transcript)` → `{item, isCorrect}` or null. BaseGame owns speak→advance logic. See detail below. |
 | 13 | Game flow | Add `SHAPE_ALIASES` to ShapeGame | `ShapeGame.js` | [x] | [x] | [x] | See aliases table below. Test and refine during real use. |
 | 14 | Game flow | Standardise ShapeGame correct/wrong voice responses | `ShapeGame.js` | [x] | [x] | [x] | Currently uses inline strings ("Well done! It's a circle"). Use CORRECT_RESPONSES + TRY_AGAIN_RESPONSES arrays from BaseGame |
-| 15 | UI | Move `renderGameContent` Start/Stop buttons to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Add `accentColor` prop. Color: `from-purple-600 to-blue-600`. Shape: `from-blue-600 to-green-500` |
+| 15 | UI | Move `renderGameContent` Start/Stop buttons to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Add `accentColor` prop. Color: `from-purple-600 to-blue-600`. Shape: `from-blue-600 to-green-500` |
 | 16 | Settings | Create shared `GameSettings.js` modal component | `GameSettings.js` (new) | [ ] | [ ] | [ ] | See detail below. Replaces duplicate modal shell in both settings files |
 | 17 | Settings | Refactor `ColorGameSettings` to use `GameSettings` | `ColorGameSettings.js` | [ ] | [ ] | [ ] | Pass `renderItem` that shows colour swatch |
 | 18 | Settings | Refactor `ShapeGameSettings` to use `GameSettings` | `ShapeGameSettings.js` | [ ] | [ ] | [ ] | Pass `renderItem` that shows shape SVG |

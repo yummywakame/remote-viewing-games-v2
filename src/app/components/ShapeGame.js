@@ -3,8 +3,6 @@
 import React, { useCallback, useState, useEffect, memo, useRef } from 'react'
 import BaseGame from './BaseGame'
 import ShapeGameSettings from './ShapeGameSettings'
-import { Eye } from 'lucide-react'
-import { motion } from 'framer-motion'
 import { getArticle } from '@/utils/gameUtils'
 
 const itemTable = {
@@ -103,63 +101,6 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     return null
   }, [updateCurrentItem])
 
-  const renderGameContent = useCallback(({ gameState, startGame, endGame, isButtonAnimated, gameType }) => {
-    if (gameState === 'initial') {
-      return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <motion.h2
-            className="game-title text-white text-5xl md:text-6xl font-bold mb-6"
-            initial={{ y: -20 }} animate={{ y: 0 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
-          >
-            {gameType} Game
-          </motion.h2>
-          <motion.p
-            className="game-description text-white mb-8"
-            initial={{ y: 20 }} animate={{ y: 0 }}
-            transition={{ delay: 0.4, type: 'spring', stiffness: 120 }}
-          >
-            Get your blindfold ready and let&apos;s begin!
-          </motion.p>
-          <motion.button
-            onClick={startGame}
-            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-green-500 text-white font-medium text-lg hover:from-blue-700 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-          >
-            <Eye className="mr-2" size={20} />
-            Start Game
-          </motion.button>
-        </motion.div>
-      )
-    }
-
-    if (gameState === 'intro' || gameState === 'playing') {
-      return (
-        <motion.div
-          key="game-button"
-          initial={{ opacity: 0, y: 0 }}
-          animate={{ opacity: 1, y: isButtonAnimated ? '30vh' : 0 }}
-          exit={{ opacity: 0, y: 100 }}
-          transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
-        >
-          <motion.button
-            onClick={() => endGame()}
-            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-green-500 text-white font-medium text-lg hover:from-blue-700 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-          >
-            Stop Game
-          </motion.button>
-        </motion.div>
-      )
-    }
-
-    return null
-  }, [])
-
   const handleSaveSettings = useCallback((newSelectedItems) => {
     setSelectedItems(newSelectedItems)
     localStorage.setItem('shapeGameSelectedItems', JSON.stringify(newSelectedItems))
@@ -175,8 +116,8 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
         />
       )}
       gameType="Shape"
+      accentColor="from-blue-600 to-green-500"
       onGameStateChange={onGameStateChange}
-      renderGameContent={renderGameContent}
       matchItem={matchItem}
       selectNewItemProp={selectNewItem}
       itemTable={itemTable}

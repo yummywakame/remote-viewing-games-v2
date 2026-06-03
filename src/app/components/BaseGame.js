@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef, useContext } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
 import UserPreferences from './UserPreferences'
@@ -42,7 +43,7 @@ export default function BaseGame({
   GameSettings,
   gameType,
   onGameStateChange = () => {},
-  renderGameContent,
+  accentColor = 'from-purple-600 to-blue-600',
   matchItem,
   itemTable,
   isIntroComplete,
@@ -366,14 +367,53 @@ export default function BaseGame({
       <div className="fixed inset-0 pt-16 pointer-events-none">
         <div className="flex items-center justify-center h-full">
           <div className="game-content text-center pointer-events-auto">
-            {renderGameContent({
-              gameState,
-              startGame,
-              endGame,
-              isButtonAnimated,
-              gameType: typeof window !== 'undefined' ? DOMPurify.sanitize(gameType) : gameType,
-              onOpenGameSettings: () => setIsSettingsOpen(true),
-            })}
+            {gameState === 'initial' && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <motion.h2
+                  className="game-title text-white text-5xl md:text-6xl font-bold mb-6"
+                  initial={{ y: -20 }} animate={{ y: 0 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
+                >
+                  {typeof window !== 'undefined' ? DOMPurify.sanitize(gameType) : gameType} Game
+                </motion.h2>
+                <motion.p
+                  className="game-description text-white mb-8"
+                  initial={{ y: 20 }} animate={{ y: 0 }}
+                  transition={{ delay: 0.4, type: 'spring', stiffness: 120 }}
+                >
+                  Get your blindfold ready and let&apos;s begin!
+                </motion.p>
+                <motion.button
+                  onClick={startGame}
+                  className={`inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r ${accentColor} text-white font-medium text-lg hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5`}
+                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                >
+                  <Eye className="mr-2" size={20} />
+                  Start Game
+                </motion.button>
+              </motion.div>
+            )}
+            {(gameState === 'intro' || gameState === 'playing') && (
+              <motion.div
+                key="game-button"
+                initial={{ opacity: 0, y: 0 }}
+                animate={{ opacity: 1, y: isButtonAnimated ? '30vh' : 0 }}
+                exit={{ opacity: 0, y: 100 }}
+                transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
+              >
+                <motion.button
+                  onClick={() => endGame()}
+                  className={`inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r ${accentColor} text-white font-medium text-lg hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5`}
+                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                >
+                  Stop Game
+                </motion.button>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
