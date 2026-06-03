@@ -40,11 +40,12 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
   }, [isOpen])
 
   const handleSave = useCallback(() => {
-    onUpdatePreferences(name, speed, voice)
+    // Write localStorage before calling onUpdatePreferences so any sync listeners read fresh values
     localStorage.setItem('userPreferencesName', DOMPurify.sanitize(name))
     localStorage.setItem('userPreferencesVoiceSpeed', DOMPurify.sanitize(speed.toString()))
     localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(voice))
     localStorage.setItem('gameLongIntro', DOMPurify.sanitize(longIntroEnabled.toString()))
+    onUpdatePreferences(name, speed, voice)
     onClose()
   }, [name, speed, voice, longIntroEnabled, onUpdatePreferences, onClose])
 

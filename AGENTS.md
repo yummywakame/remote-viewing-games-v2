@@ -32,7 +32,9 @@ This is a companion app to the coaching site at **mindsight.coach**. Where minds
 | HTML sanitization | `isomorphic-dompurify` |
 | Performance | `lodash.debounce` |
 | Linting | ESLint with Next.js config |
-| Deployment | Vercel |
+| Deployment | Vercel (temporary — migrating to Mochahost) |
+| STT | Deepgram Nova-2 (batch REST via `/api/transcribe`) |
+| TTS | OpenAI `gpt-4o-mini-tts` (via `/api/speak`) |
 
 ## Directory Structure
 
@@ -41,8 +43,8 @@ www/                          # Repo root
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── speak/        # POST: OpenAI TTS → audio/mpeg
-│   │   │   └── transcribe/   # POST: audio blob → Whisper transcript
+│   │   │   ├── speak/        # POST: OpenAI gpt-4o-mini-tts → audio/mpeg
+│   │   │   └── transcribe/   # POST: audio blob → Deepgram Nova-2 transcript
 │   │   ├── color-game/       # Color perception training game
 │   │   ├── shape-game/       # Shape perception training game
 │   │   ├── components/       # App-level shared components
@@ -137,15 +139,16 @@ New-Item -ItemType Junction -Path "C:\Users\olivi\AppData\Local\Temp\nextjs-mind
 
 ## Voice Architecture
 
-All voice logic lives in two files:
+All voice logic lives in these files:
 - `src/app/components/SpeechHandler.js` — `useSpeech` hook. Handles mic permission, VAD (voice activity detection), MediaRecorder clip capture, OpenAI TTS playback, and in-memory TTS cache. Returns `{ speak, startListening, stopListening, cancelSpeech, isListening, isSpeaking }`.
-- `src/app/api/transcribe/route.js` — server-side POST route; receives audio blob, calls OpenAI Whisper (`whisper-1`), returns `{ transcript }`.
+- `src/app/api/transcribe/route.js` — server-side POST route; receives audio blob, calls Deepgram Nova-2 batch REST, returns `{ transcript }`.
 - `src/app/api/speak/route.js` — server-side POST route; receives `{ text, voice, speed }`, calls OpenAI TTS (`gpt-4o-mini-tts`), returns `audio/mpeg`.
 
-**STT:** OpenAI Whisper via VAD-driven MediaRecorder. AudioContext + AnalyserNode detects speech onset; 800ms of silence after speech triggers the clip send.
+**STT:** Deepgram Nova-2 via batch REST. Browser VAD (AudioContext + AnalyserNode) detects speech onset; 800ms of silence triggers clip send to `/api/transcribe`, which proxies to Deepgram. No browser WebSocket — all API calls are server-side. Transcription latency ~300ms (vs ~1.5s with Whisper).
 **TTS:** OpenAI `gpt-4o-mini-tts`. Default voice: `echo`. Speed default: 1.2. Available voices: `alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `nova`, `onyx`, `sage`, `shimmer`. Speed range 0.25–4.0. Tone: jovial, upbeat, playful — emphasises ALL CAPS words.
 **TTS cache:** `speak()` caches audio `Blob` objects in memory keyed by text. Repeated phrases (question variants, try-again, outro) cost 0 API calls after the first play. Cache is cleared when voice or speed changes.
-**Security:** `OPENAI_API_KEY` in `.env.local`, used only server-side — never in client code or `NEXT_PUBLIC_` vars.
+**Security:** `OPENAI_API_KEY` and `DEEPGRAM_API_KEY` in `.env.local`, used only server-side — never in client code or `NEXT_PUBLIC_` vars.
+**Expected latency:** ~800ms VAD silence wait + ~300ms Deepgram transcription = ~1.1s total (down from ~2.3s with Whisper).
 
 ### VAD tuning constants (`SpeechHandler.js`)
 
@@ -153,7 +156,7 @@ All voice logic lives in two files:
 |---|---|---|
 | `SPEECH_THRESHOLD` | 15 RMS | Lower threshold catches plosive-onset words ("pink") |
 | `MIN_SPEECH_MS` | 100ms | Time since first onset before confirming as speech |
-| `SILENCE_DURATION_MS` | 800ms | Silence after speech → send clip to Whisper |
+| `SILENCE_DURATION_MS` | 800ms | Silence after speech → send clip to Deepgram |
 | `VAD_INTERVAL_MS` | 100ms | How often VAD polls the analyser |
 | `MAX_CLIP_MS` | 10000ms | Force-rotate recording after this long |
 | `IDLE_TIMEOUT_MS` | 5 min | Stop listening after no confirmed speech |
@@ -162,7 +165,7 @@ All voice logic lives in two files:
 
 ### Hallucination filter
 
-Whisper hallucinates common phrases on silence/ambient noise. The filter discards a transcript if **every sentence** (split on `.!?`) is a known hallucination phrase (e.g. "thank you. thank you." is caught). Known phrases: bye, goodbye, thank you, thanks, see you, you're welcome, thank you for watching.
+Deepgram is much less prone to hallucinations than Whisper, but a small filter is kept as a safety net. Discards a transcript if every sentence (split on `.!?`) is a known filler phrase. Known phrases: bye, goodbye, thank you, thanks, see you, you're welcome, thank you for watching.
 
 ### `handleVoiceCommand` interface
 
@@ -241,20 +244,21 @@ What color is this? / What color do you see? / Can you tell what color this is? 
 
 ## Active Work in Progress
 
-### Next up: Deepgram STT migration
+### Current branch: `feature/voice-hybrid`
 
-- [ ] Investigate Deepgram streaming STT as replacement for Whisper VAD approach in `SpeechHandler.js`
-  - Deepgram WebSocket streams transcript in real-time — no silence-wait, faster response
-  - Would remove most of the VAD complexity (no MediaRecorder clips, no burst timer)
-  - Keep `/api/speak` (OpenAI TTS) unchanged
-  - See https://developers.deepgram.com/docs/getting-started-with-live-streaming-audio
+Hybrid voice stack — best of both worlds:
+- **STT:** Deepgram Nova-2 batch REST (VAD + MediaRecorder from `feature/voice-openai-whisper`, Deepgram replaces Whisper in `/api/transcribe`)
+- **TTS:** OpenAI `gpt-4o-mini-tts` (unchanged from `feature/voice-openai-whisper`)
+- No browser WebSocket — all API calls are server-side proxied
+- Expected latency: ~1.1s (down from ~2.3s with Whisper)
 
 ### Remaining items
 
-- [ ] "pink" still unreliable — add more COLOR_ALIASES as discovered during testing (Whisper mishearings)
+- [ ] Test Deepgram Nova-2 accuracy against COLOR_ALIASES — Deepgram may mishear different words than Whisper; update aliases accordingly
+- [ ] Test short single-word answers ("red", "blue") — verify VAD MIN_SPEECH_MS=100ms catches them reliably
 - [ ] Cross-browser testing: Chrome desktop, Safari iOS, Android Chrome
 - [ ] Rate limiting per-IP (Upstash Redis — see `VOICE_SETUP_INSTRUCTIONS.md`) — recommended before public launch to control API costs
-- [ ] After merging voice feature branch: audit CSP `connect-src` in `next.config.mjs` — add API hosts needed by the chosen provider; drop any `wss://` entries if browser WebSocket is not used
+- [ ] CSP in `next.config.mjs`: `connect-src 'self'` is correct as-is — Deepgram is called server-side only, no browser-direct requests
 
 ## Deployment
 

@@ -45,6 +45,18 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
   }, [])
 
+  // Sync preferences when updated from the header while on the game page
+  useEffect(() => {
+    const sync = () => {
+      setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
+      setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
+      setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
+      setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
+    }
+    window.addEventListener('preferencesUpdated', sync)
+    return () => window.removeEventListener('preferencesUpdated', sync)
+  }, [])
+
   const updateCurrentItem = useCallback((newItem) => {
     currentItemRef.current = newItem
     setCurrentItem(newItem)
@@ -137,7 +149,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
           transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
         >
           <motion.button
-            onClick={endGame}
+            onClick={() => endGame()}
             className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-green-500 text-white font-medium text-lg hover:from-blue-700 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           >
