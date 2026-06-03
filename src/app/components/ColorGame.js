@@ -98,8 +98,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
 
     if (/\b(what|which)/.test(command)) {
       const current = currentItemRef.current
-      if (current) speak?.(`It's ${current}`)
-      return { item: current || 'hint', isCorrect: null }
+      return { item: current || 'hint', isCorrect: null, revealText: current ? `It's ${current}` : null }
     }
 
     return null

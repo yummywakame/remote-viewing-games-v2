@@ -100,6 +100,7 @@ The app provides solo practice games for MindSight development. All games are **
 | `userPreferencesVoiceSpeed` | TTS playback speed (default 1.2) |
 | `userPreferencesVoiceName` | Selected OpenAI voice name (default `echo`) |
 | `gameLongIntro` | `"true"` / `"false"` — full vs brief welcome message |
+| `gameAutoAdvance` | `"true"` / `"false"` — auto-advance to next item after correct guess (default `"true"`) |
 | `colorGameSelectedItems` | JSON array of active colors |
 | `shapeGameSelectedItems` | JSON array of active shapes |
 
@@ -125,6 +126,7 @@ npm run lint    # Lint
 
 **Key conventions:**
 - App Router only — all routes live under `src/app/`
+- **`UserPreferences.js` — stale closure trap:** `handleSave` is a `useCallback`. Every preference state variable it writes to localStorage (`name`, `speed`, `voice`, `longIntroEnabled`, `autoAdvance`, and any future additions) **must** appear in the dependency array, or `handleSave` will capture a stale initial value and silently save the wrong thing. This has caused bugs multiple times. When adding a new preference, always add it to both the `localStorage.setItem` block AND the `useCallback` dep array in the same commit.
 - Tailwind for all styling — avoid inline styles and CSS modules
 - Radix UI primitives in `src/components/ui/` — use these as the base for new interactive components
 - CVA (`class-variance-authority`) for component variant patterns

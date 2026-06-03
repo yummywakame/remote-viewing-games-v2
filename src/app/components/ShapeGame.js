@@ -68,11 +68,8 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     const currentShape = currentItemRef.current
 
     if (/\b(what|which)(?:\s+(?:shape|is|it))?/.test(command)) {
-      if (currentShape) {
-        const article = getArticle(currentShape)
-        speak?.(`It's ${article} ${currentShape}.`)
-      }
-      return { item: currentShape || 'hint', isCorrect: null }
+      const revealText = currentShape ? `It's ${getArticle(currentShape)} ${currentShape}.` : null
+      return { item: currentShape || 'hint', isCorrect: null, revealText }
     }
 
     const showMatch = command.match(/\b(?:show(?:\s+me)?)\s+(?:a\s+|an\s+)?(.+)\b/i)

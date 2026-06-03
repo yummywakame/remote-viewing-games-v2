@@ -78,14 +78,22 @@ export default function BaseGame({
   const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
   const [longIntroEnabled, setLongIntroEnabled] = useState(true)
+  const [autoAdvance, setAutoAdvance] = useState(true)
   const [isIntroComplete, setIsIntroComplete] = useState(false)
   const [userName, setUserName] = useState('')
   const [voiceSpeed, setVoiceSpeed] = useState(1.2)
   const [voiceName, setVoiceName] = useState('echo')
 
+  const autoAdvanceRef = useRef(true)
+  const hintShownRef = useRef(false)
+  const tipShownRef = useRef(false)
+
+  useEffect(() => { autoAdvanceRef.current = autoAdvance }, [autoAdvance])
+
   // Load preferences from localStorage on mount
   useEffect(() => {
     setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
+    setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
     setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
     setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
     setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
@@ -95,6 +103,7 @@ export default function BaseGame({
   useEffect(() => {
     const sync = () => {
       setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
+      setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
       setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
       setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
       setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
@@ -107,6 +116,7 @@ export default function BaseGame({
     setUserName(newName)
     setVoiceSpeed(newVoiceSpeed)
     setVoiceName(newVoiceName)
+    setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
     localStorage.setItem('userPreferencesName', sanitizeInput(newName))
     localStorage.setItem('userPreferencesVoiceSpeed', sanitizeInput(newVoiceSpeed.toString()))
     localStorage.setItem('userPreferencesVoiceName', sanitizeInput(newVoiceName))
@@ -158,22 +168,47 @@ export default function BaseGame({
       const correctText = CORRECT_RESPONSES[correctIndexRef.current](matched.item, matched.displayItem)
       correctIndexRef.current = (correctIndexRef.current + 1) % CORRECT_RESPONSES.length
       const selectItemFunc = selectNewItemProp || selectNewItem
-      speakRef.current?.(correctText).then(async () => {
-        const next = selectItemFunc(selectedItems, matched.item)
-        if (next) {
-          updateCurrentItemRef.current?.(next)
-          const variants = questionVariants?.length ? questionVariants : [`What ${gameType.toLowerCase()} is this?`]
-          await speakRef.current?.(variants[Math.floor(Math.random() * variants.length)])
-        }
-      })
+
+      if (autoAdvanceRef.current) {
+        speakRef.current?.(correctText).then(async () => {
+          const next = selectItemFunc(selectedItems, matched.item)
+          if (next) {
+            updateCurrentItemRef.current?.(next)
+            const variants = questionVariants?.length ? questionVariants : [`What ${gameType.toLowerCase()} is this?`]
+            await speakRef.current?.(variants[Math.floor(Math.random() * variants.length)])
+          }
+        })
+      } else {
+        const needsHint = !hintShownRef.current
+        hintShownRef.current = true
+        const hint = `Say 'next ${gameType.toLowerCase()}' or click the screen to advance when you're ready.`
+        speakRef.current?.(needsHint ? `${correctText} ${hint}` : correctText)
+      }
     } else if (matched?.isCorrect === false) {
       setLastHeardWord(matched.item)
       setLastInteraction(Date.now())
       speakRef.current?.(TRY_AGAIN_RESPONSES[Math.floor(Math.random() * TRY_AGAIN_RESPONSES.length)])
     } else if (matched?.item) {
-      // Special command (show me / hint) — already handled inside matchItem, just reset timer
       setLastHeardWord(typeof matched.item === 'string' ? matched.item : '')
       setLastInteraction(Date.now())
+      if (matched.revealText) {
+        if (autoAdvanceRef.current) {
+          const selectItemFunc = selectNewItemProp || selectNewItem
+          speakRef.current?.(matched.revealText).then(async () => {
+            const next = selectItemFunc(selectedItems, currentItemRef.current)
+            if (next) {
+              updateCurrentItemRef.current?.(next)
+              const variants = questionVariants?.length ? questionVariants : [`What ${gameType.toLowerCase()} is this?`]
+              await speakRef.current?.(variants[Math.floor(Math.random() * variants.length)])
+            }
+          })
+        } else {
+          const needsHint = !hintShownRef.current
+          if (needsHint) hintShownRef.current = true
+          const hint = needsHint ? ` Say 'next ${gameType.toLowerCase()}' or click the screen to advance when you're ready.` : ''
+          speakRef.current?.(`${matched.revealText}${hint}`)
+        }
+      }
     }
   }, [gameType, matchItem, selectedItems, questionVariants, selectNewItemProp])
 
@@ -275,6 +310,9 @@ export default function BaseGame({
 
   const startGame = useCallback(async () => {
     lockStateChangeRef.current = true
+    hintShownRef.current = false
+    tipShownRef.current = false
+    setLastInteraction(Date.now())
     setAndLogGameState('intro', 'start game')
     cancelSpeech()
     stopListening()
@@ -335,6 +373,20 @@ export default function BaseGame({
     }, 2 * 60 * 1000)
     return () => clearTimeout(timer)
   }, [gameState, lastInteraction])
+
+  // Prompt tip after 30s of no recognised interaction — once per session
+  useEffect(() => {
+    if (gameState !== 'playing' || tipShownRef.current) return
+    const timer = setTimeout(() => {
+      if (!tipShownRef.current) {
+        tipShownRef.current = true
+        speakRef.current?.(
+          `Sometimes I can't understand single word answers. Try telling me the ${gameType.toLowerCase()} in a sentence.`
+        )
+      }
+    }, 30 * 1000)
+    return () => clearTimeout(timer)
+  }, [gameState, lastInteraction, gameType])
 
   useEffect(() => {
     setOnOpenGameSettings(() => () => setIsSettingsOpen(true))

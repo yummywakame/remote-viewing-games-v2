@@ -26,6 +26,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
   const [speed, setSpeed] = useState(voiceSpeed || 1.2)
   const [voice, setVoice] = useState(voiceName || DEFAULT_VOICE)
   const [longIntroEnabled, setLongIntroEnabled] = useState(true)
+  const [autoAdvance, setAutoAdvance] = useState(true)
   const [isPreviewing, setIsPreviewing] = useState(false)
   const previewAudioRef = useRef(null)
   const modalRef = useRef(null)
@@ -35,8 +36,8 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
     setName(DOMPurify.sanitize(localStorage.getItem('userPreferencesName') || ''))
     setSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
     setVoice(localStorage.getItem('userPreferencesVoiceName') || DEFAULT_VOICE)
-    const savedLongIntro = localStorage.getItem('gameLongIntro')
-    setLongIntroEnabled(savedLongIntro !== 'false')
+    setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
+    setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
   }, [isOpen])
 
   const handleSave = useCallback(() => {
@@ -45,15 +46,17 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
     localStorage.setItem('userPreferencesVoiceSpeed', DOMPurify.sanitize(speed.toString()))
     localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(voice))
     localStorage.setItem('gameLongIntro', DOMPurify.sanitize(longIntroEnabled.toString()))
+    localStorage.setItem('gameAutoAdvance', DOMPurify.sanitize(autoAdvance.toString()))
     onUpdatePreferences(name, speed, voice)
     onClose()
-  }, [name, speed, voice, longIntroEnabled, onUpdatePreferences, onClose])
+  }, [name, speed, voice, longIntroEnabled, autoAdvance, onUpdatePreferences, onClose])
 
   const handleReset = useCallback(() => {
     setName('')
     setSpeed(1.2)
     setVoice(DEFAULT_VOICE)
     setLongIntroEnabled(true)
+    setAutoAdvance(true)
   }, [])
 
   const handleOutsideClick = useCallback((e) => {
@@ -186,6 +189,20 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
                   className="bg-gray-600 data-[state=checked]:bg-blue-500"
                 />
                 <span className={`text-xs ${longIntroEnabled ? 'text-white' : 'text-gray-400'}`}>Full explanation</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className="block text-sm font-medium">Next item</span>
+              <div className="flex items-center space-x-2">
+                <span className={`text-xs ${!autoAdvance ? 'text-white' : 'text-gray-400'}`}>Manual</span>
+                <Switch
+                  checked={autoAdvance}
+                  onCheckedChange={setAutoAdvance}
+                  defaultChecked={true}
+                  className="bg-gray-600 data-[state=checked]:bg-blue-500"
+                />
+                <span className={`text-xs ${autoAdvance ? 'text-white' : 'text-gray-400'}`}>Auto-advance</span>
               </div>
             </div>
           </div>
