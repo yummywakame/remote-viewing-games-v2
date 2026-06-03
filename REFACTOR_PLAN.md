@@ -1,7 +1,7 @@
 # MindSight Training — Refactor Plan: `refactor/game-base`
 
 **Created:** 2026-06-03  
-**Status:** NOT STARTED — ready to begin in a new session  
+**Status:** COMPLETE — all groups done, pending final test and merge to main  
 **Goal:** Move shared game logic from ColorGame/ShapeGame into BaseGame. Zero visible change to the user — same sounds, same look, same behaviour.
 
 ---
@@ -70,26 +70,26 @@ The following console.logs are intentional and must not be removed:
 
 | # | Group | Item | File(s) | Coded | Built | Tested | Notes |
 |---|-------|------|---------|:-----:|:-----:|:------:|-------|
-| 1 | Cleanup | Remove dead `handleCommonVoiceCommands` function | `gameUtils.js` | [ ] | [ ] | [ ] | Never called anywhere — BaseGame handles this directly |
-| 2 | Cleanup | Remove dead `backgroundMode` prop | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Passed by both games, never used in BaseGame |
-| 3 | Cleanup | Remove dead `longIntroEnabled` prop ShapeGame→BaseGame | `ShapeGame.js` | [ ] | [ ] | [ ] | BaseGame ignores it; causes confusion |
-| 4 | Cleanup | Consolidate duplicate `selectNewItem` | `ColorGame.js`, `gameUtils.js` | [ ] | [ ] | [ ] | ColorGame has its own copy; use `gameUtils` version only |
-| 5 | Preferences | Move `userName`, `voiceSpeed`, `voiceName` state to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Identical in both games |
-| 6 | Preferences | Move localStorage read on mount to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Identical in both games |
-| 7 | Preferences | Move `preferencesUpdated` event listener to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Identical in both games |
-| 8 | Preferences | Fix `longIntroEnabled` reactivity bug | `BaseGame.js` | [ ] | [ ] | [ ] | **BUG:** BaseGame has its own `longIntroEnabled` from `useState` that never updates after mount. Must become reactive via `preferencesUpdated` event. Currently even after syncing prefs the intro length doesn't change |
-| 9 | Preferences | Move `handleUpdateUserPreferences` to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Identical callback in both games |
-| 10 | Game flow | Move `CORRECT_RESPONSES` + `TRY_AGAIN_RESPONSES` to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | ColorGame has arrays; ShapeGame uses inline strings — standardise both |
-| 11 | Game flow | Move `QUESTION_VARIANTS` defaults to BaseGame | `BaseGame.js`, `ColorGame.js` | [ ] | [ ] | [ ] | BaseGame already accepts `questionVariants` prop; add defaults there |
-| 12 | Game flow | Generalise `handleVoiceCommand` flow in BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Games provide `matchItem(transcript)` → `{item, isCorrect}` or null. BaseGame owns speak→advance logic. See detail below. |
-| 13 | Game flow | Add `SHAPE_ALIASES` to ShapeGame | `ShapeGame.js` | [ ] | [ ] | [ ] | See aliases table below. Test and refine during real use. |
-| 14 | Game flow | Standardise ShapeGame correct/wrong voice responses | `ShapeGame.js` | [ ] | [ ] | [ ] | Currently uses inline strings ("Well done! It's a circle"). Use CORRECT_RESPONSES + TRY_AGAIN_RESPONSES arrays from BaseGame |
-| 15 | UI | Move `renderGameContent` Start/Stop buttons to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Add `accentColor` prop. Color: `from-purple-600 to-blue-600`. Shape: `from-blue-600 to-green-500` |
-| 16 | Settings | Create shared `GameSettings.js` modal component | `GameSettings.js` (new) | [ ] | [ ] | [ ] | See detail below. Replaces duplicate modal shell in both settings files |
-| 17 | Settings | Refactor `ColorGameSettings` to use `GameSettings` | `ColorGameSettings.js` | [ ] | [ ] | [ ] | Pass `renderItem` that shows colour swatch |
-| 18 | Settings | Refactor `ShapeGameSettings` to use `GameSettings` | `ShapeGameSettings.js` | [ ] | [ ] | [ ] | Pass `renderItem` that shows shape SVG |
-| 19 | Misc | Move `isIntroComplete` / `setIsIntroComplete` state to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Currently managed in game component and passed down unnecessarily |
-| 20 | Misc | Fix home page name not updating on preferences change | `page.js` | [ ] | [ ] | [ ] | Add `preferencesUpdated` listener to re-read `userPreferencesName` |
+| 1 | Cleanup | Remove dead `handleCommonVoiceCommands` function | `gameUtils.js` | [x] | [x] | [x] | Never called anywhere — BaseGame handles this directly |
+| 2 | Cleanup | Remove dead `backgroundMode` prop | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Passed by both games, never used in BaseGame |
+| 3 | Cleanup | Remove dead `longIntroEnabled` prop ShapeGame→BaseGame | `ShapeGame.js` | [x] | [x] | [x] | BaseGame ignores it; causes confusion |
+| 4 | Cleanup | Consolidate duplicate `selectNewItem` | `ColorGame.js`, `gameUtils.js` | [x] | [x] | [x] | ColorGame has its own copy; use `gameUtils` version only |
+| 5 | Preferences | Move `userName`, `voiceSpeed`, `voiceName` state to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Identical in both games |
+| 6 | Preferences | Move localStorage read on mount to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Identical in both games |
+| 7 | Preferences | Move `preferencesUpdated` event listener to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Identical in both games |
+| 8 | Preferences | Fix `longIntroEnabled` reactivity bug | `BaseGame.js` | [x] | [x] | [x] | **BUG:** BaseGame has its own `longIntroEnabled` from `useState` that never updates after mount. Must become reactive via `preferencesUpdated` event. Currently even after syncing prefs the intro length doesn't change |
+| 9 | Preferences | Move `handleUpdateUserPreferences` to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Identical callback in both games |
+| 10 | Game flow | Move `CORRECT_RESPONSES` + `TRY_AGAIN_RESPONSES` to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | ColorGame has arrays; ShapeGame uses inline strings — standardise both |
+| 11 | Game flow | Move `QUESTION_VARIANTS` defaults to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | BaseGame already accepts `questionVariants` prop; add defaults there. ShapeGame now passes its own QUESTION_VARIANTS (same set, "shape" swapped for "color") |
+| 12 | Game flow | Generalise `handleVoiceCommand` flow in BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Games provide `matchItem(transcript)` → `{item, isCorrect}` or null. BaseGame owns speak→advance logic. See detail below. |
+| 13 | Game flow | Add `SHAPE_ALIASES` to ShapeGame | `ShapeGame.js` | [x] | [x] | [x] | See aliases table below. Test and refine during real use. |
+| 14 | Game flow | Standardise ShapeGame correct/wrong voice responses | `ShapeGame.js` | [x] | [x] | [x] | Currently uses inline strings ("Well done! It's a circle"). Use CORRECT_RESPONSES + TRY_AGAIN_RESPONSES arrays from BaseGame |
+| 15 | UI | Move `renderGameContent` Start/Stop buttons to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Add `accentColor` prop. Color: `from-purple-600 to-blue-600`. Shape: `from-blue-600 to-green-500` |
+| 16 | Settings | Create shared `GameSettings.js` modal component | `GameSettings.js` (new) | [x] | [x] | [x] | See detail below. Replaces duplicate modal shell in both settings files |
+| 17 | Settings | Refactor `ColorGameSettings` to use `GameSettings` | `ColorGameSettings.js` | [x] | [x] | [x] | Pass `renderItem` that shows colour swatch |
+| 18 | Settings | Refactor `ShapeGameSettings` to use `GameSettings` | `ShapeGameSettings.js` | [x] | [x] | [x] | Pass `renderItem` that shows shape SVG |
+| 19 | Misc | Move `isIntroComplete` / `setIsIntroComplete` state to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Currently managed in game component and passed down unnecessarily |
+| 20 | Misc | Fix home page name not updating on preferences change | `page.js` | [x] | [x] | [x] | Add `preferencesUpdated` listener to re-read `userPreferencesName` |
 
 ---
 

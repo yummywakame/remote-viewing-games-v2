@@ -12,6 +12,12 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    const syncName = () => setUserName(DOMPurify.sanitize(localStorage.getItem('userPreferencesName') || ''))
+    window.addEventListener('preferencesUpdated', syncName)
+    return () => window.removeEventListener('preferencesUpdated', syncName)
+  }, [])
+
+  useEffect(() => {
     const initializePage = async () => {
       try {
         const savedName = localStorage.getItem('userPreferencesName') || ''

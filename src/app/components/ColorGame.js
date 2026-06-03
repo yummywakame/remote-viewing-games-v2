@@ -3,9 +3,6 @@
 import React, { useCallback, useState, useEffect, memo } from 'react'
 import BaseGame from './BaseGame'
 import ColorGameSettings from './ColorGameSettings'
-import { Eye } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { sanitizeInput } from '@/utils/gameUtils'
 
 const itemTable = {
   yellow: '#FFD700',
@@ -38,36 +35,10 @@ const QUESTION_VARIANTS = [
   'Next. What do you sense?',
 ]
 
-const CORRECT_RESPONSES = [
-  (c) => `Correct! It IS ${c}!`,
-  (c) => `Yes, it's ${c}!`,
-  (c) => `Well done! ${c.charAt(0).toUpperCase() + c.slice(1)}!`,
-  (c) => `Yes, ${c}!`,
-  (c) => `You nailed it! It's ${c}!`,
-  (c) => `Yep, it's ${c}!`,
-  (c) => `It IS ${c}!`,
-  (c) => `${c.charAt(0).toUpperCase() + c.slice(1)} it is!`,
-]
-
-const TRY_AGAIN_RESPONSES = [
-  'Not this time — keep sensing!',
-  'Almost! Give it another go.',
-  "Keep going, you've got this!",
-  'Not quite — what else do you pick up?',
-  'Give it another try!',
-  "You're getting there — try again!",
-]
-
 const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(['yellow', 'green', 'blue', 'purple', 'pink', 'red', 'orange'])
   const [currentItem, setCurrentItem] = useState(null)
-  const [longIntroEnabled, setLongIntroEnabled] = useState(true)
-  const [isIntroComplete, setIsIntroComplete] = useState(false)
-  const [userName, setUserName] = useState('')
-  const [voiceSpeed, setVoiceSpeed] = useState(1.2)
-  const [voiceName, setVoiceName] = useState('echo')
   const currentItemRef = React.useRef(null)
-  const correctIndexRef = React.useRef(0)
 
   useEffect(() => {
     const savedItems = localStorage.getItem('colorGameSelectedItems')
@@ -77,25 +48,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
         if (Array.isArray(parsed) && parsed.length >= 2) setSelectedItems(parsed)
       } catch { /* ignore */ }
     }
-
-    const savedLongIntro = localStorage.getItem('gameLongIntro')
-    setLongIntroEnabled(savedLongIntro !== 'false')
-
-    setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
-    setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
-    setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
-  }, [])
-
-  // Sync preferences when updated from the header while on the game page
-  useEffect(() => {
-    const sync = () => {
-      setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
-      setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
-      setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
-      setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
-    }
-    window.addEventListener('preferencesUpdated', sync)
-    return () => window.removeEventListener('preferencesUpdated', sync)
   }, [])
 
   const updateCurrentItem = useCallback((newItem) => {
@@ -114,56 +66,22 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     if (currentItem) currentItemRef.current = currentItem
   }, [currentItem])
 
-  // Reset background when game is not playing
-  useEffect(() => {
-    if (!isIntroComplete) {
-      document.body.style.backgroundColor = ''
-      currentItemRef.current = null
-      setCurrentItem(null)
-    }
-  }, [isIntroComplete])
-
-  const selectNewItem = useCallback((items, current) => {
-    if (!items?.length) return null
-    let next
-    do { next = items[Math.floor(Math.random() * items.length)] }
-    while (next === current && items.length > 1)
-    return next
-  }, [])
-
-  // handleVoiceCommand receives (command, speak) from BaseGame
-  const handleVoiceCommand = useCallback((command, speak) => {
+  // matchItem receives (command, speak) from BaseGame; returns {item, isCorrect} or null
+  const matchItem = useCallback((command, speak) => {
     // Collect ALL color words mentioned — handles "is it blue or green?" correctly
     const mentionedSelected = selectedItems.filter((c) => command.includes(c) || matchesAlias(command, c))
-    const anyKnownColor = !mentionedSelected.length && Object.keys(itemTable).find((c) => command.includes(c) || matchesAlias(command, c))
+    const anyKnownColor = !mentionedSelected.length && Object.keys(itemTable).find(
+      (c) => command.includes(c) || matchesAlias(command, c)
+    )
 
     if (mentionedSelected.length > 0) {
       const currentColor = currentItemRef.current
-      const isCorrect = currentColor && mentionedSelected.includes(currentColor)
-
-      if (isCorrect) {
-        const correctText = CORRECT_RESPONSES[correctIndexRef.current](currentColor)
-        correctIndexRef.current = (correctIndexRef.current + 1) % CORRECT_RESPONSES.length
-        speak(correctText).then(async () => {
-          const newItem = selectNewItem(selectedItems, currentColor)
-          if (newItem) {
-            updateCurrentItem(newItem)
-            const question = QUESTION_VARIANTS[Math.floor(Math.random() * QUESTION_VARIANTS.length)]
-            await speak(question)
-          }
-        })
-        return currentColor
-      } else {
-        const tryAgain = TRY_AGAIN_RESPONSES[Math.floor(Math.random() * TRY_AGAIN_RESPONSES.length)]
-        speak(tryAgain)
-        return mentionedSelected[0]
-      }
+      const isCorrect = !!(currentColor && mentionedSelected.includes(currentColor))
+      return { item: isCorrect ? currentColor : mentionedSelected[0], isCorrect }
     }
 
     if (anyKnownColor) {
-      const tryAgain = TRY_AGAIN_RESPONSES[Math.floor(Math.random() * TRY_AGAIN_RESPONSES.length)]
-      speak(tryAgain)
-      return anyKnownColor
+      return { item: anyKnownColor, isCorrect: false }
     }
 
     const showMatch = command.match(/show\s+(?:me\s+)?(?:the\s+)?(?:color\s+)?(\w+)/)
@@ -171,90 +89,25 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       const requested = showMatch[1]
       if (selectedItems.includes(requested)) {
         updateCurrentItem(requested)
-        speak(`Showing you ${requested}`)
+        speak?.(`Showing you ${requested}`)
       } else {
-        speak(`Sorry, ${requested} is not in the color list. Available colors are: ${selectedItems.join(', ')}`)
+        speak?.(`Sorry, ${requested} is not in the color list. Available colors are: ${selectedItems.join(', ')}`)
       }
-      return requested
+      return { item: requested, isCorrect: null }
     }
 
     if (/\b(what|which)/.test(command)) {
       const current = currentItemRef.current
-      if (current) speak(`It's ${current}`)
-      return current || true
-    }
-  }, [selectedItems, selectNewItem, updateCurrentItem])
-
-  const renderGameContent = useCallback(({ gameState, startGame, endGame, isButtonAnimated, gameType }) => {
-    if (gameState === 'initial') {
-      return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <motion.h2
-            className="game-title text-white text-5xl md:text-6xl font-bold mb-6"
-            initial={{ y: -20 }} animate={{ y: 0 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
-          >
-            {gameType} Game
-          </motion.h2>
-          <motion.p
-            className="game-description text-white mb-8"
-            initial={{ y: 20 }} animate={{ y: 0 }}
-            transition={{ delay: 0.4, type: 'spring', stiffness: 120 }}
-          >
-            Get your blindfold ready and let&apos;s begin!
-          </motion.p>
-          <motion.button
-            onClick={startGame}
-            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-          >
-            <Eye className="mr-2" size={20} />
-            Start Game
-          </motion.button>
-        </motion.div>
-      )
-    }
-
-    if (gameState === 'intro' || gameState === 'playing') {
-      return (
-        <motion.div
-          key="game-button"
-          initial={{ opacity: 0, y: 0 }}
-          animate={{ opacity: 1, y: isButtonAnimated ? '30vh' : 0 }}
-          exit={{ opacity: 0, y: 100 }}
-          transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
-        >
-          <motion.button
-            onClick={() => endGame()}
-            className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-          >
-            Stop Game
-          </motion.button>
-        </motion.div>
-      )
+      if (current) speak?.(`It's ${current}`)
+      return { item: current || 'hint', isCorrect: null }
     }
 
     return null
-  }, [])
+  }, [selectedItems, updateCurrentItem])
 
   const handleSaveSettings = useCallback((newSelectedItems) => {
     setSelectedItems(newSelectedItems)
     localStorage.setItem('colorGameSelectedItems', JSON.stringify(newSelectedItems))
-    localStorage.setItem('gameLongIntro', sanitizeInput(String(longIntroEnabled)))
-  }, [longIntroEnabled])
-
-  const handleUpdateUserPreferences = useCallback((newName, newVoiceSpeed, newVoiceName) => {
-    setUserName(newName)
-    setVoiceSpeed(newVoiceSpeed)
-    setVoiceName(newVoiceName)
-    localStorage.setItem('userPreferencesName', sanitizeInput(newName))
-    localStorage.setItem('userPreferencesVoiceSpeed', sanitizeInput(newVoiceSpeed.toString()))
-    localStorage.setItem('userPreferencesVoiceName', sanitizeInput(newVoiceName))
   }, [])
 
   return (
@@ -262,20 +115,11 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       GameSettings={ColorGameSettings}
       gameType="Color"
       onGameStateChange={onGameStateChange}
-      renderGameContent={renderGameContent}
-      handleVoiceCommand={handleVoiceCommand}
+      matchItem={matchItem}
       itemTable={itemTable}
-      backgroundMode="color"
-      isIntroComplete={isIntroComplete}
-      setIsIntroComplete={setIsIntroComplete}
       selectedItems={selectedItems}
       onSaveSettings={handleSaveSettings}
-      userName={userName}
-      voiceSpeed={voiceSpeed}
-      voiceName={voiceName}
       questionVariants={QUESTION_VARIANTS}
-      onUpdateUserPreferences={handleUpdateUserPreferences}
-      selectNewItemProp={selectNewItem}
       onCurrentItemUpdate={updateCurrentItem}
       currentItem={currentItem}
     />
