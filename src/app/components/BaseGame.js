@@ -214,7 +214,7 @@ export default function BaseGame({
 
     const introText = longIntroEnabled
       ? `Let's practice MindSight with ${gameType.toLowerCase()}s${userName ? `, ${userName}` : ''}! I'll show you different ${gameType.toLowerCase()}s, and you tell me what you sense. Say "Help" at any time for controls. Are you ready?`
-      : `Let's play the ${gameType} Game!`
+      : `Let's practice MindSight with ${gameType.toLowerCase()}s!`
 
     await speak(introText)
 

@@ -22,7 +22,7 @@ const COLOR_ALIASES = {
   yellow: ['gielo', 'jello'],
   purple: ['pebble', 'pebbles'],
   orange: ['french'],
-  blue:   ['okay'],
+  blue:   ['okay', 'play'],
 }
 
 const matchesAlias = (command, color) =>
@@ -30,12 +30,12 @@ const matchesAlias = (command, color) =>
 
 const QUESTION_VARIANTS = [
   'What color is this?',
-  'What color do you see?',
-  'Can you tell what color this is?',
-  'What about this one?',
-  'And this one?',
-  'How about this one?',
-  'What do you sense?',
+  'Next. What color do you see?',
+  'Next. Can you tell what color this is?',
+  'Next. What about this one?',
+  'Next. And this one?',
+  'Next. How about this one?',
+  'Next. What do you sense?',
 ]
 
 const CORRECT_RESPONSES = [
@@ -84,6 +84,18 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
     setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
     setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
     setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
+  }, [])
+
+  // Sync preferences when updated from the header while on the game page
+  useEffect(() => {
+    const sync = () => {
+      setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
+      setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
+      setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
+      setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
+    }
+    window.addEventListener('preferencesUpdated', sync)
+    return () => window.removeEventListener('preferencesUpdated', sync)
   }, [])
 
   const updateCurrentItem = useCallback((newItem) => {
