@@ -32,7 +32,7 @@ const CORRECT_RESPONSES = [
 const TRY_AGAIN_RESPONSES = [
   'Not this time — keep sensing!',
   'Almost! Give it another go.',
-  "Keep going, you've got this!",
+  "Not quite! Keep going, you've got this!",
   'Not quite — what else do you pick up?',
   'Give it another try!',
   "You're getting there — try again!",

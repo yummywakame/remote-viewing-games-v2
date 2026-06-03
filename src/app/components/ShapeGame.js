@@ -28,6 +28,16 @@ const SHAPE_ALIASES = {
 const matchesAlias = (command, shape) =>
   SHAPE_ALIASES[shape]?.some(alias => new RegExp(`\\b${alias}\\b`).test(command))
 
+const QUESTION_VARIANTS = [
+  'What shape is this?',
+  'Next. What shape do you see?',
+  'Next. Can you tell what shape this is?',
+  'Next. What about this one?',
+  'Next. And this one?',
+  'Next. How about this one?',
+  'Next. What do you sense?',
+]
+
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable))
   const [isIntroComplete, setIsIntroComplete] = useState(false)
@@ -172,6 +182,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       itemTable={itemTable}
       selectedItems={selectedItems}
       onSaveSettings={handleSaveSettings}
+      questionVariants={QUESTION_VARIANTS}
       currentItem={currentItem}
       isIntroComplete={isIntroComplete}
       setIsIntroComplete={setIsIntroComplete}
