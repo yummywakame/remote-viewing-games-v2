@@ -85,9 +85,9 @@ The following console.logs are intentional and must not be removed:
 | 13 | Game flow | Add `SHAPE_ALIASES` to ShapeGame | `ShapeGame.js` | [x] | [x] | [x] | See aliases table below. Test and refine during real use. |
 | 14 | Game flow | Standardise ShapeGame correct/wrong voice responses | `ShapeGame.js` | [x] | [x] | [x] | Currently uses inline strings ("Well done! It's a circle"). Use CORRECT_RESPONSES + TRY_AGAIN_RESPONSES arrays from BaseGame |
 | 15 | UI | Move `renderGameContent` Start/Stop buttons to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Add `accentColor` prop. Color: `from-purple-600 to-blue-600`. Shape: `from-blue-600 to-green-500` |
-| 16 | Settings | Create shared `GameSettings.js` modal component | `GameSettings.js` (new) | [ ] | [ ] | [ ] | See detail below. Replaces duplicate modal shell in both settings files |
-| 17 | Settings | Refactor `ColorGameSettings` to use `GameSettings` | `ColorGameSettings.js` | [ ] | [ ] | [ ] | Pass `renderItem` that shows colour swatch |
-| 18 | Settings | Refactor `ShapeGameSettings` to use `GameSettings` | `ShapeGameSettings.js` | [ ] | [ ] | [ ] | Pass `renderItem` that shows shape SVG |
+| 16 | Settings | Create shared `GameSettings.js` modal component | `GameSettings.js` (new) | [x] | [x] | [x] | See detail below. Replaces duplicate modal shell in both settings files |
+| 17 | Settings | Refactor `ColorGameSettings` to use `GameSettings` | `ColorGameSettings.js` | [x] | [x] | [x] | Pass `renderItem` that shows colour swatch |
+| 18 | Settings | Refactor `ShapeGameSettings` to use `GameSettings` | `ShapeGameSettings.js` | [x] | [x] | [x] | Pass `renderItem` that shows shape SVG |
 | 19 | Misc | Move `isIntroComplete` / `setIsIntroComplete` state to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Currently managed in game component and passed down unnecessarily |
 | 20 | Misc | Fix home page name not updating on preferences change | `page.js` | [ ] | [ ] | [ ] | Add `preferencesUpdated` listener to re-read `userPreferencesName` |
 

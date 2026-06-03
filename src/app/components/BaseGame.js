@@ -422,7 +422,7 @@ export default function BaseGame({
         {isSettingsOpen && (
           <GameSettings
             key="settings"
-            title={`${gameType} Game`}
+            title={`${gameType} Game Settings`}
             onClose={() => setIsSettingsOpen(false)}
             onSave={handleSaveSettings}
             itemTable={itemTable}
