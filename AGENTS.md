@@ -54,6 +54,12 @@ www/                          # Repo root
 │   │   ├── metadata.js       # Site metadata config
 │   │   └── page.js           # Home / landing page
 │   ├── components/
+│   │   ├── BaseGame.js       # Shared game shell — owns all prefs state, voice flow, buttons, settings modal
+│   │   ├── ColorGame.js      # Color game — provides matchItem, itemTable, COLOR_ALIASES, QUESTION_VARIANTS
+│   │   ├── ShapeGame.js      # Shape game — provides matchItem, itemTable, SHAPE_ALIASES, QUESTION_VARIANTS
+│   │   ├── GameSettings.js   # Shared settings modal shell (new — replaces duplicate in each game)
+│   │   ├── ColorGameSettings.js  # Thin wrapper: passes renderItem (color swatch) to GameSettings
+│   │   ├── ShapeGameSettings.js  # Thin wrapper: passes renderItem (shape SVG) to GameSettings
 │   │   └── ui/               # Radix UI-based primitive components
 │   ├── lib/                  # Shared library utilities
 │   └── utils/                # Utility/helper functions
@@ -95,6 +101,7 @@ The app provides solo practice games for MindSight development. All games are **
 | `userPreferencesVoiceName` | Selected OpenAI voice name (default `echo`) |
 | `gameLongIntro` | `"true"` / `"false"` — full vs brief welcome message |
 | `colorGameSelectedItems` | JSON array of active colors |
+| `shapeGameSelectedItems` | JSON array of active shapes |
 
 | Game | Route | Status |
 |---|---|---|
@@ -167,18 +174,26 @@ All voice logic lives in these files:
 
 Deepgram is much less prone to hallucinations than Whisper, but a small filter is kept as a safety net. Discards a transcript if every sentence (split on `.!?`) is a known filler phrase. Known phrases: bye, goodbye, thank you, thanks, see you, you're welcome, thank you for watching.
 
-### `handleVoiceCommand` interface
+### `matchItem` interface
 
 BaseGame handles common commands centrally (stop/next/skip/help) and calls:
 ```js
-const matchedWord = handleVoiceCommand(transcript, speak)
-if (matchedWord) setLastInteraction(Date.now())  // resets inactivity timer
+const matched = matchItem(transcript, speak)
+// matched: { item: string, isCorrect: true|false|null } | null
 ```
-Game components return the matched word (string) on recognition, `undefined` otherwise. The inactivity timer only resets on recognised game items or navigation commands — background noise transcripts do not keep the game alive.
+
+- `isCorrect === true` → BaseGame speaks a CORRECT_RESPONSES entry, then advances to next item and asks the next question.
+- `isCorrect === false` → BaseGame speaks a TRY_AGAIN_RESPONSES entry.
+- `isCorrect === null` → special command (show me / hint) already spoken inside `matchItem`; BaseGame just resets the inactivity timer.
+- `null` → nothing matched; inactivity timer is NOT reset.
+
+Game components also pass `displayItem` for grammatical articles (e.g. ShapeGame returns `displayItem: "a circle"` so correct responses say "It IS a circle!" not "It IS circle!").
+
+The inactivity timer only resets on recognised game items or navigation commands — background noise transcripts do not keep the game alive.
 
 ## Game Response Variations
 
-All response arrays live at module level in `ColorGame.js` / `BaseGame.js`.
+`CORRECT_RESPONSES` and `TRY_AGAIN_RESPONSES` live in `BaseGame.js` (shared). `COLOR_ALIASES` and `QUESTION_VARIANTS` live in `ColorGame.js`. `SHAPE_ALIASES` and `QUESTION_VARIANTS` live in `ShapeGame.js`.
 
 ### ColorGame — `COLOR_ALIASES`
 Whisper often mishears short color words. Aliases use word-boundary regex matching:
@@ -193,21 +208,36 @@ Whisper often mishears short color words. Aliases use word-boundary regex matchi
 
 Both active and inactive colors are checked — saying any color name (even a deselected one) triggers a "try again" response.
 
-### ColorGame — correct responses (cycle in order)
-1. `Correct! It IS [color]!`
-2. `Yes, it's [color]!`
-3. `Well done! [Color]!`
-4. `Yes, [color]!`
-5. `You nailed it! It's [color]!`
-6. `Yep, it's [color]!`
-7. `It IS [color]!`
-8. `[Color] it is!`
+### Correct responses — `BaseGame.js` (cycle in order, shared by all games)
+Functions take `(item, display?)` — `display` is used when an article is needed (e.g. "a circle").
+1. `Correct! It IS [display]!`
+2. `Yes, it's [display]!`
+3. `Well done! [Display]!`
+4. `Yes, [display]!`
+5. `You nailed it! It's [display]!`
+6. `Yep, it's [display]!`
+7. `It IS [display]!`
+8. `[Display] it is!`
 
-### ColorGame — try-again responses (random)
-Not this time — keep sensing! / Almost! Give it another go. / Keep going, you've got this! / Not quite — what else do you pick up? / Give it another try! / You're getting there — try again!
+### Try-again responses — `BaseGame.js` (random, shared by all games)
+Not this time — keep sensing! / Almost! Give it another go. / Not quite! Keep going, you've got this! / Not quite — what else do you pick up? / Give it another try! / You're getting there — try again!
 
 ### Question variants (random after first; first is always fixed)
-What color is this? / What color do you see? / Can you tell what color this is? / What about this one? / And this one? / How about this one? / What do you sense?
+**ColorGame:** What color is this? / Next. What color do you see? / Next. Can you tell what color this is? / Next. What about this one? / Next. And this one? / Next. How about this one? / Next. What do you sense?
+**ShapeGame:** same set with "shape" in place of "color".
+The first question on game start is always hardcoded in `BaseGame.startGame` (`"What [gameType] is this?"`). Subsequent questions use the variants array randomly.
+
+### ShapeGame — `SHAPE_ALIASES`
+Initial phonetic guesses — test and refine during real play (Deepgram may mishear differently):
+
+| Shape | Aliases |
+|---|---|
+| triangle | try angle, trying, try angel, tri angle |
+| square | scare, squire, swear, squared |
+| circle | surgical, surreal, circles, circled |
+| oval | over, opal, able, oh well |
+| diamond | die man, diamonds, diemond |
+| star | store, scar, stare, start, stars |
 
 ### Outro responses (`BaseGame.js` — cycles with name)
 - `Thanks [name]! That was fun.` / `Thank you for playing!`
@@ -242,23 +272,27 @@ What color is this? / What color do you see? / Can you tell what color this is? 
 
 ---
 
-## Active Work in Progress
+## Current State
 
-### Current branch: `feature/voice-hybrid`
+**Branch:** `main` — clean, fully merged.
 
-Hybrid voice stack — best of both worlds:
-- **STT:** Deepgram Nova-2 batch REST (VAD + MediaRecorder from `feature/voice-openai-whisper`, Deepgram replaces Whisper in `/api/transcribe`)
-- **TTS:** OpenAI `gpt-4o-mini-tts` (unchanged from `feature/voice-openai-whisper`)
-- No browser WebSocket — all API calls are server-side proxied
-- Expected latency: ~1.1s (down from ~2.3s with Whisper)
+### Completed work
+- Hybrid voice stack (Deepgram Nova-2 STT + OpenAI gpt-4o-mini-tts) — merged from `feature/voice-hybrid`
+- Full game logic refactor (`refactor/game-base`) — all shared logic consolidated into BaseGame:
+  - All preferences state, localStorage, and `preferencesUpdated` listener live in BaseGame
+  - `matchItem` interface replaces `handleVoiceCommand` — BaseGame owns speak→advance loop
+  - Start/Stop buttons, settings modal shell, and `isIntroComplete` state all in BaseGame
+  - SHAPE_ALIASES added; ShapeGame question variants added; longIntroEnabled reactivity bug fixed
+  - Home page name updates immediately on preferences change (no reload needed)
 
-### Remaining items
+### Remaining items before public launch
 
-- [ ] Test Deepgram Nova-2 accuracy against COLOR_ALIASES — Deepgram may mishear different words than Whisper; update aliases accordingly
-- [ ] Test short single-word answers ("red", "blue") — verify VAD MIN_SPEECH_MS=100ms catches them reliably
+- [ ] Test Deepgram Nova-2 accuracy against COLOR_ALIASES and SHAPE_ALIASES — update aliases as needed based on real gameplay
+- [ ] Test short single-word answers ("red", "blue", "star") — verify VAD MIN_SPEECH_MS=100ms catches them reliably
 - [ ] Cross-browser testing: Chrome desktop, Safari iOS, Android Chrome
 - [ ] Rate limiting per-IP (Upstash Redis — see `VOICE_SETUP_INSTRUCTIONS.md`) — recommended before public launch to control API costs
 - [ ] CSP in `next.config.mjs`: `connect-src 'self'` is correct as-is — Deepgram is called server-side only, no browser-direct requests
+- [ ] Migrate from Vercel to Mochahost (see Deployment section below)
 
 ## Deployment
 
