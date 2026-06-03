@@ -5,7 +5,7 @@ import BaseGame from './BaseGame'
 import ShapeGameSettings from './ShapeGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { sanitizeInput, getArticle } from '@/utils/gameUtils'
+import { getArticle } from '@/utils/gameUtils'
 
 const itemTable = {
   triangle: '/shapes/triangle.svg',
@@ -19,10 +19,6 @@ const itemTable = {
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable))
   const [isIntroComplete, setIsIntroComplete] = useState(false)
-  const [longIntroEnabled, setLongIntroEnabled] = useState(false)
-  const [userName, setUserName] = useState('')
-  const [voiceSpeed, setVoiceSpeed] = useState(1.2)
-  const [voiceName, setVoiceName] = useState('echo')
   const [currentItem, setCurrentItem] = useState(null)
   const currentItemRef = useRef(null)
 
@@ -36,25 +32,6 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
         else setSelectedItems(Object.keys(itemTable))
       } catch { setSelectedItems(Object.keys(itemTable)) }
     }
-
-    const savedLongIntro = localStorage.getItem('gameLongIntro')
-    setLongIntroEnabled(savedLongIntro !== 'false')
-
-    setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
-    setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
-    setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
-  }, [])
-
-  // Sync preferences when updated from the header while on the game page
-  useEffect(() => {
-    const sync = () => {
-      setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
-      setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
-      setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
-      setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
-    }
-    window.addEventListener('preferencesUpdated', sync)
-    return () => window.removeEventListener('preferencesUpdated', sync)
   }, [])
 
   const updateCurrentItem = useCallback((newItem) => {
@@ -118,7 +95,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
             initial={{ y: -20 }} animate={{ y: 0 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
           >
-            {sanitizeInput(gameType)} Game
+            {gameType} Game
           </motion.h2>
           <motion.p
             className="game-description text-white mb-8"
@@ -165,16 +142,6 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const handleSaveSettings = useCallback((newSelectedItems) => {
     setSelectedItems(newSelectedItems)
     localStorage.setItem('shapeGameSelectedItems', JSON.stringify(newSelectedItems))
-    localStorage.setItem('gameLongIntro', sanitizeInput(String(longIntroEnabled)))
-  }, [longIntroEnabled])
-
-  const handleUpdateUserPreferences = useCallback((newName, newVoiceSpeed, newVoiceName) => {
-    setUserName(newName)
-    setVoiceSpeed(newVoiceSpeed)
-    setVoiceName(newVoiceName)
-    localStorage.setItem('userPreferencesName', sanitizeInput(newName))
-    localStorage.setItem('userPreferencesVoiceSpeed', sanitizeInput(newVoiceSpeed.toString()))
-    localStorage.setItem('userPreferencesVoiceName', sanitizeInput(newVoiceName))
   }, [])
 
   return (
@@ -184,8 +151,6 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
           {...props}
           selectedItems={selectedItems}
           onSave={handleSaveSettings}
-          longIntroEnabled={longIntroEnabled}
-          setLongIntroEnabled={setLongIntroEnabled}
         />
       )}
       gameType="Shape"
@@ -199,10 +164,6 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       currentItem={currentItem}
       isIntroComplete={isIntroComplete}
       setIsIntroComplete={setIsIntroComplete}
-      userName={userName}
-      voiceSpeed={voiceSpeed}
-      voiceName={voiceName}
-      onUpdateUserPreferences={handleUpdateUserPreferences}
       onCurrentItemUpdate={updateCurrentItem}
     />
   )

@@ -5,7 +5,7 @@ import BaseGame from './BaseGame'
 import ColorGameSettings from './ColorGameSettings'
 import { Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { sanitizeInput, selectNewItem } from '@/utils/gameUtils'
+import { selectNewItem } from '@/utils/gameUtils'
 
 const itemTable = {
   yellow: '#FFD700',
@@ -61,11 +61,7 @@ const TRY_AGAIN_RESPONSES = [
 const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(['yellow', 'green', 'blue', 'purple', 'pink', 'red', 'orange'])
   const [currentItem, setCurrentItem] = useState(null)
-  const [longIntroEnabled, setLongIntroEnabled] = useState(true)
   const [isIntroComplete, setIsIntroComplete] = useState(false)
-  const [userName, setUserName] = useState('')
-  const [voiceSpeed, setVoiceSpeed] = useState(1.2)
-  const [voiceName, setVoiceName] = useState('echo')
   const currentItemRef = React.useRef(null)
   const correctIndexRef = React.useRef(0)
 
@@ -77,25 +73,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
         if (Array.isArray(parsed) && parsed.length >= 2) setSelectedItems(parsed)
       } catch { /* ignore */ }
     }
-
-    const savedLongIntro = localStorage.getItem('gameLongIntro')
-    setLongIntroEnabled(savedLongIntro !== 'false')
-
-    setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
-    setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
-    setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
-  }, [])
-
-  // Sync preferences when updated from the header while on the game page
-  useEffect(() => {
-    const sync = () => {
-      setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
-      setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
-      setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
-      setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
-    }
-    window.addEventListener('preferencesUpdated', sync)
-    return () => window.removeEventListener('preferencesUpdated', sync)
   }, [])
 
   const updateCurrentItem = useCallback((newItem) => {
@@ -237,16 +214,6 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
   const handleSaveSettings = useCallback((newSelectedItems) => {
     setSelectedItems(newSelectedItems)
     localStorage.setItem('colorGameSelectedItems', JSON.stringify(newSelectedItems))
-    localStorage.setItem('gameLongIntro', sanitizeInput(String(longIntroEnabled)))
-  }, [longIntroEnabled])
-
-  const handleUpdateUserPreferences = useCallback((newName, newVoiceSpeed, newVoiceName) => {
-    setUserName(newName)
-    setVoiceSpeed(newVoiceSpeed)
-    setVoiceName(newVoiceName)
-    localStorage.setItem('userPreferencesName', sanitizeInput(newName))
-    localStorage.setItem('userPreferencesVoiceSpeed', sanitizeInput(newVoiceSpeed.toString()))
-    localStorage.setItem('userPreferencesVoiceName', sanitizeInput(newVoiceName))
   }, [])
 
   return (
@@ -261,11 +228,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
       setIsIntroComplete={setIsIntroComplete}
       selectedItems={selectedItems}
       onSaveSettings={handleSaveSettings}
-      userName={userName}
-      voiceSpeed={voiceSpeed}
-      voiceName={voiceName}
       questionVariants={QUESTION_VARIANTS}
-      onUpdateUserPreferences={handleUpdateUserPreferences}
       onCurrentItemUpdate={updateCurrentItem}
       currentItem={currentItem}
     />

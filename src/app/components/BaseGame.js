@@ -8,7 +8,7 @@ import UserPreferences from './UserPreferences'
 import GameDisplay from './GameDisplay'
 import { GameStateContext } from '../layout'
 import DOMPurify from 'isomorphic-dompurify'
-import { selectNewItem } from '@/utils/gameUtils'
+import { selectNewItem, sanitizeInput } from '@/utils/gameUtils'
 import useSpeech from './SpeechHandler'
 
 const OUTRO_RESPONSES = [
@@ -29,11 +29,7 @@ export default function BaseGame({
   setIsIntroComplete,
   selectedItems,
   onSaveSettings,
-  userName,
-  voiceName = 'coral',
-  voiceSpeed = 1.0,
   questionVariants,
-  onUpdateUserPreferences,
   selectNewItemProp,
   onCurrentItemUpdate,
   currentItem,           // reactive state from game component — used for display
@@ -60,9 +56,39 @@ export default function BaseGame({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
-  const [longIntroEnabled] = useState(
-    () => typeof window !== 'undefined' ? localStorage.getItem('gameLongIntro') !== 'false' : true
-  )
+  const [longIntroEnabled, setLongIntroEnabled] = useState(true)
+  const [userName, setUserName] = useState('')
+  const [voiceSpeed, setVoiceSpeed] = useState(1.2)
+  const [voiceName, setVoiceName] = useState('echo')
+
+  // Load preferences from localStorage on mount
+  useEffect(() => {
+    setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
+    setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
+    setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
+    setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
+  }, [])
+
+  // Sync preferences when updated from the header while on the game page
+  useEffect(() => {
+    const sync = () => {
+      setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
+      setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
+      setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
+      setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
+    }
+    window.addEventListener('preferencesUpdated', sync)
+    return () => window.removeEventListener('preferencesUpdated', sync)
+  }, [])
+
+  const handleUpdateUserPreferences = useCallback((newName, newVoiceSpeed, newVoiceName) => {
+    setUserName(newName)
+    setVoiceSpeed(newVoiceSpeed)
+    setVoiceName(newVoiceName)
+    localStorage.setItem('userPreferencesName', sanitizeInput(newName))
+    localStorage.setItem('userPreferencesVoiceSpeed', sanitizeInput(newVoiceSpeed.toString()))
+    localStorage.setItem('userPreferencesVoiceName', sanitizeInput(newVoiceName))
+  }, [])
 
   // Auto-clear the speech bubble after 2 seconds
   useEffect(() => {
@@ -329,7 +355,7 @@ export default function BaseGame({
         userName={userName}
         voiceSpeed={voiceSpeed}
         voiceName={voiceName}
-        onUpdatePreferences={onUpdateUserPreferences}
+        onUpdatePreferences={handleUpdateUserPreferences}
       />
     </div>
   )

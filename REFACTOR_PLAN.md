@@ -1,7 +1,7 @@
 # MindSight Training — Refactor Plan: `refactor/game-base`
 
 **Created:** 2026-06-03  
-**Status:** NOT STARTED — ready to begin in a new session  
+**Status:** IN PROGRESS — Group 1 done, Group 2 in progress  
 **Goal:** Move shared game logic from ColorGame/ShapeGame into BaseGame. Zero visible change to the user — same sounds, same look, same behaviour.
 
 ---
@@ -70,15 +70,15 @@ The following console.logs are intentional and must not be removed:
 
 | # | Group | Item | File(s) | Coded | Built | Tested | Notes |
 |---|-------|------|---------|:-----:|:-----:|:------:|-------|
-| 1 | Cleanup | Remove dead `handleCommonVoiceCommands` function | `gameUtils.js` | [ ] | [ ] | [ ] | Never called anywhere — BaseGame handles this directly |
-| 2 | Cleanup | Remove dead `backgroundMode` prop | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Passed by both games, never used in BaseGame |
-| 3 | Cleanup | Remove dead `longIntroEnabled` prop ShapeGame→BaseGame | `ShapeGame.js` | [ ] | [ ] | [ ] | BaseGame ignores it; causes confusion |
-| 4 | Cleanup | Consolidate duplicate `selectNewItem` | `ColorGame.js`, `gameUtils.js` | [ ] | [ ] | [ ] | ColorGame has its own copy; use `gameUtils` version only |
-| 5 | Preferences | Move `userName`, `voiceSpeed`, `voiceName` state to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Identical in both games |
-| 6 | Preferences | Move localStorage read on mount to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Identical in both games |
-| 7 | Preferences | Move `preferencesUpdated` event listener to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Identical in both games |
-| 8 | Preferences | Fix `longIntroEnabled` reactivity bug | `BaseGame.js` | [ ] | [ ] | [ ] | **BUG:** BaseGame has its own `longIntroEnabled` from `useState` that never updates after mount. Must become reactive via `preferencesUpdated` event. Currently even after syncing prefs the intro length doesn't change |
-| 9 | Preferences | Move `handleUpdateUserPreferences` to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Identical callback in both games |
+| 1 | Cleanup | Remove dead `handleCommonVoiceCommands` function | `gameUtils.js` | [x] | [x] | [x] | Never called anywhere — BaseGame handles this directly |
+| 2 | Cleanup | Remove dead `backgroundMode` prop | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Passed by both games, never used in BaseGame |
+| 3 | Cleanup | Remove dead `longIntroEnabled` prop ShapeGame→BaseGame | `ShapeGame.js` | [x] | [x] | [x] | BaseGame ignores it; causes confusion |
+| 4 | Cleanup | Consolidate duplicate `selectNewItem` | `ColorGame.js`, `gameUtils.js` | [x] | [x] | [x] | ColorGame has its own copy; use `gameUtils` version only |
+| 5 | Preferences | Move `userName`, `voiceSpeed`, `voiceName` state to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Identical in both games |
+| 6 | Preferences | Move localStorage read on mount to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Identical in both games |
+| 7 | Preferences | Move `preferencesUpdated` event listener to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Identical in both games |
+| 8 | Preferences | Fix `longIntroEnabled` reactivity bug | `BaseGame.js` | [x] | [x] | [x] | **BUG:** BaseGame has its own `longIntroEnabled` from `useState` that never updates after mount. Must become reactive via `preferencesUpdated` event. Currently even after syncing prefs the intro length doesn't change |
+| 9 | Preferences | Move `handleUpdateUserPreferences` to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [x] | [x] | [x] | Identical callback in both games |
 | 10 | Game flow | Move `CORRECT_RESPONSES` + `TRY_AGAIN_RESPONSES` to BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | ColorGame has arrays; ShapeGame uses inline strings — standardise both |
 | 11 | Game flow | Move `QUESTION_VARIANTS` defaults to BaseGame | `BaseGame.js`, `ColorGame.js` | [ ] | [ ] | [ ] | BaseGame already accepts `questionVariants` prop; add defaults there |
 | 12 | Game flow | Generalise `handleVoiceCommand` flow in BaseGame | `BaseGame.js`, `ColorGame.js`, `ShapeGame.js` | [ ] | [ ] | [ ] | Games provide `matchItem(transcript)` → `{item, isCorrect}` or null. BaseGame owns speak→advance logic. See detail below. |
