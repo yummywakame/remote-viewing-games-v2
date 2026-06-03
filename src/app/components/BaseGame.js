@@ -12,11 +12,11 @@ import { selectNewItem } from '@/utils/gameUtils'
 import useSpeech from './SpeechHandler'
 
 const OUTRO_RESPONSES = [
-  (name) => name ? `Thanks ${name}! That was fun.` : 'Thank you for playing!',
+  (name) => name ? `Thanks ${name}! Let's practice again soon.` : 'Thank you for playing!',
   (name) => name ? `Thanks ${name}! I hope we play again soon.` : 'Great session — thanks for playing!',
   (name) => name ? `That was a good practice session, ${name}!` : 'That was a great practice session!',
 ]
-const TIMEOUT_MESSAGE = "I haven't heard from you in a while. Goodbye!"
+const TIMEOUT_MESSAGE = 'Goodbye!'
 
 export default function BaseGame({
   GameSettings,
@@ -213,7 +213,7 @@ export default function BaseGame({
     await new Promise((r) => setTimeout(r, 500))
 
     const introText = longIntroEnabled
-      ? `Welcome${userName ? ` ${userName}` : ''} to the ${gameType} Game! I will show you different ${gameType.toLowerCase()}s, and you need to tell me the ${gameType.toLowerCase()} you see. Say "Help" at any time for more controls. Are you ready?`
+      ? `Let's practice MindSight with ${gameType.toLowerCase()}s${userName ? `, ${userName}` : ''}! I'll show you different ${gameType.toLowerCase()}s, and you tell me what you sense. Say "Help" at any time for controls. Are you ready?`
       : `Let's play the ${gameType} Game!`
 
     await speak(introText)

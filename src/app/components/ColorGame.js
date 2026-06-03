@@ -121,29 +121,31 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
 
   // handleVoiceCommand receives (command, speak) from BaseGame
   const handleVoiceCommand = useCallback((command, speak) => {
-    const matchedColor = selectedItems.find((c) => command.includes(c) || matchesAlias(command, c))
-    const anyKnownColor = !matchedColor && Object.keys(itemTable).find((c) => command.includes(c) || matchesAlias(command, c))
+    // Collect ALL color words mentioned — handles "is it blue or green?" correctly
+    const mentionedSelected = selectedItems.filter((c) => command.includes(c) || matchesAlias(command, c))
+    const anyKnownColor = !mentionedSelected.length && Object.keys(itemTable).find((c) => command.includes(c) || matchesAlias(command, c))
 
-    if (matchedColor) {
+    if (mentionedSelected.length > 0) {
       const currentColor = currentItemRef.current
-      const isCorrect = currentColor && matchedColor === currentColor
+      const isCorrect = currentColor && mentionedSelected.includes(currentColor)
 
       if (isCorrect) {
-        const correctText = CORRECT_RESPONSES[correctIndexRef.current](matchedColor)
+        const correctText = CORRECT_RESPONSES[correctIndexRef.current](currentColor)
         correctIndexRef.current = (correctIndexRef.current + 1) % CORRECT_RESPONSES.length
         speak(correctText).then(async () => {
-          const newItem = selectNewItem(selectedItems, matchedColor)
+          const newItem = selectNewItem(selectedItems, currentColor)
           if (newItem) {
             updateCurrentItem(newItem)
             const question = QUESTION_VARIANTS[Math.floor(Math.random() * QUESTION_VARIANTS.length)]
             await speak(question)
           }
         })
+        return currentColor
       } else {
         const tryAgain = TRY_AGAIN_RESPONSES[Math.floor(Math.random() * TRY_AGAIN_RESPONSES.length)]
         speak(tryAgain)
+        return mentionedSelected[0]
       }
-      return matchedColor
     }
 
     if (anyKnownColor) {
@@ -215,7 +217,7 @@ const ColorGame = memo(function ColorGame({ onGameStateChange = () => {} }) {
           transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
         >
           <motion.button
-            onClick={endGame}
+            onClick={() => endGame()}
             className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           >
