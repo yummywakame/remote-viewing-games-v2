@@ -254,9 +254,38 @@ What color is this? / What color do you see? / Can you tell what color this is? 
 - [ ] "pink" still unreliable — add more COLOR_ALIASES as discovered during testing (Whisper mishearings)
 - [ ] Cross-browser testing: Chrome desktop, Safari iOS, Android Chrome
 - [ ] Rate limiting per-IP (Upstash Redis — see `VOICE_SETUP_INSTRUCTIONS.md`) — recommended before public launch to control API costs
+- [ ] After merging voice feature branch: audit CSP `connect-src` in `next.config.mjs` — add API hosts needed by the chosen provider; drop any `wss://` entries if browser WebSocket is not used
 
 ## Deployment
 
-Currently on Vercel. When the `mindsight.training` domain is connected, update:
-- The Vercel project's custom domain setting
-- `src/app/metadata.js` — update `metadataBase` URL and any hardcoded domain references
+### Current state
+Temporarily on Vercel (`remote-viewing-games-v2.vercel.app`). Will migrate to Mochahost once the voice feature branch is finalised and merged.
+
+### Target hosting — Mochahost mochaBusiness (shared hosting)
+
+| Item | Detail |
+|---|---|
+| **Provider** | Mochahost — Business plan (`mochaBusiness`) |
+| **Hosting type** | Shared hosting with cPanel (NOT a VPS) |
+| **cPanel user** | `yummywak` |
+| **Primary domain** | yummy-wakame.com (`mindsight.training` will be an addon domain) |
+| **Home directory** | `/home/yummywak` |
+| **Shared IP** | `65.181.116.152` |
+| **Server** | s1106 |
+| **OS** | Linux x86_64 (CloudLinux, kernel 4.18.0) |
+| **Apache** | 2.4.67 |
+| **Node.js support** | Via **Phusion Passenger** — managed through cPanel → Software → "Setup Node.js App" |
+
+**Important:** This is shared hosting, not a VPS. Node.js is managed by Phusion Passenger, not PM2 or systemd. You cannot run `npm start` as a persistent process — Passenger handles process lifecycle via the cPanel Node.js App manager.
+
+### Deployment steps (future)
+
+1. Add `mindsight.training` as an addon domain in cPanel
+2. Set up the Node.js app in cPanel → Software → **Setup Node.js App**
+   - Node.js version: select 18.x or 20.x
+   - Application root: path to the app under `/home/yummywak/`
+   - Application startup file: `server.js` (custom entry point required for Passenger — see `server.js` in repo root)
+3. Run `npm run build` locally, then upload the `.next/` build output and all required files to the server (or set up a Git-based deploy workflow)
+4. Set environment variables (`DEEPGRAM_API_KEY`, `OPENAI_API_KEY`, etc.) in the cPanel Node.js App config — **not** in a `.env.local` file
+5. Update `src/app/metadata.js` — set `metadataBase` to `https://mindsight.training`
+6. Remove the Vercel deployment once live on Mochahost
