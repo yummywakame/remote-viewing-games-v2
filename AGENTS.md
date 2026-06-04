@@ -183,7 +183,7 @@ All voice logic lives in these files:
 |---|---|---|
 | `SPEECH_THRESHOLD` | 15 RMS | Lower threshold catches plosive-onset words ("pink") |
 | `MIN_SPEECH_MS` | 100ms | Time since first onset before confirming as speech |
-| `SILENCE_DURATION_MS` | 800ms | Silence after speech → send clip to Deepgram |
+| `SILENCE_DURATION_MS` | 200ms | Silence after speech → send clip to Deepgram |
 | `VAD_INTERVAL_MS` | 100ms | How often VAD polls the analyser |
 | `MAX_CLIP_MS` | 10000ms | Force-rotate recording after this long |
 | `IDLE_TIMEOUT_MS` | 5 min | Stop listening after no confirmed speech |
