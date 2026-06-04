@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useEffect, useState } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
+import { TRANSCRIPTION_ERROR_MESSAGE } from '@/lib/gameConstants'
 
 // VAD tuning constants
 const SPEECH_THRESHOLD = 15       // RMS above this → possible speech (lower catches plosive-onset words like "pink")
@@ -26,9 +27,10 @@ export default function useSpeech({
   gameState,
   voiceName = 'echo',
   voiceSpeed = 1.2,
-  onTranscript,        // (transcript: string) => void
-  onListeningChange,   // (bool) => void
-  onSpeakingChange,    // (bool) => void
+  onTranscript,          // (transcript: string) => void
+  onListeningChange,     // (bool) => void
+  onSpeakingChange,      // (bool) => void
+  onTranscriptionError,  // () => void — called after error message + 1s delay
 }) {
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
@@ -37,9 +39,11 @@ export default function useSpeech({
   const onTranscriptRef = useRef(onTranscript)
   const onListeningChangeRef = useRef(onListeningChange)
   const onSpeakingChangeRef = useRef(onSpeakingChange)
+  const onTranscriptionErrorRef = useRef(onTranscriptionError)
   useEffect(() => { onTranscriptRef.current = onTranscript }, [onTranscript])
   useEffect(() => { onListeningChangeRef.current = onListeningChange }, [onListeningChange])
   useEffect(() => { onSpeakingChangeRef.current = onSpeakingChange }, [onSpeakingChange])
+  useEffect(() => { onTranscriptionErrorRef.current = onTranscriptionError }, [onTranscriptionError])
 
   // Voice preference refs so speak() always uses the latest values without needing them in deps
   const voiceNameRef = useRef(voiceName)
@@ -85,6 +89,10 @@ export default function useSpeech({
   const speechStartTimeRef = useRef(null)   // when RMS first crossed threshold this burst
   const lastSpeechSentRef = useRef(Date.now()) // for idle timeout
 
+  // STT failure tracking — triggers error message after 2 consecutive failures
+  const consecutiveFailuresRef = useRef(0)
+  const transcriptionErrorHandlerRef = useRef(null)
+
   const setListening = useCallback((val) => {
     isListeningRef.current = val
     setIsListening(val)
@@ -107,15 +115,20 @@ export default function useSpeech({
 
     lastSpeechSentRef.current = Date.now()
 
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
+
     try {
       const fd = new FormData()
       fd.append('audio', blob, 'clip.webm')
-      const res = await fetch('/api/transcribe', { method: 'POST', body: fd })
-      if (!res.ok) return
+      const res = await fetch('/api/transcribe', { method: 'POST', body: fd, signal: controller.signal })
+      clearTimeout(timeoutId)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const { transcript } = await res.json()
+      consecutiveFailuresRef.current = 0  // reset on success
       const clean = transcript?.trim().toLowerCase()
       if (!clean) return
-      // Discard if every sentence is a known Whisper hallucination (catches repetitions like "thank you. thank you.")
+      // Discard if every sentence is a known hallucination (catches repetitions like "thank you. thank you.")
       const sentences = clean.split(/[.!?]+/).map(s => s.trim()).filter(Boolean)
       if (sentences.length > 0 && sentences.every(s => HALLUCINATIONS.has(s))) {
         console.log('[STT] discarded hallucination:', clean)
@@ -124,7 +137,13 @@ export default function useSpeech({
       console.log('[STT] heard:', clean)
       onTranscriptRef.current?.(clean)
     } catch (err) {
-      console.error('[STT]', err)
+      clearTimeout(timeoutId)
+      console.error('[STT] failed:', err.name === 'AbortError' ? 'timeout' : err.message)
+      consecutiveFailuresRef.current++
+      if (consecutiveFailuresRef.current >= 2) {
+        consecutiveFailuresRef.current = 0
+        transcriptionErrorHandlerRef.current?.()
+      }
     }
   }, [])
 
@@ -263,12 +282,13 @@ export default function useSpeech({
   }, [setSpeaking])
 
   const speak = useCallback(async (text) => {
-    if (!text) return
+    if (!text) return false
 
     cancelSpeech()
     stopListening()
     setSpeaking(true)
 
+    let success = false
     try {
       const cacheKey = DOMPurify.sanitize(text)
       let blob = audioCacheRef.current.get(cacheKey)
@@ -320,6 +340,7 @@ export default function useSpeech({
         audio.onerror = finish
         audio.play().catch((err) => { console.error('[TTS] play:', err); finish() })
       })
+      success = true
     } catch (err) {
       console.error('[TTS]', err)
       setSpeaking(false)
@@ -329,7 +350,19 @@ export default function useSpeech({
     if (gameStateRef.current === 'playing') {
       setTimeout(startListening, 300)
     }
+
+    return success
   }, [cancelSpeech, stopListening, setSpeaking, startListening])
+
+  // Wire up the transcription error handler once speak and stopListening are stable
+  useEffect(() => {
+    transcriptionErrorHandlerRef.current = async () => {
+      stopListening()
+      await speak(TRANSCRIPTION_ERROR_MESSAGE)
+      await new Promise(r => setTimeout(r, 1000))
+      onTranscriptionErrorRef.current?.()
+    }
+  }, [speak, stopListening])
 
   // ----- Lifecycle -----
 

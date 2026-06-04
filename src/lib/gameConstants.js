@@ -37,6 +37,9 @@ export const OUTRO_RESPONSES = [
 
 export const TIMEOUT_MESSAGE = 'Goodbye!'
 
+export const TRANSCRIPTION_ERROR_MESSAGE =
+  "I'm sorry. I can't seem to hear you right now. Please check your internet connection and try again."
+
 // ---------- Color game ----------
 
 export const COLOR_ITEM_TABLE = {
@@ -90,7 +93,7 @@ export const getHelpText = (gameType) =>
   `To proceed to the next ${gameType.toLowerCase()} say 'next', or click anywhere on the screen. For a hint ask 'what ${gameType.toLowerCase()} is it?' To end the game at any time say 'stop' or 'end the game'.`
 
 export const getTipText = (gameType) =>
-  `Sometimes I can't understand single word answers. Try telling me the ${gameType.toLowerCase()} in a sentence.`
+  `Sometimes I have trouble hearing single word answers. Try telling me the ${gameType.toLowerCase()} in a sentence.`
 
 export const getAdvanceHint = (gameType) =>
   `Say 'next ${gameType.toLowerCase()}' or click the screen to advance when you're ready.`

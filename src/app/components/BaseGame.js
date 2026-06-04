@@ -186,6 +186,10 @@ export default function BaseGame({
     }
   }, [gameType, matchItem, selectedItems, questionVariants, selectNewItemProp])
 
+  const onTranscriptionError = useCallback(() => {
+    endGameRef.current?.(true)
+  }, [])
+
   const { speak, stopListening, cancelSpeech } = useSpeech({
     gameState,
     voiceName,
@@ -193,6 +197,7 @@ export default function BaseGame({
     onTranscript: handleTranscript,
     onListeningChange: (val) => { setGlobalIsListening(val) },
     onSpeakingChange: (val) => { setGlobalIsSpeaking(val) },
+    onTranscriptionError,
   })
 
   // Keep speakRef current so handleTranscript (and others) always see the latest speak
@@ -240,14 +245,18 @@ export default function BaseGame({
     setAndLogGameState('ending', 'end game')
     updateCurrentItem(null)
     setLastHeardWord('')
-    const outroText = isTimeout
-      ? TIMEOUT_MESSAGE
-      : (() => {
-          const text = OUTRO_RESPONSES[outroIndexRef.current](userName)
-          outroIndexRef.current = (outroIndexRef.current + 1) % OUTRO_RESPONSES.length
-          return text
-        })()
-    await speak(outroText)
+
+    if (isTimeout) {
+      await speak(TIMEOUT_MESSAGE)
+    } else {
+      const idx = outroIndexRef.current
+      outroIndexRef.current = (idx + 1) % OUTRO_RESPONSES.length
+      const outroOk = await speak(OUTRO_RESPONSES[idx](userName))
+      if (!outroOk && userName) {
+        await speak(OUTRO_RESPONSES[idx](null))
+      }
+    }
+
     setAndLogGameState('initial', 'game ended')
     setIsIntroComplete(false)
     setGlobalIsListening(false)
@@ -299,7 +308,10 @@ export default function BaseGame({
           : getLongIntroNoName(gameType))
       : getBriefIntro(gameType)
 
-    await speak(introText)
+    const introOk = await speak(introText)
+    if (!introOk && longIntroEnabled && userName) {
+      await speak(getLongIntroNoName(gameType))
+    }
 
     setAndLogGameState('playing', 'intro complete')
     setIsIntroComplete(true)

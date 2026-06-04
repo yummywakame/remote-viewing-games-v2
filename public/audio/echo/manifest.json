@@ -81,7 +81,6 @@
     "What color is this?": "27c3c08a416f4117.mp3",
     "It's pink": "2bb8b5157150e93f.mp3",
     "It's orange": "3443035797dc3701.mp3",
-    "Sometimes I can't understand single word answers. Try telling me the color in a sentence.": "e95963e18dc71534.mp3",
     "Say 'next color' or click the screen to advance when you're ready.": "e571bcbe115f6423.mp3",
     "Let's practice MindSight with colors!": "8e1ac936374ac500.mp3",
     "Correct! It IS a circle!": "1261a0a849b3774d.mp3",
@@ -143,14 +142,16 @@
     "It's an oval.": "e69008b651dffb9a.mp3",
     "It's a star.": "a14115b6cff0ebc6.mp3",
     "It's a diamond.": "a06d22766a535d7c.mp3",
-    "Sometimes I can't understand single word answers. Try telling me the shape in a sentence.": "78c02613a29b1bc0.mp3",
     "Let's practice MindSight with shapes!": "3c3e7f9a08ff3936.mp3",
     "Say 'next shape' or click the screen to advance when you're ready.": "5a31036e18016a78.mp3",
     "Let's practice MindSight with shapes! I'll show you different shapes, and you tell me what you sense. Say \"Help\" at any time for controls. Are you ready?": "b3928fcafee0d273.mp3",
     "Next. What's this shape?": "6b8a151cad703c47.mp3",
     "Next. Howabout this color?": "1092d9a622c4b20a.mp3",
     "To proceed to the next shape say 'next', or click anywhere on the screen. For a hint ask 'what shape is it?' To end the game at any time say 'stop' or 'end the game'.": "ec41ae6fc81f8d87.mp3",
-    "To proceed to the next color say 'next', or click anywhere on the screen. For a hint ask 'what color is it?' To end the game at any time say 'stop' or 'end the game'.": "d3710e6d0332142e.mp3"
+    "To proceed to the next color say 'next', or click anywhere on the screen. For a hint ask 'what color is it?' To end the game at any time say 'stop' or 'end the game'.": "d3710e6d0332142e.mp3",
+    "Sometimes I have trouble hearing single word answers. Try telling me the shape in a sentence.": "777235dd90cd8d14.mp3",
+    "I'm sorry. I can't seem to hear you right now. Please check your internet connection and try again.": "87f04eb5a3414e43.mp3",
+    "Sometimes I have trouble hearing single word answers. Try telling me the color in a sentence.": "2d7ea231d8f96bf9.mp3"
   },
-  "updatedAt": "2026-06-04T17:56:51.842Z"
+  "updatedAt": "2026-06-04T18:17:00.680Z"
 }

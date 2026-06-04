@@ -3,7 +3,7 @@
 // responses/items automatically flow through to the audio sync scripts.
 
 import {
-  CORRECT_RESPONSES, TRY_AGAIN_RESPONSES, OUTRO_RESPONSES, TIMEOUT_MESSAGE,
+  CORRECT_RESPONSES, TRY_AGAIN_RESPONSES, OUTRO_RESPONSES, TIMEOUT_MESSAGE, TRANSCRIPTION_ERROR_MESSAGE,
   GAMES,
   getHelpText, getTipText, getAdvanceHint, getFirstQuestion,
   getBriefIntro, getLongIntroNoName,
@@ -21,6 +21,7 @@ export function buildPhraseList() {
   for (const r of TRY_AGAIN_RESPONSES) phrases.add(r)
   for (const fn of OUTRO_RESPONSES) phrases.add(fn(null))
   phrases.add(TIMEOUT_MESSAGE)
+  phrases.add(TRANSCRIPTION_ERROR_MESSAGE)
 
   // Per-game phrases
   for (const { gameType, itemTable, questionVariants, getDisplayItem, getRevealText } of GAMES) {
