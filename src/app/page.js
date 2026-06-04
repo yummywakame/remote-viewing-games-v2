@@ -6,45 +6,25 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
 
+const GAMES = [
+  { name: 'Color Game', href: '/color-game', icon: Eye, color: 'from-purple-600 to-blue-600', available: true },
+  { name: 'Shape Game', href: '/shape-game', icon: Shapes, color: 'from-blue-600 to-green-500', available: true },
+  { name: 'Number Game', href: '#', icon: Hash, color: 'from-orange-600 to-red-600', available: false },
+]
+
 export default function Home() {
-  const [userName, setUserName] = useState('')
-  const [games, setGames] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [userName, setUserName] = useState(
+    typeof window !== 'undefined'
+      ? DOMPurify.sanitize(localStorage.getItem('userPreferencesName') || '')
+      : ''
+  )
 
   useEffect(() => {
     const syncName = () => setUserName(DOMPurify.sanitize(localStorage.getItem('userPreferencesName') || ''))
+    syncName()
     window.addEventListener('preferencesUpdated', syncName)
     return () => window.removeEventListener('preferencesUpdated', syncName)
   }, [])
-
-  useEffect(() => {
-    const initializePage = async () => {
-      try {
-        const savedName = localStorage.getItem('userPreferencesName') || ''
-        setUserName(DOMPurify.sanitize(savedName))
-
-        setGames([
-          { name: 'Color Game', href: '/color-game', icon: Eye, color: 'from-purple-600 to-blue-600', available: true },
-          { name: 'Shape Game', href: '/shape-game', icon: Shapes, color: 'from-blue-600 to-green-500', available: true },
-          { name: 'Number Game', href: '#', icon: Hash, color: 'from-orange-600 to-red-600', available: false },
-        ])
-      } catch (error) {
-        console.error('Error initializing page:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    initializePage()
-  }, [])
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
-        <div className="text-white text-2xl">Loading...</div>
-      </div>
-    )
-  }
 
   return (
     <div className="overflow-auto">
@@ -110,7 +90,7 @@ export default function Home() {
             transition={{ delay: 0.3 }}
           >
             <p className="text-xl md:text-2xl text-gray-300 leading-relaxed">
-              Challenge Your Perception,<br />Sharpen Your Mind!
+              Challenge Your Perception,<br />Sharpen Your Mind's Eye!
             </p>
 
             <motion.div
@@ -119,7 +99,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
             >
-              {games.map((game, index) => (
+              {GAMES.map((game, index) => (
                 <motion.div
                   key={game.name}
                   initial={{ opacity: 0, scale: 0.5 }}

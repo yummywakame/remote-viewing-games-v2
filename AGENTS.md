@@ -300,27 +300,41 @@ At the start of each dev session, ask: **"Would you like me to run `npm run audi
 
 ## Current State
 
-**Active branch:** `feature/static-audio-cache` — in progress, not yet merged. `main` is clean up to the docs/deployment update commit.
+**Active branch:** `main` — `feature/static-audio-cache` fully merged.
 
 ### Completed work
-- Hybrid voice stack (Deepgram Nova-2 STT + OpenAI gpt-4o-mini-tts) — merged from `feature/voice-hybrid`
-- Full game logic refactor (`refactor/game-base`) — all shared logic consolidated into BaseGame:
-  - All preferences state, localStorage, and `preferencesUpdated` listener live in BaseGame
-  - `matchItem` interface replaces `handleVoiceCommand` — BaseGame owns speak→advance loop
-  - Start/Stop buttons, settings modal shell, and `isIntroComplete` state all in BaseGame
-  - SHAPE_ALIASES added; ShapeGame question variants added; longIntroEnabled reactivity bug fixed
-  - Home page name updates immediately on preferences change (no reload needed)
+- Hybrid voice stack (Deepgram Nova-2 STT + OpenAI gpt-4o-mini-tts)
+- Full game logic refactor — all shared logic in BaseGame (`matchItem` interface, speak→advance loop, prefs state)
+- Static TTS audio cache: 150 phrases × 10 voices pre-generated; manifest-based lookup; API fallback for dynamic (name-bearing) phrases only
+- STT/TTS error handling: 8s timeout, 2-strike failure detection, pre-generated error message, graceful game-end on connectivity loss
+- TTS fallback: name-bearing intro/outro falls back to no-name static version if API unreachable
+- Speed: `audio.playbackRate` used for all playback; speed preference works consistently for static and dynamic audio
+- VAD tuning: SILENCE_DURATION_MS reduced to 200ms for snappy response
+- STT aliases tuned through real gameplay (COLOR_ALIASES, SHAPE_ALIASES)
+- Question variants updated: "What color/shape is this?" used only as first question; subsequent questions all include "Next."
+- Home page: removed loading flash (static GAMES constant, synchronous localStorage init), removed version badge
+- Fixed `overflow-auto` → `overflow-hidden` on BaseGame wrapper (suppresses browser auto-scroll warnings on fixed children)
 - UX improvements: auto-advance toggle, 30s single-word tip, reveal-then-advance flow
+
+### UI — next up: background redesign
+
+The current background has a grid pattern (`/grid.svg` at 10% opacity) over a gray gradient. Goal is **cosmic and starry** — more ethereal and mystical. Options to try in order:
+
+1. **Soft radial glows** — blurred circles of color (nebula/aurora feel) — try first
+2. **Animated particles or stars** — floating dots, very subtle
+3. **Subtle noise/grain texture** — organic depth without geometric structure
+4. **Smooth flowing gradient only** — no texture at all, just the gradient
+5. **Subtle bokeh-style blurs** — soft overlapping light circles
+
+Background lives in `src/app/page.js` (the `fixed-full` div with `bg-gradient-to-b` and `bg-[url('/grid.svg')]`).
 
 ### Remaining items before public launch
 
-- [ ] Test Deepgram Nova-2 accuracy against COLOR_ALIASES and SHAPE_ALIASES — update aliases as needed based on real gameplay
-- [ ] Test short single-word answers ("red", "blue", "star") — verify VAD MIN_SPEECH_MS=100ms catches them reliably
+- [ ] Background redesign (see above)
 - [ ] Cross-browser testing: Chrome desktop, Safari iOS, Android Chrome
 - [ ] Rate limiting per-IP (Upstash Redis — see `VOICE_SETUP_INSTRUCTIONS.md`) — recommended before public launch to control API costs
-- [ ] CSP in `next.config.mjs`: `connect-src 'self'` is correct as-is — Deepgram is called server-side only, no browser-direct requests
 - [ ] Complete Mochahost deployment (see Deployment section below)
-- [ ] Run `npm run audio:sync` before first deploy to generate all static TTS audio files
+- [ ] Upload `public/audio/` to server after deploy (gitignored — must transfer separately; run `npm run audio:sync` first)
 
 ## Deployment
 

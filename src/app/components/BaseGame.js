@@ -392,7 +392,7 @@ export default function BaseGame({
   // ----- Render -----
 
   return (
-    <div className="relative h-screen overflow-auto">
+    <div className="relative h-screen overflow-hidden">
       <GameDisplay
         gameType={gameType}
         currentItem={currentItem ?? null}

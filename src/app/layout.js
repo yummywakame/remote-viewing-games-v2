@@ -103,9 +103,6 @@ export default function RootLayout({ children }) {
               window.dispatchEvent(new Event('preferencesUpdated'))
             }}
           />
-          <div className="fixed bottom-2 right-2 text-white text-xs opacity-50 z-[200]">
-            v{process.env.NEXT_PUBLIC_APP_VERSION}
-          </div>
         </GameStateContext.Provider>
       </body>
     </html>
