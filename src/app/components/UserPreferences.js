@@ -117,7 +117,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
             <h2 className="text-2xl font-semibold">User Preferences</h2>
             <button
               onClick={onClose}
-              className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors"
+              className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -131,7 +131,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white/5 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-white/10"
               />
             </div>
 
@@ -141,7 +141,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
                 id="voice"
                 value={voice}
                 onChange={(e) => setVoice(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white/5 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-white/10"
               >
                 {OPENAI_VOICES.map((v) => (
                   <option key={v.id} value={v.id}>{v.label}</option>
@@ -168,7 +168,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
                   <button
                     onClick={previewVoice}
                     className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors self-end ${
-                      isPreviewing ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-500 hover:bg-blue-600'
+                      isPreviewing ? 'bg-purple-600 hover:bg-purple-700' : 'bg-indigo-600 hover:bg-indigo-700'
                     }`}
                     aria-label="Preview voice"
                   >
@@ -186,7 +186,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
                   checked={longIntroEnabled}
                   onCheckedChange={setLongIntroEnabled}
                   defaultChecked={true}
-                  className="bg-gray-600 data-[state=checked]:bg-blue-500"
+                  className="bg-white/20 data-[state=checked]:bg-indigo-500"
                 />
                 <span className={`text-xs ${longIntroEnabled ? 'text-white' : 'text-gray-400'}`}>Full explanation</span>
               </div>
@@ -200,24 +200,24 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
                   checked={autoAdvance}
                   onCheckedChange={setAutoAdvance}
                   defaultChecked={true}
-                  className="bg-gray-600 data-[state=checked]:bg-blue-500"
+                  className="bg-white/20 data-[state=checked]:bg-indigo-500"
                 />
                 <span className={`text-xs ${autoAdvance ? 'text-white' : 'text-gray-400'}`}>Auto-advance</span>
               </div>
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-700">
+          <div className="mt-8 pt-6 border-t border-white/10">
             <div className="flex justify-end space-x-4">
               <button
                 onClick={handleReset}
-                className="px-4 py-2 rounded-full text-gray-300 hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                className="px-4 py-2 rounded-full text-gray-300 hover:bg-white/10 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
               >
                 Reset
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
               >
                 Save
               </button>

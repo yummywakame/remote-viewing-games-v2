@@ -71,7 +71,7 @@ const GameSettings = React.memo(function GameSettings({
             <h2 className="text-2xl font-semibold">{title}</h2>
             <button
               onClick={onClose}
-              className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors"
+              className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
               aria-label="Close settings"
             >
               <X className="h-4 w-4" />
@@ -85,8 +85,8 @@ const GameSettings = React.memo(function GameSettings({
                 className={`
                   relative p-4 rounded-lg cursor-pointer flex items-center
                   transition-all duration-200
-                  ${localSelectedItems.includes(item) ? 'ring-2 ring-offset-2 ring-offset-gray-800 bg-gray-700' : 'ring-1 ring-gray-600'}
-                  hover:ring-2 hover:ring-offset-2 hover:ring-offset-gray-800
+                  ${localSelectedItems.includes(item) ? 'ring-2 ring-offset-2 ring-offset-[#12122e] bg-white/10' : 'ring-1 ring-white/20'}
+                  hover:ring-2 hover:ring-offset-2 hover:ring-offset-[#12122e]
                 `}
               >
                 <input
@@ -118,11 +118,11 @@ const GameSettings = React.memo(function GameSettings({
 
           {children && <div className="mb-6">{children}</div>}
 
-          <div className="mt-8 pt-6 border-t border-gray-700">
+          <div className="mt-8 pt-6 border-t border-white/10">
             <div className="flex justify-end space-x-4">
               <button
                 onClick={handleReset}
-                className="px-4 py-2 rounded-full text-gray-300 hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                className="px-4 py-2 rounded-full text-gray-300 hover:bg-white/10 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
               >
                 Reset
               </button>
