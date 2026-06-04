@@ -3,38 +3,19 @@
 import React, { useCallback, useState, useEffect, memo, useRef } from 'react'
 import BaseGame from './BaseGame'
 import ShapeGameSettings from './ShapeGameSettings'
-import { getArticle } from '@/utils/gameUtils'
-
-const itemTable = {
-  triangle: '/shapes/triangle.svg',
-  square: '/shapes/square.svg',
-  circle: '/shapes/circle.svg',
-  oval: '/shapes/oval.svg',
-  diamond: '/shapes/diamond.svg',
-  star: '/shapes/star.svg',
-}
+import { SHAPE_ITEM_TABLE as itemTable, SHAPE_QUESTION_VARIANTS as QUESTION_VARIANTS, getShapeRevealText, getArticle } from '@/lib/gameConstants'
 
 const SHAPE_ALIASES = {
   triangle: ['try angle', 'trying', 'try angel', 'tri angle'],
   square:   ['scare', 'squire', 'swear', 'squared'],
   circle:   ['surgical', 'surreal', 'circles', 'circled'],
-  oval:     ['over', 'opal', 'able', 'oh well'],
+  oval:     ['over', 'opal', 'able', 'oh well', 'hello'],
   diamond:  ['die man', 'diamonds', 'diemond'],
   star:     ['store', 'scar', 'stare', 'start', 'stars'],
 }
 
 const matchesAlias = (command, shape) =>
   SHAPE_ALIASES[shape]?.some(alias => new RegExp(`\\b${alias}\\b`).test(command))
-
-const QUESTION_VARIANTS = [
-  'What shape is this?',
-  'Next. What shape do you see?',
-  'Next. Can you tell what shape this is?',
-  'Next. What about this one?',
-  'Next. And this one?',
-  'Next. How about this one?',
-  'Next. What do you sense?',
-]
 
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable))
@@ -68,7 +49,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     const currentShape = currentItemRef.current
 
     if (/\b(what|which)(?:\s+(?:shape|is|it))?/.test(command)) {
-      const revealText = currentShape ? `It's ${getArticle(currentShape)} ${currentShape}.` : null
+      const revealText = currentShape ? getShapeRevealText(currentShape) : null
       return { item: currentShape || 'hint', isCorrect: null, revealText }
     }
 
