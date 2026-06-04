@@ -2,7 +2,7 @@
 
 ## What This App Is
 
-**mindsight.training** is a solo practice web app for developing MindSight — the ability to perceive visual information while blindfolded (extra-ocular vision). Users practice independently through interactive games that train color and shape perception without using their eyes.
+**mindsight.training** is a solo practice web app for developing MindSight — the ability to perceive visual information while blindfolded (extra-ocular vision). Users practice independently through interactive games that train color, shape, and number perception without using their eyes.
 
 This is a companion app to the coaching site at **mindsight.coach**. Where mindsight.coach is for booking 1-on-1 sessions with Olivia Meiring, this app is for ongoing solo practice between sessions (and for self-guided learners).
 
@@ -47,27 +47,31 @@ www/                          # Repo root
 │   │   │   └── transcribe/   # POST: audio blob → Deepgram Nova-2 transcript
 │   │   ├── color-game/       # Color perception training game
 │   │   ├── shape-game/       # Shape perception training game
+│   │   ├── number-game/      # Number perception training game (digits 0–9)
 │   │   ├── components/       # App-level shared components
 │   │   ├── fonts/            # Custom font files
 │   │   ├── globals.css       # Global stylesheet
-│   │   ├── layout.js         # Root layout (applies to all routes)
+│   │   ├── layout.js         # Root layout — h-screen overflow-hidden body/main; no width wrapper (game pages use fixed positioning)
 │   │   ├── metadata.js       # Site metadata config
-│   │   └── page.js           # Home / landing page
+│   │   └── page.js           # Home / landing page (responsive, scrollable on small screens)
 │   ├── components/
-│   │   ├── BaseGame.js           # Shared game shell — owns all prefs state, voice flow, buttons, settings modal
+│   │   ├── BaseGame.js           # Shared game shell — owns all prefs state, voice flow, buttons, settings modal. Stop button is fixed bottom-8.
 │   │   ├── CosmicBackground.js   # Shared background: pulsing nebula glows + twinkling starfield
 │   │   ├── ColorGame.js          # Color game — provides matchItem, COLOR_ALIASES; imports itemTable/variants from gameConstants
 │   │   ├── ShapeGame.js          # Shape game — provides matchItem, SHAPE_ALIASES; imports itemTable/variants from gameConstants
-│   │   ├── GameDisplay.js        # Full-screen display: color bg fade, shape/number crossfade via AnimatePresence
-│   │   ├── GameSettings.js       # Shared settings modal shell (supports children slot for game-specific extras)
+│   │   ├── NumberGame.js         # Number game — spoken-word + alias matching; NUMBER_DISPLAY_WORDS + NUMBER_ARTICLES for TTS
+│   │   ├── GameDisplay.js        # Full-screen display: color bg fade, shape SVG, number SVG crossfade via AnimatePresence.
+│   │   │                         # Responsive sizing: ITEM_SIZE = min(85vw, calc(100vh - 160px), 900px)
+│   │   ├── GameSettings.js       # Shared settings modal shell — gridCols prop (default 2), extraItems prop (renders below main grid full-width)
 │   │   ├── ColorGameSettings.js  # Thin wrapper: passes renderItem (color swatch) to GameSettings
-│   │   ├── ShapeGameSettings.js  # Adds Dark/Light background toggle; passes renderItem (shape SVG) to GameSettings
+│   │   ├── ShapeGameSettings.js  # Adds Dark/Light background toggle (indigo Switch); passes renderItem (shape SVG) to GameSettings
+│   │   ├── NumberGameSettings.js # Calculator keypad layout (3-col 1–9, 0 full-width below via extraItems); Dark/Light toggle
 │   │   └── ui/                   # Radix UI-based primitive components
 │   ├── lib/
 │   │   └── gameConstants.js  # Single source of truth for ALL phrases, item tables, phrase builders
 │   └── utils/                # Utility/helper functions (sanitizeInput, getArticle, selectNewItem, etc.)
 ├── scripts/
-│   ├── phraseList.mjs        # Shared phrase list builder (derives 147 phrases from gameConstants)
+│   ├── phraseList.mjs        # Shared phrase list builder (derives 249 phrases from gameConstants)
 │   ├── generate-audio.mjs    # Generates static MP3s for all voices — run with audio:sync
 │   ├── check-audio.mjs       # Audits manifests vs phrase list — run with audio:check
 │   └── delete-phrase.mjs     # Finds and deletes a phrase's MP3(s) by text search so generate-audio re-fetches it; supports --voice <name|all>, fuzzy/case-insensitive matching, and suggests close matches on no-match
@@ -83,8 +87,6 @@ www/                          # Repo root
 ├── postcss.config.mjs        # PostCSS config (locked to v8.5.10 for compat)
 ├── components.json           # shadcn/ui component config
 ├── jsconfig.json             # JS path aliases
-├── HANDOFF.md                # Latest session handoff — read this first
-├── VOICE_SETUP_INSTRUCTIONS.md  # Instructions for voice/audio feature setup
 ├── AGENTS.md                 # This file
 └── CLAUDE.md                 # Points to this file
 ```
@@ -175,7 +177,7 @@ All voice logic lives in these files:
 
 **STT:** Deepgram Nova-2 via batch REST. Browser VAD (AudioContext + AnalyserNode) detects speech onset; 800ms of silence triggers clip send to `/api/transcribe`, which proxies to Deepgram. No browser WebSocket — all API calls are server-side. Transcription latency ~300ms (vs ~1.5s with Whisper).
 **TTS:** OpenAI `gpt-4o-mini-tts`. Default voice: `echo`. Speed default: 1.1. Available voices: `alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `nova`, `onyx`, `sage`, `shimmer`. Speed range 0.25–4.0. Tone: jovial, upbeat, playful — emphasises ALL CAPS words.
-**TTS cache:** `speak()` resolves audio in three steps: (1) check in-memory client cache (`audioCacheRef`), (2) check static pre-generated file via the voice's `manifest.json` in `public/audio/{voice}/`, (3) fall back to the `/api/speak` API. Static files cover all known game phrases (~147 per voice, pre-generated with `audio:sync`). Only dynamic phrases (name-bearing intro/outro) hit the API. Client cache is cleared when voice or speed changes. The `/api/speak` route also has a server-side in-memory cache (keyed by `voice:text`) so repeated API calls within a server session never hit OpenAI twice. The response includes an `X-Cache: HIT|MISS` header which the client logs as `[TTS] server-cached:` or `[TTS] api:`.
+**TTS cache:** `speak()` resolves audio in three steps: (1) check in-memory client cache (`audioCacheRef`), (2) check static pre-generated file via the voice's `manifest.json` in `public/audio/{voice}/`, (3) fall back to the `/api/speak` API. Static files cover all known game phrases (249 per voice, pre-generated with `audio:sync`). Only dynamic phrases (name-bearing intro/outro) hit the API. Client cache is cleared when voice or speed changes. The `/api/speak` route also has a server-side in-memory cache (keyed by `voice:text`) so repeated API calls within a server session never hit OpenAI twice. The response includes an `X-Cache: HIT|MISS` header which the client logs as `[TTS] server-cached:` or `[TTS] api:`.
 **Security:** `OPENAI_API_KEY` and `DEEPGRAM_API_KEY` in `.env.local`, used only server-side — never in client code or `NEXT_PUBLIC_` vars.
 **Expected latency:** ~800ms VAD silence wait + ~300ms Deepgram transcription = ~1.1s total (down from ~2.3s with Whisper).
 
@@ -209,29 +211,18 @@ const matched = matchItem(transcript, speak)
 - `isCorrect === null` → special command (show me / reveal). If result includes `revealText`, BaseGame speaks it (and advances if auto-advance is on, or appends the advance hint once if off). BaseGame resets the inactivity timer.
 - `null` → nothing matched; inactivity timer is NOT reset.
 
-Game components also pass `displayItem` for grammatical articles (e.g. ShapeGame returns `displayItem: "a circle"` so correct responses say "It IS a circle!" not "It IS circle!").
+Game components pass `displayItem` for grammatical phrasing — e.g. ShapeGame returns `displayItem: "a circle"`, NumberGame returns `displayItem: "a nine"` or `displayItem: "an eight"`, so correct responses say "It IS a nine!" not "It IS 9!".
+
+**TTS digit safety:** Never pass raw digit characters (e.g. `"9"`) to TTS — punctuation adjacent to digits causes misreadings (`"9!"` → "nine point nine", `"0!"` → "zero exclamation"). Always use `NUMBER_DISPLAY_WORDS` for spoken output.
 
 The inactivity timer only resets on recognised game items or navigation commands — background noise transcripts do not keep the game alive.
 
 ## Game Response Variations
 
-All phrase constants (`CORRECT_RESPONSES`, `TRY_AGAIN_RESPONSES`, `OUTRO_RESPONSES`, item tables, question variants, and phrase builder functions) live in **`src/lib/gameConstants.js`** — the single source of truth. Game components import from there. `COLOR_ALIASES` and `SHAPE_ALIASES` remain in their respective game files (STT-matching only, not used for audio generation).
-
-### ColorGame — `COLOR_ALIASES`
-Deepgram sometimes mishears short color words. Aliases use word-boundary regex matching:
-
-| Color | Aliases |
-|---|---|
-| red | raid, reed, read, rad, bread, rick, great |
-| yellow | gielo, jello |
-| purple | pebble, pebbles |
-| orange | french |
-| blue | okay, play |
-
-Both active and inactive colors are checked — saying any color name (even a deselected one) triggers a "try again" response.
+All phrase constants (`CORRECT_RESPONSES`, `TRY_AGAIN_RESPONSES`, `OUTRO_RESPONSES`, item tables, question variants, and phrase builder functions) live in **`src/lib/gameConstants.js`** — the single source of truth. Game components import from there. `COLOR_ALIASES`, `SHAPE_ALIASES`, and `NUMBER_ALIASES` remain in their respective game files (STT-matching only, not used for audio generation).
 
 ### Correct responses — `gameConstants.js` (cycle in order, shared by all games)
-Functions take `(item, display?)` — `display` is used when an article is needed (e.g. "a circle").
+Functions take `(item, display?)` — `display` is used when an article is needed (e.g. "a circle", "an eight").
 1. `Correct! It IS [display]!`
 2. `Yes, it's [display]!`
 3. `Well done! [Display]!`
@@ -247,7 +238,21 @@ Not this time — keep sensing! / Almost! Give it another go. / Not quite! Keep 
 ### Question variants (random after first; first is always fixed)
 **ColorGame:** What color is this? / Next. What color do you see? / Next. Can you tell what color this is? / Next. What about this one? / Next. And this one? / Next. How about this one? / Next. What do you sense?
 **ShapeGame:** same set with "shape" in place of "color".
+**NumberGame:** What number is this? / Next. What number do you see? / Next. Can you tell what number this is? / Next. What about this one? / Next. And this one? / Next. How about this one? / Next. What's this number?
 The first question on game start uses `getFirstQuestion(gameType)` from `gameConstants.js`. Subsequent questions use the variants array randomly.
+
+### ColorGame — `COLOR_ALIASES`
+Deepgram sometimes mishears short color words. Aliases use word-boundary regex matching:
+
+| Color | Aliases |
+|---|---|
+| red | raid, reed, read, rad, bread, rick, great |
+| yellow | gielo, jello |
+| purple | pebble, pebbles |
+| orange | french |
+| blue | okay, play |
+
+Both active and inactive colors are checked — saying any color name (even a deselected one) triggers a "try again" response.
 
 ### ShapeGame — `SHAPE_ALIASES`
 Initial phonetic guesses — refine during real play as needed:
@@ -257,9 +262,36 @@ Initial phonetic guesses — refine during real play as needed:
 | triangle | try angle, trying, try angel, tri angle |
 | square | scare, squire, swear, squared |
 | circle | surgical, surreal, circles, circled |
-| oval | over, opal, able, oh well |
+| oval | over, opal, able, oh well, hello |
 | diamond | die man, diamonds, diemond |
 | star | store, scar, stare, start, stars |
+
+### NumberGame — matching & display
+
+**`NUMBER_DISPLAY_WORDS`** (in `gameConstants.js`) maps digit keys to spoken words: `'0'→'zero'`, `'1'→'one'`, … `'9'→'nine'`. Always use these for TTS output, never raw digit characters.
+
+**`NUMBER_ARTICLES`** (in `gameConstants.js`) maps digit keys to correct articles. Only `'8'→'an'` (an eight); all others use `'a'`. Note: "one" is pronounced "wun" so takes "a" not "an".
+
+**`NUMBER_WORD_MAP`** (in `NumberGame.js`) maps spoken words to digit keys for STT matching: `zero→'0'`, `one→'1'`, … `nine→'9'`. Checked first in `matchNumberInCommand`.
+
+**`NUMBER_ALIASES`** (in `NumberGame.js`) — Deepgram mishearing aliases, tuned during real play:
+
+| Digit | Aliases |
+|---|---|
+| 0 | oh, nought, naught |
+| 1 | won, wan |
+| 2 | too, tu |
+| 3 | tree, free |
+| 4 | for, fore, fur |
+| 5 | hive, fife |
+| 6 | sex |
+| 7 | heaven |
+| 8 | ate, ait |
+| 9 | nein, note |
+
+Note: `note` is confirmed Deepgram mishearing of "nine" and is intentionally NOT added to 0 (naught) to avoid conflict.
+
+Both active and inactive digits are checked — saying any digit word triggers a response.
 
 ### Outro responses (`gameConstants.js` — cycles with name)
 - `Thanks [name]! Let's practice again soon.` / `Thank you for playing!`
@@ -272,6 +304,26 @@ Initial phonetic guesses — refine during real play as needed:
 - **2-min game inactivity** → ends game with timeout message (only resets on recognised items/commands, not background noise)
 - **30-sec no-recognition tip** → speaks single-word-answer tip once per session if no recognised interaction
 - **5-min VAD idle** → stops listening (restarts on next interaction)
+
+## Game Display
+
+**Responsive sizing:** `GameDisplay.js` uses `ITEM_SIZE = 'min(85vw, calc(100vh - 160px), 900px)'` for both shapes and numbers. This prevents overflow on any screen size — constrained by width, available height (accounting for 64px header + 80px stop button), and a 900px max cap on large screens.
+
+**Shapes:** Rendered via Next.js `<Image>` with CSS size override using `ITEM_SIZE`.
+
+**Numbers:** Rendered as inline SVG (`viewBox="0 0 200 200"`, `textAnchor="middle"`, `dominantBaseline="central"`) for consistent cross-browser scaling. The digit is centered at `x=100 y=100` with `fontSize=175`.
+
+**Stop button:** `fixed bottom-8` — sits at the bottom edge during gameplay, maximising display area.
+
+## Home Page Layout
+
+- `body` has `h-screen overflow-hidden` (needed for game pages which are all fixed-positioned)
+- `layout.js` `main` has `h-screen pt-16` — children render directly (no width wrapper)
+- Home page outer div is `h-full overflow-y-auto` — makes it the scroll container within the fixed shell
+- **Responsive grid:** `grid-cols-1 min-[480px]:grid-cols-3` — 3 columns from 480px
+- **Responsive padding:** `px-4 sm:px-6 md:px-10` on outer, `p-4 sm:p-5 md:p-6` on cards
+- **Text scales down below 480px:** heading `text-3xl`, tagline `text-base`, footer note `text-sm`
+- **Scroll fix:** `items-start` below 480px prevents flex-center from clipping overflowed content above scroll origin; `items-center` at 480px+ for visual centering when content fits
 
 ## Alternative Voice Providers (for future consideration)
 
@@ -295,10 +347,6 @@ Static pre-generation via `audio:sync` eliminates most API calls during gameplay
 
 ---
 
-## Session handoff
-
-See [HANDOFF.md](HANDOFF.md) for a full summary of the most recent session: what was built, what needs testing, and pending actions (including running `audio:sync`). Update or replace this file at the end of each significant session.
-
 ## Session-start conventions
 
 At the start of each dev session, ask: **"Would you like me to run `npm run audio:check` to verify the static audio cache?"** This audits all voice manifests against the current phrase list and reports missing or stale files. Run `npm run audio:sync` to actually fetch missing files and remove stale ones. The audio files themselves are excluded from git (see `.gitignore`) and must be regenerated locally and uploaded to the server separately.
@@ -310,30 +358,30 @@ At the start of each dev session, ask: **"Would you like me to run `npm run audi
 ### Completed work
 - Hybrid voice stack (Deepgram Nova-2 STT + OpenAI gpt-4o-mini-tts)
 - Full game logic refactor — all shared logic in BaseGame (`matchItem` interface, speak→advance loop, prefs state)
-- Static TTS audio cache: 150 phrases × 10 voices pre-generated; manifest-based lookup; API fallback for dynamic (name-bearing) phrases only
-- Server-side TTS in-memory cache in `/api/speak` — repeated phrases never hit OpenAI twice within a server session; `X-Cache` response header for client-side logging
+- Static TTS audio cache: 249 phrases × 10 voices pre-generated; manifest-based lookup; API fallback for dynamic (name-bearing) phrases only
+- Server-side TTS in-memory cache in `/api/speak`; `X-Cache` response header for client-side logging
 - STT/TTS error handling: 8s timeout, 2-strike failure detection, pre-generated error message, graceful game-end on connectivity loss
 - TTS fallback: name-bearing intro/outro falls back to no-name static version if API unreachable
-- Speed: `audio.playbackRate` used for all playback; speed preference works consistently for static and dynamic audio. Default: `echo` voice, speed `1.1`
+- Speed: `audio.playbackRate` for all playback; default `echo` voice, speed `1.1`
 - VAD tuning: SILENCE_DURATION_MS at 200ms for snappy response
-- STT aliases tuned through real gameplay (COLOR_ALIASES, SHAPE_ALIASES)
-- Question variants updated: "What color/shape is this?" used only as first question; subsequent questions all include "Next."
-- Home page: removed loading flash, removed version badge
-- Fixed auto-scroll warnings: `scroll={false}` on all `<Link>` components and `router.push` calls
-- Fixed background click-to-advance: removed erroneous `pointer-events-auto` from `game-content` container
-- UX improvements: auto-advance toggle, 30s single-word tip, reveal-then-advance flow
-- **Cosmic background**: `CosmicBackground` component — 5 pulsing nebula glow orbs (indigo/violet/blue, 9–15s cycles) + 160-star twinkling field. Used in homepage and game initial screens
-- **Shape game Dark/Light toggle**: in Shape Game Settings; defaults to dark (white shape on black); saves on Save button; Reset reverts to dark
-- **Smooth fade transitions**: color game background fades at 700ms (CSS transition); shape/number items crossfade at 400ms (Framer Motion `AnimatePresence`)
-- **UI color scheme**: deep indigo/violet palette throughout — modals `#12122e`, glassy inputs `bg-white/5`, indigo switches and buttons, `border-white/10` dividers
-- **Code cleanup**: removed `VoiceControls.js` (unused), removed neon-button/game-button CSS classes, removed unused CSS variables and utilities from globals.css
+- STT aliases tuned through real gameplay (COLOR_ALIASES, SHAPE_ALIASES, NUMBER_ALIASES)
+- **Number Game** (`/number-game`): digits 0–9, spoken-word + alias STT matching, calculator keypad settings (3-col 1–9, wide 0 below), dark/light toggle, green→orange gradient, full audio cache generated
+- **Number game TTS safety**: displayItem uses NUMBER_DISPLAY_WORDS + NUMBER_ARTICLES ("a nine", "an eight") — never raw digit chars next to punctuation
+- **Responsive game display**: `ITEM_SIZE = min(85vw, calc(100vh - 160px), 900px)` for shapes and numbers; numbers rendered as inline SVG
+- **Stop button repositioned**: `fixed bottom-8` — maximises screen space for display during gameplay
+- **Responsive home page**: 3-column grid from 480px, scrollable on small screens, text scales down below 480px
+- **Cosmic background**: `CosmicBackground` component — 5 pulsing nebula glow orbs + 160-star twinkling field
+- **Shape/Number game Dark/Light toggle**: saves on Save; Reset reverts to dark; indigo Switch styling consistent across all settings
+- **Smooth fade transitions**: color bg 700ms CSS; shape/number crossfade 400ms Framer Motion AnimatePresence
+- **UI color scheme**: deep indigo/violet palette — modals `#12122e`, indigo switches/buttons, `border-white/10` dividers
+- **Voice dropdown**: `bg-[#12122e]` with `[&>option]:bg-[#12122e]` to carry dark theme into native browser dropdown
 
 ### Remaining items before public launch
 
 - [ ] Cross-browser testing: Chrome desktop, Safari iOS, Android Chrome
 - [ ] Rate limiting per-IP (Upstash Redis — see `VOICE_SETUP_INSTRUCTIONS.md`) — recommended before public launch to control API costs
 - [ ] Complete Mochahost deployment (see Deployment section below)
-- [ ] Upload `public/audio/` to server after deploy (gitignored — must transfer separately; run `npm run audio:sync` first)
+- [ ] Upload `public/audio/` to server after deploy (gitignored — must transfer separately; run `npm run audio:sync` first to ensure cache is current)
 
 ## Deployment
 
@@ -364,7 +412,7 @@ Vercel deployment has been removed. **Not yet live in production.** Mochahost mi
    - Node.js version: select 20.x or 24.x (match local version — currently v24)
    - Application root: path to the app under `/home/yummywak/`
    - Application startup file: `server.js` (already exists in repo root)
-3. Run `npm run audio:sync` locally to generate all static TTS audio files, then upload `public/audio/` to the server (audio is gitignored — must be transferred separately)
+3. Run `npm run audio:sync` locally to ensure all static TTS audio files are current, then upload `public/audio/` to the server (audio is gitignored — must be transferred separately)
 4. Run `npm run build` locally, then upload the `.next/` build output and all required files
 5. Set environment variables (`DEEPGRAM_API_KEY`, `OPENAI_API_KEY`, etc.) in the cPanel Node.js App config — **not** in a `.env.local` file
 6. Update `src/app/metadata.js` — set `metadataBase` to `https://mindsight.training`
