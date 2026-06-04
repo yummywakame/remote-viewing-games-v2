@@ -351,7 +351,8 @@ Static pre-generation via `audio:sync` eliminates most API calls during gameplay
 
 At the start of every new agent session:
 1. **Run the dev server** (`npm run dev`) in the background and **open the app** in the user's browser at `http://localhost:3000`. Keep it running throughout the session — Next.js hot-reloads on every save so the user sees changes instantly without manual refresh.
-2. **Ask:** "Would you like me to run `npm run audio:check` to verify the static audio cache?" This audits all voice manifests against the current phrase list and reports missing or stale files. Run `npm run audio:sync` to actually fetch missing files and remove stale ones. The audio files themselves are excluded from git (see `.gitignore`) and must be regenerated locally and uploaded to the server separately.
+2. **At the end of the session**, ask: "Would you like me to stop the dev server?"
+3. **Ask:** "Would you like me to run `npm run audio:check` to verify the static audio cache?" This audits all voice manifests against the current phrase list and reports missing or stale files. Run `npm run audio:sync` to actually fetch missing files and remove stale ones. The audio files themselves are excluded from git (see `.gitignore`) and must be regenerated locally and uploaded to the server separately.
 
 ## Current State
 
