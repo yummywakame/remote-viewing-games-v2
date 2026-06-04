@@ -89,9 +89,7 @@ export default function RootLayout({ children }) {
             <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#0a0a1a] to-transparent" />
           </div>
           <main className="h-screen relative z-10 pt-16">
-            <div className="max-w-[600px] px-5 mx-auto h-full">
-              {children}
-            </div>
+            {children}
           </main>
           <UserPreferences
             isOpen={isUserPreferencesOpen}
