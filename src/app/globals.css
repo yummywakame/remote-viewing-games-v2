@@ -7,14 +7,6 @@
   --background-hex: #0a0a1a;
   --gray-800: #12122e;
   --gray-900: #0a0a1a;
-  --purple-600: #9D4EDD;
-  --purple-700: #7B2CBF;
-  --blue-600: #3B82F6;
-  --blue-700: #2563EB;
-  --green-500: #22C55E;
-  --red-500: #EF4444;
-  --pink-500: #EC4899;
-  --rose-500: #F43F5E;
 }
 
 html, body {
@@ -29,48 +21,6 @@ body {
 }
 
 @layer components {
-  .neon-button {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem 1.5rem;
-    overflow: hidden;
-    font-family: ui-monospace, monospace;
-    font-weight: 500;
-    letter-spacing: -0.025em;
-    color: #FFFFFF;
-    background-color: #1F2937;
-    border-radius: 9999px;
-  }
-
-  .neon-button-background {
-    @apply absolute inset-0 w-0 h-0 transition-all duration-500 ease-out bg-red-500 rounded-full;
-    transform: translate(-50%, -50%);
-    left: 50%;
-    top: 50%;
-  }
-
-  .neon-button:hover .neon-button-background {
-    @apply w-[300%] h-[300%];
-  }
-
-  .neon-button-gradient {
-    @apply absolute inset-0 w-full h-full rounded-full opacity-30 bg-gradient-to-b from-transparent via-transparent to-black;
-  }
-
-  .neon-button-text {
-    @apply relative z-10 transition-colors duration-300;
-  }
-
-  .neon-button:hover .neon-button-text {
-    @apply text-white;
-  }
-
-  .game-container {
-    @apply h-full flex items-center justify-center;
-  }
-
   .game-content {
     @apply text-center w-full;
   }
@@ -85,25 +35,8 @@ body {
 }
 
 @layer utilities {
-  .animate-spin-slow {
-    animation: spin 2s linear infinite;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
   .fixed-full {
     @apply fixed inset-0 w-full h-full;
-  }
-
-  .fixed-top {
-    @apply fixed top-0 left-0 right-0;
   }
 
   .fixed-bottom {
@@ -111,35 +44,6 @@ body {
   }
 }
 
-/* New styles for game buttons */
-.game-button {
-  @apply flex flex-col items-center justify-center p-6 rounded-2xl bg-opacity-20 backdrop-blur-lg transition-all duration-300 shadow-lg hover:shadow-xl;
-}
-
-.game-button-icon {
-  @apply w-12 h-12 mb-4 text-white;
-}
-
-.game-button-title {
-  @apply text-xl font-bold text-white mb-2;
-}
-
-.game-button-subtitle {
-  @apply text-sm text-gray-200;
-}
-
-.game-button-disabled {
-  @apply bg-gray-700 cursor-not-allowed;
-}
-
-.game-button-disabled .game-button-subtitle {
-  @apply text-gray-400;
-}
-
-/* New gradient for shape game button */
-.bg-gradient-shape-game {
-  @apply bg-gradient-to-br from-pink-500 to-rose-500;
-}
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -161,11 +65,6 @@ body {
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
   .dark {
@@ -188,13 +87,9 @@ body {
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
   }
 }
+
 @layer base {
   * {
     @apply border-border;

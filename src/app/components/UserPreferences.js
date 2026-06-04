@@ -211,13 +211,13 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
             <div className="flex justify-end space-x-4">
               <button
                 onClick={handleReset}
-                className="px-4 py-2 rounded-full text-gray-300 hover:bg-white/10 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                className="px-4 py-2 rounded-full text-gray-300 hover:bg-white/10 transition-all duration-300 hover:opacity-90"
               >
                 Reset
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 hover:opacity-90"
               >
                 Save
               </button>

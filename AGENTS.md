@@ -54,13 +54,15 @@ www/                          # Repo root
 │   │   ├── metadata.js       # Site metadata config
 │   │   └── page.js           # Home / landing page
 │   ├── components/
-│   │   ├── BaseGame.js       # Shared game shell — owns all prefs state, voice flow, buttons, settings modal
-│   │   ├── ColorGame.js      # Color game — provides matchItem, COLOR_ALIASES; imports itemTable/variants from gameConstants
-│   │   ├── ShapeGame.js      # Shape game — provides matchItem, SHAPE_ALIASES; imports itemTable/variants from gameConstants
-│   │   ├── GameSettings.js   # Shared settings modal shell
+│   │   ├── BaseGame.js           # Shared game shell — owns all prefs state, voice flow, buttons, settings modal
+│   │   ├── CosmicBackground.js   # Shared background: pulsing nebula glows + twinkling starfield
+│   │   ├── ColorGame.js          # Color game — provides matchItem, COLOR_ALIASES; imports itemTable/variants from gameConstants
+│   │   ├── ShapeGame.js          # Shape game — provides matchItem, SHAPE_ALIASES; imports itemTable/variants from gameConstants
+│   │   ├── GameDisplay.js        # Full-screen display: color bg fade, shape/number crossfade via AnimatePresence
+│   │   ├── GameSettings.js       # Shared settings modal shell (supports children slot for game-specific extras)
 │   │   ├── ColorGameSettings.js  # Thin wrapper: passes renderItem (color swatch) to GameSettings
-│   │   ├── ShapeGameSettings.js  # Thin wrapper: passes renderItem (shape SVG) to GameSettings
-│   │   └── ui/               # Radix UI-based primitive components
+│   │   ├── ShapeGameSettings.js  # Adds Dark/Light background toggle; passes renderItem (shape SVG) to GameSettings
+│   │   └── ui/                   # Radix UI-based primitive components
 │   ├── lib/
 │   │   └── gameConstants.js  # Single source of truth for ALL phrases, item tables, phrase builders
 │   └── utils/                # Utility/helper functions (sanitizeInput, getArticle, selectNewItem, etc.)
@@ -107,12 +109,13 @@ The app provides solo practice games for MindSight development. All games are **
 | localStorage key | Value |
 |---|---|
 | `userPreferencesName` | User's name (used in voice intro and outro) |
-| `userPreferencesVoiceSpeed` | TTS playback speed (default 1.2) |
+| `userPreferencesVoiceSpeed` | TTS playback speed (default 1.1) |
 | `userPreferencesVoiceName` | Selected OpenAI voice name (default `echo`) |
 | `gameLongIntro` | `"true"` / `"false"` — full vs brief welcome message |
 | `gameAutoAdvance` | `"true"` / `"false"` — auto-advance to next item after correct guess (default `"true"`) |
 | `colorGameSelectedItems` | JSON array of active colors |
 | `shapeGameSelectedItems` | JSON array of active shapes |
+| `shapeGameLightMode` | `"true"` / `"false"` — light background (white bg, black shape) vs dark (default) |
 
 | Game | Route | Status |
 |---|---|---|
@@ -169,8 +172,8 @@ All voice logic lives in these files:
 - `src/app/api/speak/route.js` — server-side POST route; receives `{ text, voice, speed }`, calls OpenAI TTS (`gpt-4o-mini-tts`), returns `audio/mpeg`.
 
 **STT:** Deepgram Nova-2 via batch REST. Browser VAD (AudioContext + AnalyserNode) detects speech onset; 800ms of silence triggers clip send to `/api/transcribe`, which proxies to Deepgram. No browser WebSocket — all API calls are server-side. Transcription latency ~300ms (vs ~1.5s with Whisper).
-**TTS:** OpenAI `gpt-4o-mini-tts`. Default voice: `echo`. Speed default: 1.2. Available voices: `alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `nova`, `onyx`, `sage`, `shimmer`. Speed range 0.25–4.0. Tone: jovial, upbeat, playful — emphasises ALL CAPS words.
-**TTS cache:** `speak()` resolves audio in three steps: (1) check in-memory cache, (2) check static pre-generated file via the voice's `manifest.json` in `public/audio/{voice}/`, (3) fall back to the `/api/speak` API. Static files cover all known game phrases (~147 per voice, pre-generated with `audio:sync`). Only dynamic phrases (name-bearing intro/outro) hit the API. Cache is cleared when voice or speed changes.
+**TTS:** OpenAI `gpt-4o-mini-tts`. Default voice: `echo`. Speed default: 1.1. Available voices: `alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `nova`, `onyx`, `sage`, `shimmer`. Speed range 0.25–4.0. Tone: jovial, upbeat, playful — emphasises ALL CAPS words.
+**TTS cache:** `speak()` resolves audio in three steps: (1) check in-memory client cache (`audioCacheRef`), (2) check static pre-generated file via the voice's `manifest.json` in `public/audio/{voice}/`, (3) fall back to the `/api/speak` API. Static files cover all known game phrases (~147 per voice, pre-generated with `audio:sync`). Only dynamic phrases (name-bearing intro/outro) hit the API. Client cache is cleared when voice or speed changes. The `/api/speak` route also has a server-side in-memory cache (keyed by `voice:text`) so repeated API calls within a server session never hit OpenAI twice. The response includes an `X-Cache: HIT|MISS` header which the client logs as `[TTS] server-cached:` or `[TTS] api:`.
 **Security:** `OPENAI_API_KEY` and `DEEPGRAM_API_KEY` in `.env.local`, used only server-side — never in client code or `NEXT_PUBLIC_` vars.
 **Expected latency:** ~800ms VAD silence wait + ~300ms Deepgram transcription = ~1.1s total (down from ~2.3s with Whisper).
 
@@ -300,37 +303,31 @@ At the start of each dev session, ask: **"Would you like me to run `npm run audi
 
 ## Current State
 
-**Active branch:** `main` — `feature/static-audio-cache` fully merged.
+**Active branch:** `main`
 
 ### Completed work
 - Hybrid voice stack (Deepgram Nova-2 STT + OpenAI gpt-4o-mini-tts)
 - Full game logic refactor — all shared logic in BaseGame (`matchItem` interface, speak→advance loop, prefs state)
 - Static TTS audio cache: 150 phrases × 10 voices pre-generated; manifest-based lookup; API fallback for dynamic (name-bearing) phrases only
+- Server-side TTS in-memory cache in `/api/speak` — repeated phrases never hit OpenAI twice within a server session; `X-Cache` response header for client-side logging
 - STT/TTS error handling: 8s timeout, 2-strike failure detection, pre-generated error message, graceful game-end on connectivity loss
 - TTS fallback: name-bearing intro/outro falls back to no-name static version if API unreachable
-- Speed: `audio.playbackRate` used for all playback; speed preference works consistently for static and dynamic audio
-- VAD tuning: SILENCE_DURATION_MS reduced to 200ms for snappy response
+- Speed: `audio.playbackRate` used for all playback; speed preference works consistently for static and dynamic audio. Default: `echo` voice, speed `1.1`
+- VAD tuning: SILENCE_DURATION_MS at 200ms for snappy response
 - STT aliases tuned through real gameplay (COLOR_ALIASES, SHAPE_ALIASES)
 - Question variants updated: "What color/shape is this?" used only as first question; subsequent questions all include "Next."
-- Home page: removed loading flash (static GAMES constant, synchronous localStorage init), removed version badge
-- Fixed `overflow-auto` → `overflow-hidden` on BaseGame wrapper (suppresses browser auto-scroll warnings on fixed children)
+- Home page: removed loading flash, removed version badge
+- Fixed auto-scroll warnings: `scroll={false}` on all `<Link>` components and `router.push` calls
+- Fixed background click-to-advance: removed erroneous `pointer-events-auto` from `game-content` container
 - UX improvements: auto-advance toggle, 30s single-word tip, reveal-then-advance flow
-
-### UI — next up: background redesign
-
-The current background has a grid pattern (`/grid.svg` at 10% opacity) over a gray gradient. Goal is **cosmic and starry** — more ethereal and mystical. Options to try in order:
-
-1. **Soft radial glows** — blurred circles of color (nebula/aurora feel) — try first
-2. **Animated particles or stars** — floating dots, very subtle
-3. **Subtle noise/grain texture** — organic depth without geometric structure
-4. **Smooth flowing gradient only** — no texture at all, just the gradient
-5. **Subtle bokeh-style blurs** — soft overlapping light circles
-
-Background lives in `src/app/page.js` (the `fixed-full` div with `bg-gradient-to-b` and `bg-[url('/grid.svg')]`).
+- **Cosmic background**: `CosmicBackground` component — 5 pulsing nebula glow orbs (indigo/violet/blue, 9–15s cycles) + 160-star twinkling field. Used in homepage and game initial screens
+- **Shape game Dark/Light toggle**: in Shape Game Settings; defaults to dark (white shape on black); saves on Save button; Reset reverts to dark
+- **Smooth fade transitions**: color game background fades at 700ms (CSS transition); shape/number items crossfade at 400ms (Framer Motion `AnimatePresence`)
+- **UI color scheme**: deep indigo/violet palette throughout — modals `#12122e`, glassy inputs `bg-white/5`, indigo switches and buttons, `border-white/10` dividers
+- **Code cleanup**: removed `VoiceControls.js` (unused), removed neon-button/game-button CSS classes, removed unused CSS variables and utilities from globals.css
 
 ### Remaining items before public launch
 
-- [ ] Background redesign (see above)
 - [ ] Cross-browser testing: Chrome desktop, Safari iOS, Android Chrome
 - [ ] Rate limiting per-IP (Upstash Redis — see `VOICE_SETUP_INSTRUCTIONS.md`) — recommended before public launch to control API costs
 - [ ] Complete Mochahost deployment (see Deployment section below)
