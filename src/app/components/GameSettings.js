@@ -4,6 +4,8 @@ import * as React from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
 
+const GRID_COLS_CLASS = { 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4', 5: 'grid-cols-5' }
+
 const GameSettings = React.memo(function GameSettings({
   title,
   onClose,
@@ -14,6 +16,8 @@ const GameSettings = React.memo(function GameSettings({
   renderItem,
   accentColor = 'from-purple-600 to-blue-600',
   minItemsLabel = 'items',
+  gridCols = 2,
+  extraItems,
   children,
 }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedItems)
@@ -49,6 +53,46 @@ const GameSettings = React.memo(function GameSettings({
     }
   }, [onClose])
 
+  const mainEntries = React.useMemo(
+    () => Object.entries(itemTable).filter(([item]) => !extraItems?.includes(item)),
+    [itemTable, extraItems]
+  )
+
+  const extraEntries = React.useMemo(
+    () => extraItems?.map(item => [item, itemTable[item]]) ?? [],
+    [itemTable, extraItems]
+  )
+
+  const renderItemLabel = (item, value) => (
+    <label
+      key={item}
+      className={`
+        relative p-4 rounded-lg cursor-pointer flex items-center
+        transition-all duration-200
+        ${localSelectedItems.includes(item) ? 'ring-2 ring-offset-2 ring-offset-[#12122e] bg-white/10' : 'ring-1 ring-white/20'}
+        hover:ring-2 hover:ring-offset-2 hover:ring-offset-[#12122e]
+      `}
+    >
+      <input
+        type="checkbox"
+        className="sr-only"
+        checked={localSelectedItems.includes(item)}
+        onChange={() => handleCheckboxChange(item)}
+        disabled={localSelectedItems.length <= 2 && localSelectedItems.includes(item)}
+        aria-label={`Select ${item}`}
+      />
+      {renderItem(item, value)}
+      {localSelectedItems.includes(item) && (
+        <motion.div
+          className="absolute inset-0 rounded-lg bg-white/10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        />
+      )}
+    </label>
+  )
+
   return (
     <motion.div
       className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[150]"
@@ -78,37 +122,17 @@ const GameSettings = React.memo(function GameSettings({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            {Object.entries(itemTable).map(([item, value]) => (
-              <label
-                key={item}
-                className={`
-                  relative p-4 rounded-lg cursor-pointer flex items-center
-                  transition-all duration-200
-                  ${localSelectedItems.includes(item) ? 'ring-2 ring-offset-2 ring-offset-[#12122e] bg-white/10' : 'ring-1 ring-white/20'}
-                  hover:ring-2 hover:ring-offset-2 hover:ring-offset-[#12122e]
-                `}
-              >
-                <input
-                  type="checkbox"
-                  className="sr-only"
-                  checked={localSelectedItems.includes(item)}
-                  onChange={() => handleCheckboxChange(item)}
-                  disabled={localSelectedItems.length <= 2 && localSelectedItems.includes(item)}
-                  aria-label={`Select ${item}`}
-                />
-                {renderItem(item, value)}
-                {localSelectedItems.includes(item) && (
-                  <motion.div
-                    className="absolute inset-0 rounded-lg bg-white/10"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  />
-                )}
-              </label>
-            ))}
+          <div className={`grid ${GRID_COLS_CLASS[gridCols] ?? 'grid-cols-2'} gap-4`}>
+            {mainEntries.map(([item, value]) => renderItemLabel(item, value))}
           </div>
+
+          {extraEntries.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 mt-4">
+              {extraEntries.map(([item, value]) => renderItemLabel(item, value))}
+            </div>
+          )}
+
+          <div className="mb-6" />
 
           {localSelectedItems.length <= 1 && (
             <p className="text-sm text-red-400 mb-6">

@@ -87,6 +87,30 @@ export const SHAPE_QUESTION_VARIANTS = [
 
 export const getShapeRevealText = (item) => `It's ${getArticle(item)} ${item}.`
 
+// ---------- Number game ----------
+
+export const NUMBER_ITEM_TABLE = {
+  '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
+  '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+}
+
+export const NUMBER_QUESTION_VARIANTS = [
+  'Next. What number do you see?',
+  'Next. Can you tell what number this is?',
+  'Next. What about this one?',
+  'Next. And this one?',
+  'Next. How about this one?',
+  'Next. What do you sense?',
+  "Next. What's this number?",
+]
+
+export const NUMBER_DISPLAY_WORDS = {
+  '0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four',
+  '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine',
+}
+
+export const getNumberRevealText = (item) => `It's ${NUMBER_DISPLAY_WORDS[item] ?? item}.`
+
 // ---------- Game-specific phrase builders ----------
 
 export const getHelpText = (gameType) =>
@@ -123,5 +147,12 @@ export const GAMES = [
     questionVariants: SHAPE_QUESTION_VARIANTS,
     getDisplayItem: (item) => `${getArticle(item)} ${item}`,
     getRevealText: getShapeRevealText,
+  },
+  {
+    gameType: 'Number',
+    itemTable: NUMBER_ITEM_TABLE,
+    questionVariants: NUMBER_QUESTION_VARIANTS,
+    getDisplayItem: (item) => NUMBER_DISPLAY_WORDS[item] ?? item,
+    getRevealText: getNumberRevealText,
   },
 ]

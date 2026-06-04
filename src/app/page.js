@@ -10,7 +10,7 @@ import CosmicBackground from './components/CosmicBackground'
 const GAMES = [
   { name: 'Color Game', href: '/color-game', icon: Eye, color: 'from-purple-600 to-blue-600', available: true },
   { name: 'Shape Game', href: '/shape-game', icon: Shapes, color: 'from-blue-600 to-green-500', available: true },
-  { name: 'Number Game', href: '#', icon: Hash, color: 'from-orange-600 to-red-600', available: false },
+  { name: 'Number Game', href: '/number-game', icon: Hash, color: 'from-green-600 to-orange-600', available: true },
 ]
 
 export default function Home() {

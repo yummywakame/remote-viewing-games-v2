@@ -78,7 +78,7 @@ const GameDisplay = React.memo(function GameDisplay({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4, ease: 'easeInOut' }}
-              style={{ fontSize: '15rem', fontWeight: 'bold', color: 'white' }}
+              style={{ fontSize: '15rem', fontWeight: 'bold', color: lightMode ? 'black' : 'white' }}
             >
               {currentItem}
             </motion.div>

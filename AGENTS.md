@@ -116,12 +116,14 @@ The app provides solo practice games for MindSight development. All games are **
 | `colorGameSelectedItems` | JSON array of active colors |
 | `shapeGameSelectedItems` | JSON array of active shapes |
 | `shapeGameLightMode` | `"true"` / `"false"` — light background (white bg, black shape) vs dark (default) |
+| `numberGameSelectedItems` | JSON array of active digits (e.g. `["0","1","2",...]`) |
+| `numberGameLightMode` | `"true"` / `"false"` — light background (white bg, black number) vs dark (default) |
 
 | Game | Route | Status |
 |---|---|---|
 | Color Game | `/color-game` | Live |
 | Shape Game | `/shape-game` | Live |
-| Number Game | `/number-game` | Planned |
+| Number Game | `/number-game` | Live |
 | Object Game | `/object-game` | Planned |
 | Word Game | `/word-game` | Planned |
 | Scene Game | `/scene-game` | Planned |

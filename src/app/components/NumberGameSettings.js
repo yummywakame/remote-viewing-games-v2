@@ -2,23 +2,18 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
-import Image from 'next/image'
 import GameSettings from './GameSettings'
 import { Switch } from '@/components/ui/switch'
 
-const renderItem = (item, src) => (
-  <>
-    <div className="w-8 h-8 flex items-center justify-center mr-3">
-      <Image src={src} alt={item} width={32} height={32} className="invert" />
-    </div>
-    <span className="capitalize font-medium">{DOMPurify.sanitize(item)}</span>
-  </>
+const renderItem = (item) => (
+  <div className="flex items-center justify-center w-full py-1">
+    <span className="text-2xl font-bold font-mono">{DOMPurify.sanitize(item)}</span>
+  </div>
 )
 
-export default function ShapeGameSettings({ lightMode: committedLightMode = false, onSave: onSaveItems, ...props }) {
+export default function NumberGameSettings({ lightMode: committedLightMode = false, onSave: onSaveItems, ...props }) {
   const [localLightMode, setLocalLightMode] = useState(committedLightMode)
 
-  // Sync local state if the committed value changes (e.g. on open)
   useEffect(() => {
     setLocalLightMode(committedLightMode)
   }, [committedLightMode])
@@ -36,9 +31,11 @@ export default function ShapeGameSettings({ lightMode: committedLightMode = fals
       {...props}
       onSave={handleSave}
       onReset={handleReset}
-      accentColor="from-blue-600 to-green-500"
-      minItemsLabel="shapes"
+      accentColor="from-green-600 to-orange-600"
+      minItemsLabel="numbers"
       renderItem={renderItem}
+      gridCols={3}
+      extraItems={['0']}
     >
       <div className="flex items-center justify-between px-1">
         <span className="text-sm font-medium text-gray-300">Background</span>

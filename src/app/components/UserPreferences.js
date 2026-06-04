@@ -141,7 +141,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
                 id="voice"
                 value={voice}
                 onChange={(e) => setVoice(e.target.value)}
-                className="w-full px-3 py-2 bg-white/5 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-white/10"
+                className="w-full px-3 py-2 bg-[#12122e] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-white/10 [&>option]:bg-[#12122e]"
               >
                 {OPENAI_VOICES.map((v) => (
                   <option key={v.id} value={v.id}>{v.label}</option>
