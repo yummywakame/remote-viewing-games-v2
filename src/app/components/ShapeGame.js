@@ -20,6 +20,7 @@ const matchesAlias = (command, shape) =>
 const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
   const [selectedItems, setSelectedItems] = useState(Object.keys(itemTable))
   const [currentItem, setCurrentItem] = useState(null)
+  const [lightMode, setLightMode] = useState(false)
   const currentItemRef = useRef(null)
 
   useEffect(() => {
@@ -32,6 +33,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
         else setSelectedItems(Object.keys(itemTable))
       } catch { setSelectedItems(Object.keys(itemTable)) }
     }
+    setLightMode(localStorage.getItem('shapeGameLightMode') === 'true')
   }, [])
 
   const updateCurrentItem = useCallback((newItem) => {
@@ -78,9 +80,11 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
     return null
   }, [updateCurrentItem])
 
-  const handleSaveSettings = useCallback((newSelectedItems) => {
+  const handleSaveSettings = useCallback((newSelectedItems, newLightMode = false) => {
     setSelectedItems(newSelectedItems)
     localStorage.setItem('shapeGameSelectedItems', JSON.stringify(newSelectedItems))
+    setLightMode(newLightMode)
+    localStorage.setItem('shapeGameLightMode', String(newLightMode))
   }, [])
 
   return (
@@ -90,6 +94,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
           {...props}
           selectedItems={selectedItems}
           onSave={handleSaveSettings}
+          lightMode={lightMode}
         />
       )}
       gameType="Shape"
@@ -103,6 +108,7 @@ const ShapeGame = memo(function ShapeGame({ onGameStateChange = () => {} }) {
       questionVariants={QUESTION_VARIANTS}
       currentItem={currentItem}
       onCurrentItemUpdate={updateCurrentItem}
+      gameDisplayProps={{ lightMode }}
     />
   )
 })

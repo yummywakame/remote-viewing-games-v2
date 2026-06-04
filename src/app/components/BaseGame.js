@@ -29,6 +29,7 @@ export default function BaseGame({
   selectNewItemProp,
   onCurrentItemUpdate,
   currentItem,           // reactive state from game component — used for display
+  gameDisplayProps = {},
 }) {
   const {
     setIsListening: setGlobalIsListening,
@@ -400,6 +401,7 @@ export default function BaseGame({
         onClick={handleBackgroundClick}
         gameState={gameState}
         isIntroComplete={isIntroComplete}
+        {...gameDisplayProps}
       />
       <div className="fixed inset-0 pt-16 pointer-events-none">
         <div className="flex items-center justify-center h-full">

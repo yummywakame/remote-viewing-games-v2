@@ -5,13 +5,14 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 
 // Wrap the entire component in React.memo to reduce re-renders
-const GameDisplay = React.memo(function GameDisplay({ 
-  gameType, 
-  currentItem, 
-  itemTable, 
-  onClick, 
-  gameState, 
-  isIntroComplete 
+const GameDisplay = React.memo(function GameDisplay({
+  gameType,
+  currentItem,
+  itemTable,
+  onClick,
+  gameState,
+  isIntroComplete,
+  lightMode = false,
 }) {
   // Only log color changes once when they happen, not on every render
   useEffect(() => {
@@ -46,7 +47,7 @@ const GameDisplay = React.memo(function GameDisplay({
             alt={`${currentItem.split('-')[0]} shape`}
             width={450}
             height={450}
-            style={{ filter: isIntroComplete ? 'invert(1)' : 'none' }}
+            style={{ filter: isIntroComplete ? (lightMode ? 'none' : 'invert(1)') : 'none' }}
           />
         </div>
       );
@@ -62,7 +63,7 @@ const GameDisplay = React.memo(function GameDisplay({
         {currentItem}
       </motion.div>
     );
-  }, [gameType, currentItem, itemTable, isIntroComplete]);
+  }, [gameType, currentItem, itemTable, isIntroComplete, lightMode]);
 
   // Simplify the background color logic - BaseGame is now handling this directly
   // We'll just provide a className that the stylesheet can target
@@ -76,11 +77,11 @@ const GameDisplay = React.memo(function GameDisplay({
     }
     
     if (isIntroComplete && gameState === 'playing') {
-      return 'black';
+      return lightMode ? 'white' : 'black';
     }
     
     return 'transparent';
-  }, [gameType, currentItem, itemTable, gameState, isIntroComplete]);
+  }, [gameType, currentItem, itemTable, gameState, isIntroComplete, lightMode]);
 
   // Add a key to force re-creation when color changes for better updates
   const displayKey = `${gameType}-${currentItem}-${gameState}`;

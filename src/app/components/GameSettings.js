@@ -8,11 +8,13 @@ const GameSettings = React.memo(function GameSettings({
   title,
   onClose,
   onSave: onSaveSettings,
+  onReset: onResetExtra,
   itemTable,
   selectedItems,
   renderItem,
   accentColor = 'from-purple-600 to-blue-600',
   minItemsLabel = 'items',
+  children,
 }) {
   const [localSelectedItems, setLocalSelectedItems] = React.useState(selectedItems)
   const modalRef = React.useRef(null)
@@ -38,7 +40,8 @@ const GameSettings = React.memo(function GameSettings({
 
   const handleReset = React.useCallback(() => {
     setLocalSelectedItems(Object.keys(itemTable))
-  }, [itemTable])
+    onResetExtra?.()
+  }, [itemTable, onResetExtra])
 
   const handleOutsideClick = React.useCallback((e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -112,6 +115,8 @@ const GameSettings = React.memo(function GameSettings({
               You must select at least two {minItemsLabel}.
             </p>
           )}
+
+          {children && <div className="mb-6">{children}</div>}
 
           <div className="mt-8 pt-6 border-t border-gray-700">
             <div className="flex justify-end space-x-4">
