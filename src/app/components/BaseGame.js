@@ -405,7 +405,7 @@ export default function BaseGame({
       />
       <div className="fixed inset-0 pt-16 pointer-events-none">
         <div className="flex items-center justify-center h-full">
-          <div className="game-content text-center pointer-events-auto">
+          <div className="game-content text-center pointer-events-none">
             {gameState === 'initial' && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.5 }}
@@ -428,7 +428,7 @@ export default function BaseGame({
                 </motion.p>
                 <motion.button
                   onClick={startGame}
-                  className={`inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r ${accentColor} text-white font-medium text-lg hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5`}
+                  className={`pointer-events-auto inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r ${accentColor} text-white font-medium text-lg hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5`}
                   whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 >
                   <Eye className="mr-2" size={20} />
@@ -446,7 +446,7 @@ export default function BaseGame({
               >
                 <motion.button
                   onClick={() => endGame()}
-                  className={`inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r ${accentColor} text-white font-medium text-lg hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5`}
+                  className={`pointer-events-auto inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r ${accentColor} text-white font-medium text-lg hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5`}
                   whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 >
                   Stop Game
