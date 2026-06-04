@@ -9,7 +9,7 @@ const SHAPE_ALIASES = {
   triangle: ['try angle', 'trying', 'try angel', 'tri angle'],
   square:   ['scare', 'squire', 'swear', 'squared'],
   circle:   ['surgical', 'surreal', 'circles', 'circled'],
-  oval:     ['over', 'opal', 'able', 'oh well'],
+  oval:     ['over', 'opal', 'able', 'oh well', 'hello'],
   diamond:  ['die man', 'diamonds', 'diemond'],
   star:     ['store', 'scar', 'stare', 'start', 'stars'],
 }

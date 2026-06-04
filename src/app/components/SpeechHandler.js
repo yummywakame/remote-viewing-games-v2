@@ -6,7 +6,7 @@ import DOMPurify from 'isomorphic-dompurify'
 // VAD tuning constants
 const SPEECH_THRESHOLD = 15       // RMS above this → possible speech (lower catches plosive-onset words like "pink")
 const MIN_SPEECH_MS = 100         // time since first onset before counting as real speech
-const SILENCE_DURATION_MS = 800   // ms of silence after speech → send clip
+const SILENCE_DURATION_MS = 200   // ms of silence after speech → send clip
 const VAD_INTERVAL_MS = 100
 const MAX_CLIP_MS = 10000         // force-rotate recording after this long
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000  // stop listening after 5 min of no confirmed speech

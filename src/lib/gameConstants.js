@@ -56,7 +56,7 @@ export const COLOR_QUESTION_VARIANTS = [
   'Next. And this one?',
   'Next. How about this one?',
   'Next. What do you sense?',
-  "Next. What's this color?",
+  "Next. Howabout this color?",
 ]
 
 export const getColorRevealText = (item) => `It's ${item}`
@@ -87,7 +87,7 @@ export const getShapeRevealText = (item) => `It's ${getArticle(item)} ${item}.`
 // ---------- Game-specific phrase builders ----------
 
 export const getHelpText = (gameType) =>
-  `To proceed to the next ${gameType.toLowerCase()} say 'next', or click anywhere on the screen. To end the game say 'stop'. For a hint ask 'what ${gameType.toLowerCase()} is it?'`
+  `To proceed to the next ${gameType.toLowerCase()} say 'next', or click anywhere on the screen. For a hint ask 'what ${gameType.toLowerCase()} is it?' To end the game at any time say 'stop' or 'end the game'.`
 
 export const getTipText = (gameType) =>
   `Sometimes I can't understand single word answers. Try telling me the ${gameType.toLowerCase()} in a sentence.`

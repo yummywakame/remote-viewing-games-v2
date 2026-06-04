@@ -6,11 +6,12 @@ import ColorGameSettings from './ColorGameSettings'
 import { COLOR_ITEM_TABLE as itemTable, COLOR_QUESTION_VARIANTS as QUESTION_VARIANTS, getColorRevealText } from '@/lib/gameConstants'
 
 const COLOR_ALIASES = {
-  red:    ['raid', 'reed', 'read', 'rad', 'bread', 'rick', 'great'],
-  yellow: ['gielo', 'jello'],
-  purple: ['pebble', 'pebbles'],
+  red:    ['raid', 'reed', 'read', 'rad', 'bread', 'rick', 'great', 'grade'],
+  yellow: ['gielo', 'jello', 'hello'],
+  purple: ['pebble', 'pebbles', 'triple', 'lavender', 'lander', 'circle'],
+  pink:   ['magenta'],
   orange: ['french'],
-  blue:   ['okay', 'play'],
+  blue:   ['okay', 'play', 'view', 'lou'],
 }
 
 const matchesAlias = (command, color) =>
