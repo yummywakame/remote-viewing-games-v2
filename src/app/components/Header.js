@@ -29,6 +29,7 @@ const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSett
           {/* Center title */}
           <Link
             href="/"
+            scroll={false}
             className={`text-white text-xl font-bold hover:text-gray-300 transition-colors ${isHomePage ? 'pointer-events-none' : ''}`}
             onClick={(e) => {
               if (!isHomePage) {

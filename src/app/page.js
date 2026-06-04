@@ -106,7 +106,7 @@ export default function Home() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: index * 0.2 }}
                 >
-                  <Link href={game.href}>
+                  <Link href={game.href} scroll={false}>
                     <motion.div
                       className={`flex flex-col items-center justify-center p-6 rounded-2xl bg-opacity-20 backdrop-blur-lg ${
                         game.available ? `bg-gradient-to-br ${game.color} hover:opacity-90` : 'bg-gray-700'

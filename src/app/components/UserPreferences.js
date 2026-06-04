@@ -23,7 +23,7 @@ const DEFAULT_VOICE = 'echo'
 
 const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onUpdatePreferences }) => {
   const [name, setName] = useState(userName || '')
-  const [speed, setSpeed] = useState(voiceSpeed || 1.2)
+  const [speed, setSpeed] = useState(voiceSpeed || 1.1)
   const [voice, setVoice] = useState(voiceName || DEFAULT_VOICE)
   const [longIntroEnabled, setLongIntroEnabled] = useState(true)
   const [autoAdvance, setAutoAdvance] = useState(true)
@@ -34,7 +34,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
   useEffect(() => {
     if (!isOpen) return
     setName(DOMPurify.sanitize(localStorage.getItem('userPreferencesName') || ''))
-    setSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
+    setSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.1)
     setVoice(localStorage.getItem('userPreferencesVoiceName') || DEFAULT_VOICE)
     setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
     setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
@@ -53,7 +53,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
 
   const handleReset = useCallback(() => {
     setName('')
-    setSpeed(1.2)
+    setSpeed(1.1)
     setVoice(DEFAULT_VOICE)
     setLongIntroEnabled(true)
     setAutoAdvance(true)

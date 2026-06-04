@@ -31,7 +31,7 @@ export default function RootLayout({ children }) {
       exitGameState();
     }
     setIsGamePlayingState(false);
-    router.push('/');
+    router.push('/', { scroll: false });
   }, [exitGameState, router]);
 
   const handleOpenUserPreferences = useCallback(() => {
@@ -97,7 +97,7 @@ export default function RootLayout({ children }) {
             isOpen={isUserPreferencesOpen}
             onClose={handleCloseUserPreferences}
             userName=""
-            voiceSpeed={1.2}
+            voiceSpeed={1.1}
             selectedVoice={null}
             onUpdatePreferences={() => {
               window.dispatchEvent(new Event('preferencesUpdated'))

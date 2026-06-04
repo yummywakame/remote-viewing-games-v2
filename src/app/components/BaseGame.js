@@ -58,7 +58,7 @@ export default function BaseGame({
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [isIntroComplete, setIsIntroComplete] = useState(false)
   const [userName, setUserName] = useState('')
-  const [voiceSpeed, setVoiceSpeed] = useState(1.2)
+  const [voiceSpeed, setVoiceSpeed] = useState(1.1)
   const [voiceName, setVoiceName] = useState('echo')
 
   const autoAdvanceRef = useRef(true)
@@ -72,7 +72,7 @@ export default function BaseGame({
     setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
     setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
     setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
-    setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
+    setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.1)
     setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
   }, [])
 
@@ -82,7 +82,7 @@ export default function BaseGame({
       setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
       setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
       setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
-      setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.2)
+      setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.1)
       setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
     }
     window.addEventListener('preferencesUpdated', sync)

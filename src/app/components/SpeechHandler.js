@@ -26,7 +26,7 @@ const HALLUCINATIONS = new Set([
 export default function useSpeech({
   gameState,
   voiceName = 'echo',
-  voiceSpeed = 1.2,
+  voiceSpeed = 1.1,
   onTranscript,          // (transcript: string) => void
   onListeningChange,     // (bool) => void
   onSpeakingChange,      // (bool) => void
@@ -319,9 +319,10 @@ export default function useSpeech({
           }),
         })
         if (!res.ok) throw new Error(`TTS ${res.status}`)
+        const serverCache = res.headers.get('X-Cache')
         blob = await res.blob()
         audioCacheRef.current.set(cacheKey, blob)
-        console.log('[TTS] api:', cacheKey)
+        console.log(`[TTS] ${serverCache === 'HIT' ? 'server-cached' : 'api'}:`, cacheKey)
       }
       const url = URL.createObjectURL(blob)
       currentAudioUrlRef.current = url
