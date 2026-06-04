@@ -296,7 +296,6 @@ export default function useSpeech({
           body: JSON.stringify({
             text: cacheKey,
             voice: voiceNameRef.current,
-            speed: voiceSpeedRef.current,
           }),
         })
         if (!res.ok) throw new Error(`TTS ${res.status}`)
@@ -307,6 +306,7 @@ export default function useSpeech({
       const url = URL.createObjectURL(blob)
       currentAudioUrlRef.current = url
       const audio = new Audio(url)
+      audio.playbackRate = voiceSpeedRef.current
       currentAudioRef.current = audio
 
       await new Promise((resolve) => {

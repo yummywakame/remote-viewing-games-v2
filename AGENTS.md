@@ -67,7 +67,8 @@ www/                          # Repo root
 ├── scripts/
 │   ├── phraseList.mjs        # Shared phrase list builder (derives 147 phrases from gameConstants)
 │   ├── generate-audio.mjs    # Generates static MP3s for all voices — run with audio:sync
-│   └── check-audio.mjs       # Audits manifests vs phrase list — run with audio:check
+│   ├── check-audio.mjs       # Audits manifests vs phrase list — run with audio:check
+│   └── delete-phrase.mjs     # Finds and deletes a phrase's MP3(s) by text search so generate-audio re-fetches it; supports --voice <name|all>, fuzzy/case-insensitive matching, and suggests close matches on no-match
 ├── public/
 │   └── audio/                # Per-voice static TTS files (gitignored MP3s + committed manifests)
 │       └── {voice}/manifest.json
@@ -134,6 +135,9 @@ npm run lint         # Lint
 npm run audio:check  # Audit static TTS cache — no API key needed
 npm run audio:sync   # Generate/update static TTS audio files (requires .env.local)
 ```
+
+**Collaboration conventions:**
+- **Flag before acting:** Always flag potential issues, trade-offs, or ambiguities to the user *before* making a change — don't just go ahead. This applies to things like: a proposed alias that could cause false positives, a formatting inconsistency in new copy, a decision that affects audio regeneration costs, etc.
 
 **Key conventions:**
 - App Router only — all routes live under `src/app/`

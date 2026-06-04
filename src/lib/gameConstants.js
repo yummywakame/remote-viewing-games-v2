@@ -50,13 +50,13 @@ export const COLOR_ITEM_TABLE = {
 }
 
 export const COLOR_QUESTION_VARIANTS = [
-  'What color is this?',
   'Next. What color do you see?',
   'Next. Can you tell what color this is?',
   'Next. What about this one?',
   'Next. And this one?',
   'Next. How about this one?',
   'Next. What do you sense?',
+  "Next. What's this color?",
 ]
 
 export const getColorRevealText = (item) => `It's ${item}`
@@ -73,13 +73,13 @@ export const SHAPE_ITEM_TABLE = {
 }
 
 export const SHAPE_QUESTION_VARIANTS = [
-  'What shape is this?',
   'Next. What shape do you see?',
   'Next. Can you tell what shape this is?',
   'Next. What about this one?',
   'Next. And this one?',
   'Next. How about this one?',
   'Next. What do you sense?',
+  "Next. What's this shape?",
 ]
 
 export const getShapeRevealText = (item) => `It's ${getArticle(item)} ${item}.`

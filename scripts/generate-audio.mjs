@@ -42,6 +42,11 @@ async function fetchPhrase(client, voice, text) {
         voice,
         input: text,
         response_format: 'mp3',
+        instructions:
+          'Speak in a jovial, upbeat, and playful tone — like an enthusiastic friend ' +
+          'who finds the whole thing genuinely fun and exciting. ' +
+          'Be energetic and light-hearted, with a smile in your voice. ' +
+          'Give extra vocal stress and emphasis to any words written in ALL CAPS.',
       })
       return Buffer.from(await response.arrayBuffer())
     } catch (err) {
