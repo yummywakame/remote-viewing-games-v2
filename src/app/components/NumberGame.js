@@ -3,7 +3,7 @@
 import React, { useCallback, useState, useEffect, memo, useRef } from 'react'
 import BaseGame from './BaseGame'
 import NumberGameSettings from './NumberGameSettings'
-import { NUMBER_ITEM_TABLE as itemTable, NUMBER_QUESTION_VARIANTS as QUESTION_VARIANTS, getNumberRevealText, NUMBER_DISPLAY_WORDS } from '@/lib/gameConstants'
+import { NUMBER_ITEM_TABLE as itemTable, NUMBER_QUESTION_VARIANTS as QUESTION_VARIANTS, getNumberRevealText, NUMBER_DISPLAY_WORDS, NUMBER_ARTICLES } from '@/lib/gameConstants'
 
 const NUMBER_WORD_MAP = {
   zero: '0', one: '1', two: '2', three: '3', four: '4',
@@ -90,7 +90,9 @@ const NumberGame = memo(function NumberGame({ onGameStateChange = () => {} }) {
     const itemGuess = matchNumberInCommand(command)
     if (itemGuess) {
       const isCorrect = itemGuess === currentNumber
-      return { item: itemGuess, isCorrect, displayItem: NUMBER_DISPLAY_WORDS[itemGuess] ?? itemGuess }
+      const word = NUMBER_DISPLAY_WORDS[itemGuess] ?? itemGuess
+      const article = NUMBER_ARTICLES[itemGuess] ?? 'a'
+      return { item: itemGuess, isCorrect, displayItem: `${article} ${word}` }
     }
 
     return null

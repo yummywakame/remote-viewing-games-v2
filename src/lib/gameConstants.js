@@ -109,7 +109,14 @@ export const NUMBER_DISPLAY_WORDS = {
   '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine',
 }
 
-export const getNumberRevealText = (item) => `It's ${NUMBER_DISPLAY_WORDS[item] ?? item}.`
+// 'one' is pronounced 'wun' so takes 'a' not 'an'; only 'eight' takes 'an'
+export const NUMBER_ARTICLES = {
+  '0': 'a', '1': 'a', '2': 'a', '3': 'a', '4': 'a',
+  '5': 'a', '6': 'a', '7': 'a', '8': 'an', '9': 'a',
+}
+
+export const getNumberRevealText = (item) =>
+  `It's ${NUMBER_ARTICLES[item] ?? 'a'} ${NUMBER_DISPLAY_WORDS[item] ?? item}.`
 
 // ---------- Game-specific phrase builders ----------
 
@@ -152,7 +159,7 @@ export const GAMES = [
     gameType: 'Number',
     itemTable: NUMBER_ITEM_TABLE,
     questionVariants: NUMBER_QUESTION_VARIANTS,
-    getDisplayItem: (item) => NUMBER_DISPLAY_WORDS[item] ?? item,
+    getDisplayItem: (item) => `${NUMBER_ARTICLES[item] ?? 'a'} ${NUMBER_DISPLAY_WORDS[item] ?? item}`,
     getRevealText: getNumberRevealText,
   },
 ]

@@ -54,7 +54,6 @@ export default function BaseGame({
   const [lastHeardWord, setLastHeardWord] = useState('')
   const [lastInteraction, setLastInteraction] = useState(0)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [isButtonAnimated, setIsButtonAnimated] = useState(false)
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
   const [longIntroEnabled, setLongIntroEnabled] = useState(true)
   const [autoAdvance, setAutoAdvance] = useState(true)
@@ -214,7 +213,6 @@ export default function BaseGame({
     setGameState(newState)
     gameStateRef.current = newState
     onGameStateChange(newState)
-    setIsButtonAnimated(newState === 'intro' || newState === 'playing')
     setIsGamePlaying(newState === 'intro' || newState === 'playing')
 
     if (newState !== 'playing') {
@@ -409,59 +407,60 @@ export default function BaseGame({
         isIntroComplete={isIntroComplete}
         {...gameDisplayProps}
       />
-      <div className="fixed inset-0 pt-16 pointer-events-none">
-        <div className="flex items-center justify-center h-full">
-          <div className="game-content text-center pointer-events-none">
-            {gameState === 'initial' && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <motion.h2
-                  className="game-title text-white text-5xl md:text-6xl font-bold mb-6"
-                  initial={{ y: -20 }} animate={{ y: 0 }}
-                  transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
-                >
-                  {typeof window !== 'undefined' ? DOMPurify.sanitize(gameType) : gameType} Game
-                </motion.h2>
-                <motion.p
-                  className="game-description text-white mb-8"
-                  initial={{ y: 20 }} animate={{ y: 0 }}
-                  transition={{ delay: 0.4, type: 'spring', stiffness: 120 }}
-                >
-                  Get your blindfold ready and let&apos;s begin!
-                </motion.p>
-                <motion.button
-                  onClick={startGame}
-                  className={`pointer-events-auto inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r ${accentColor} text-white font-medium text-lg hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5`}
-                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                >
-                  <Eye className="mr-2" size={20} />
-                  Start Game
-                </motion.button>
-              </motion.div>
-            )}
-            {(gameState === 'intro' || gameState === 'playing') && (
-              <motion.div
-                key="game-button"
-                initial={{ opacity: 0, y: 0 }}
-                animate={{ opacity: 1, y: isButtonAnimated ? '30vh' : 0 }}
-                exit={{ opacity: 0, y: 100 }}
-                transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
-              >
-                <motion.button
-                  onClick={() => endGame()}
-                  className={`pointer-events-auto inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r ${accentColor} text-white font-medium text-lg hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5`}
-                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                >
-                  Stop Game
-                </motion.button>
-              </motion.div>
-            )}
-          </div>
+      {gameState === 'initial' && (
+        <div className="fixed inset-0 pt-16 pointer-events-none flex items-center justify-center">
+          <motion.div
+            className="text-center pointer-events-none"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.h2
+              className="game-title text-white text-5xl md:text-6xl font-bold mb-6"
+              initial={{ y: -20 }} animate={{ y: 0 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
+            >
+              {typeof window !== 'undefined' ? DOMPurify.sanitize(gameType) : gameType} Game
+            </motion.h2>
+            <motion.p
+              className="game-description text-white mb-8"
+              initial={{ y: 20 }} animate={{ y: 0 }}
+              transition={{ delay: 0.4, type: 'spring', stiffness: 120 }}
+            >
+              Get your blindfold ready and let&apos;s begin!
+            </motion.p>
+            <motion.button
+              onClick={startGame}
+              className={`pointer-events-auto inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r ${accentColor} text-white font-medium text-lg hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5`}
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            >
+              <Eye className="mr-2" size={20} />
+              Start Game
+            </motion.button>
+          </motion.div>
         </div>
-      </div>
+      )}
+
+      <AnimatePresence>
+        {(gameState === 'intro' || gameState === 'playing') && (
+          <motion.div
+            key="stop-button"
+            className="fixed bottom-8 left-0 right-0 flex justify-center pointer-events-none"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <motion.button
+              onClick={() => endGame()}
+              className={`pointer-events-auto inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r ${accentColor} text-white font-medium text-lg hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5`}
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            >
+              Stop Game
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isSettingsOpen && (
