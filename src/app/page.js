@@ -5,6 +5,7 @@ import { Sparkles, Eye, Brain, Shapes, Hash } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
+import CosmicBackground from './components/CosmicBackground'
 
 const GAMES = [
   { name: 'Color Game', href: '/color-game', icon: Eye, color: 'from-purple-600 to-blue-600', available: true },
@@ -28,11 +29,8 @@ export default function Home() {
 
   return (
     <div className="overflow-auto">
-      {/* Full viewport background */}
       <div className="fixed-full">
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
-          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-        </div>
+        <CosmicBackground />
       </div>
 
       {/* Floating icons */}
@@ -108,19 +106,25 @@ export default function Home() {
                 >
                   <Link href={game.href} scroll={false}>
                     <motion.div
-                      className={`flex flex-col items-center justify-center p-6 rounded-2xl bg-opacity-20 backdrop-blur-lg ${
-                        game.available ? `bg-gradient-to-br ${game.color} hover:opacity-90` : 'bg-gray-700'
-                      } transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1`}
+                      className="group relative flex flex-col items-center justify-center p-6 rounded-2xl backdrop-blur-lg transition-shadow duration-300 shadow-lg hover:shadow-xl"
                       whileHover={game.available ? { scale: 1.05, y: -8 } : {}}
                       whileTap={game.available ? { scale: 0.95 } : {}}
+                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                     >
-                      <game.icon className="w-12 h-12 mb-4 text-white" />
-                      <h2 className="text-xl font-bold text-white mb-2">{game.name}</h2>
-                      {game.available ? (
-                        <p className="text-sm text-gray-200">Start Playing</p>
-                      ) : (
-                        <p className="text-sm text-gray-400">Coming Soon</p>
-                      )}
+                      {/* Background layer — faded at rest, full on hover */}
+                      <div className={`absolute inset-0 rounded-2xl transition-opacity duration-300 opacity-50 group-hover:opacity-100 ${
+                        game.available ? `bg-gradient-to-br ${game.color}` : 'bg-gray-700'
+                      }`} />
+                      {/* Content — always fully opaque */}
+                      <div className="relative z-10 flex flex-col items-center">
+                        <game.icon className="w-12 h-12 mb-4 text-white" />
+                        <h2 className="text-xl font-bold text-white mb-2">{game.name}</h2>
+                        {game.available ? (
+                          <p className="text-sm text-gray-200">Start Playing</p>
+                        ) : (
+                          <p className="text-sm text-gray-400">Coming Soon</p>
+                        )}
+                      </div>
                     </motion.div>
                   </Link>
                 </motion.div>
@@ -136,7 +140,7 @@ export default function Home() {
       </div>
 
       {/* Decorative bottom gradient */}
-      <div className="fixed-bottom h-32 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+      <div className="fixed-bottom h-32 bg-gradient-to-t from-[#0a0a1a] to-transparent pointer-events-none"></div>
     </div>
   )
 }

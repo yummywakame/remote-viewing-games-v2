@@ -10,13 +10,6 @@ export default function ColorGamePage() {
 
   return (
     <>
-      {/* Full viewport background */}
-      <div className="fixed inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff33_1px,transparent_1px)] [background-size:16px_16px]"></div>
-        </div>
-      </div>
-
       {/* Floating icons */}
       <motion.div
         className="fixed inset-0 pointer-events-none"
@@ -54,7 +47,7 @@ export default function ColorGamePage() {
       </div>
 
       {/* Decorative bottom gradient */}
-      <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+      <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a1a] to-transparent pointer-events-none"></div>
     </>
   )
 }

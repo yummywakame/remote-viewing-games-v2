@@ -7,13 +7,6 @@ import { Sparkles, Eye, Brain, Shapes } from 'lucide-react'
 export default function ShapeGamePage() {
   return (
     <>
-      {/* Full viewport background */}
-      <div className="fixed-full">
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
-          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-        </div>
-      </div>
-
       {/* Floating icons */}
       <motion.div
         className="fixed-full pointer-events-none"
@@ -51,7 +44,7 @@ export default function ShapeGamePage() {
       </div>
 
       {/* Decorative bottom gradient */}
-      <div className="fixed-bottom h-32 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+      <div className="fixed-bottom h-32 bg-gradient-to-t from-[#0a0a1a] to-transparent pointer-events-none"></div>
     </>
   )
 }

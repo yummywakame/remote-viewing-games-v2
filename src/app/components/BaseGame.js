@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
+import CosmicBackground from './CosmicBackground'
 import UserPreferences from './UserPreferences'
 import GameDisplay from './GameDisplay'
 import { GameStateContext } from '../layout'
@@ -394,6 +395,11 @@ export default function BaseGame({
 
   return (
     <div className="relative h-screen overflow-hidden">
+      {gameState === 'initial' && (
+        <div className="fixed-full">
+          <CosmicBackground />
+        </div>
+      )}
       <GameDisplay
         gameType={gameType}
         currentItem={currentItem ?? null}
