@@ -16,6 +16,7 @@ const GameDisplay = React.memo(function GameDisplay({
   gameState,
   isIntroComplete,
   lightMode = false,
+  cardDisplay = null,
 }) {
   useEffect(() => {
     if (gameType === 'Color' && currentItem && itemTable?.[currentItem]) {
@@ -72,6 +73,12 @@ const GameDisplay = React.memo(function GameDisplay({
             </motion.div>
           )}
         </AnimatePresence>
+      )}
+
+      {gameType === 'Card' && cardDisplay && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          {cardDisplay}
+        </div>
       )}
 
       {gameType === 'Number' && (

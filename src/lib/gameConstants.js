@@ -120,23 +120,48 @@ export const getNumberRevealText = (item) =>
 
 // ---------- Game-specific phrase builders ----------
 
-export const getHelpText = (gameType) =>
-  `To proceed to the next ${gameType.toLowerCase()} say 'next', or click anywhere on the screen. For a hint ask 'what ${gameType.toLowerCase()} is it?' To end the game at any time say 'stop' or 'end the game'.`
+export const getHelpText = (gameType) => {
+  if (gameType === 'Card') {
+    return "To proceed to the next card say 'next', or click anywhere on the screen. For a hint ask 'what card is it?' You can also say the suit, the rank, or the colour. To end the game at any time say 'stop' or 'end the game'."
+  }
+  return `To proceed to the next ${gameType.toLowerCase()} say 'next', or click anywhere on the screen. For a hint ask 'what ${gameType.toLowerCase()} is it?' To end the game at any time say 'stop' or 'end the game'.`
+}
 
-export const getTipText = (gameType) =>
-  `Sometimes I have trouble hearing single word answers. Try telling me the ${gameType.toLowerCase()} in a sentence.`
+export const getTipText = (gameType) => {
+  if (gameType === 'Card') return 'Try saying the suit, the rank, or the colour.'
+  return `Sometimes I have trouble hearing single word answers. Try telling me the ${gameType.toLowerCase()} in a sentence.`
+}
 
 export const getAdvanceHint = (gameType) =>
   `Say 'next ${gameType.toLowerCase()}' or click the screen to advance when you're ready.`
 
-export const getFirstQuestion = (gameType) =>
-  `What ${gameType.toLowerCase()} is this?`
+export const getFirstQuestion = (gameType) => {
+  if (gameType === 'Card') return 'What card do you sense?'
+  return `What ${gameType.toLowerCase()} is this?`
+}
 
-export const getBriefIntro = (gameType) =>
-  `Let's practice MindSight with ${gameType.toLowerCase()}s!`
+export const getBriefIntro = (gameType) => {
+  if (gameType === 'Card') return "Let's begin! I'll show you cards. Tell me the card, the suit, the rank, or the colour."
+  return `Let's practice MindSight with ${gameType.toLowerCase()}s!`
+}
 
-export const getLongIntroNoName = (gameType) =>
-  `Let's practice MindSight with ${gameType.toLowerCase()}s! I'll show you different ${gameType.toLowerCase()}s, and you tell me what you sense. Say "Help" at any time for controls. Are you ready?`
+export const getLongIntroNoName = (gameType) => {
+  if (gameType === 'Card') return "Let's practice MindSight with cards! I'll show you cards from the deck and you tell me what you sense — the suit, the rank, the colour, or the full card. Say \"Help\" at any time for controls. Are you ready?"
+  return `Let's practice MindSight with ${gameType.toLowerCase()}s! I'll show you different ${gameType.toLowerCase()}s, and you tell me what you sense. Say "Help" at any time for controls. Are you ready?`
+}
+
+// ---------- Card game ----------
+
+export const CARD_QUESTION_VARIANTS = [
+  'Next. What card do you sense?',
+  'Next. What do you pick up?',
+  'Next. What card is this?',
+  'Next. And this one?',
+  'Next. What about this card?',
+  'Next. What do you sense?',
+]
+
+export const CARD_TRY_AGAIN = 'Try again.'
 
 // ---------- Game configs (used by audio generation script) ----------
 

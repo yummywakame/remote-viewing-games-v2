@@ -162,7 +162,15 @@ export default function BaseGame({
     } else if (matched?.isCorrect === false) {
       setLastHeardWord(matched.item)
       setLastInteraction(Date.now())
-      speakRef.current?.(TRY_AGAIN_RESPONSES[Math.floor(Math.random() * TRY_AGAIN_RESPONSES.length)])
+      const tryAgainMsg = matched.tryAgainText ??
+        TRY_AGAIN_RESPONSES[Math.floor(Math.random() * TRY_AGAIN_RESPONSES.length)]
+      speakRef.current?.(tryAgainMsg)
+    } else if (matched?.isCorrect === 'partial') {
+      setLastHeardWord(matched.item)
+      setLastInteraction(Date.now())
+      if (matched.revealText) {
+        speakRef.current?.(matched.revealText)
+      }
     } else if (matched?.item) {
       setLastHeardWord(typeof matched.item === 'string' ? matched.item : '')
       setLastInteraction(Date.now())
@@ -228,11 +236,12 @@ export default function BaseGame({
   const updateCurrentItem = useCallback((newItem) => {
     currentItemRef.current = newItem
     onCurrentItemUpdate?.(newItem)
+    if (newItem) console.log(`[Game:${gameType}] New item: ${newItem}`)
 
     if (newItem && itemTable?.[newItem]) {
       document.body.style.backgroundColor = itemTable[newItem]
     }
-  }, [itemTable, onCurrentItemUpdate])
+  }, [gameType, itemTable, onCurrentItemUpdate])
 
   // Stable ref so handleTranscript can call updateCurrentItem without it being in the dep array
   useEffect(() => { updateCurrentItemRef.current = updateCurrentItem }, [updateCurrentItem])
