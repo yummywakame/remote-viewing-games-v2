@@ -2,7 +2,7 @@
 
 ## What This App Is
 
-**mindsight.training** is a solo practice web app for developing MindSight — the ability to perceive visual information while blindfolded (extra-ocular vision). Users practice independently through interactive games that train color, shape, and number perception without using their eyes.
+**mindsight.training** is a solo practice web app for developing MindSight — the ability to perceive visual information while blindfolded (extra-ocular vision). Users practice independently through interactive games that train color, shape, number, and card perception without using their eyes.
 
 This is a companion app to the coaching site at **mindsight.coach**. Where mindsight.coach is for booking 1-on-1 sessions with Olivia Meiring, this app is for ongoing solo practice between sessions (and for self-guided learners).
 
@@ -48,6 +48,8 @@ www/                          # Repo root
 │   │   ├── color-game/       # Color perception training game
 │   │   ├── shape-game/       # Shape perception training game
 │   │   ├── number-game/      # Number perception training game (digits 0–9)
+│   │   ├── card-game/        # Card perception training game (hidden from home page — WIP)
+│   │   ├── debug-cards/      # Temporary sprite debug page — safe to delete when card game ships
 │   │   ├── components/       # App-level shared components
 │   │   ├── fonts/            # Custom font files
 │   │   ├── globals.css       # Global stylesheet
@@ -56,12 +58,17 @@ www/                          # Repo root
 │   │   └── page.js           # Home / landing page (responsive, scrollable on small screens)
 │   ├── components/
 │   │   ├── BaseGame.js           # Shared game shell — owns all prefs state, voice flow, buttons, settings modal. Stop button is fixed bottom-8.
+│   │   │                         # Props: onScreenTap (overrides click-to-advance), keepBackground (keeps CosmicBackground during play)
 │   │   ├── CosmicBackground.js   # Shared background: pulsing nebula glows + twinkling starfield
 │   │   ├── ColorGame.js          # Color game — provides matchItem, COLOR_ALIASES; imports itemTable/variants from gameConstants
 │   │   ├── ShapeGame.js          # Shape game — provides matchItem, SHAPE_ALIASES; imports itemTable/variants from gameConstants
 │   │   ├── NumberGame.js         # Number game — spoken-word + alias matching; NUMBER_DISPLAY_WORDS + NUMBER_ARTICLES for TTS
+│   │   ├── CardGame.js           # Card game — sprite-based deck, voice matching for rank/suit/color/joker combos; hidden from home page (WIP)
+│   │   ├── CardDisplay.js        # Card sprite renderer using deck2.png; 3D flip animation (Framer Motion rotateY); inner white border shadow
+│   │   ├── CardGameSettings.js   # Settings: rank/suit checkboxes + jokers toggle
 │   │   ├── GameDisplay.js        # Full-screen display: color bg fade, shape SVG, number SVG crossfade via AnimatePresence.
 │   │   │                         # Responsive sizing: ITEM_SIZE = min(85vw, calc(100vh - 160px), 900px)
+│   │   │                         # Card game: transparent background (keepBackground renders CosmicBackground instead)
 │   │   ├── GameSettings.js       # Shared settings modal shell — gridCols prop (default 2), extraItems prop (renders below main grid full-width)
 │   │   ├── ColorGameSettings.js  # Thin wrapper: passes renderItem (color swatch) to GameSettings
 │   │   ├── ShapeGameSettings.js  # Adds Dark/Light background toggle (indigo Switch); passes renderItem (shape SVG) to GameSettings
@@ -76,8 +83,11 @@ www/                          # Repo root
 │   ├── check-audio.mjs       # Audits manifests vs phrase list — run with audio:check
 │   └── delete-phrase.mjs     # Finds and deletes a phrase's MP3(s) by text search so generate-audio re-fetches it; supports --voice <name|all>, fuzzy/case-insensitive matching, and suggests close matches on no-match
 ├── public/
-│   └── audio/                # Per-voice static TTS files (gitignored MP3s + committed manifests)
-│       └── {voice}/manifest.json
+│   ├── audio/                # Per-voice static TTS files (gitignored MP3s + committed manifests)
+│   │   └── {voice}/manifest.json
+│   └── cards/
+│       ├── deck2.png         # Card sprite sheet — 5001×2000px, 14 cols × 4 rows (gitignored? check)
+│       └── deck2.svg         # Source SVG (reference only — PNG is used for CSS backgrounds)
 ├── server.js                 # Phusion Passenger entry point (required for Mochahost)
 ├── source/                   # Source/reference assets
 ├── .github/
@@ -115,6 +125,8 @@ The app provides solo practice games for MindSight development. All games are **
 | `userPreferencesVoiceName` | Selected OpenAI voice name (default `echo`) |
 | `gameLongIntro` | `"true"` / `"false"` — full vs brief welcome message |
 | `gameAutoAdvance` | `"true"` / `"false"` — auto-advance to next item after correct guess (default `"true"`) |
+| `gameInactivityTimeout` | `"2"` or `"5"` — minutes before game ends due to no response (default `"2"`) |
+| `outroIndex` | Integer (string) — cycles outro responses across sessions for variety |
 | `colorGameSelectedItems` | JSON array of active colors |
 | `shapeGameSelectedItems` | JSON array of active shapes |
 | `shapeGameLightMode` | `"true"` / `"false"` — light background (white bg, black shape) vs dark (default) |
@@ -129,7 +141,7 @@ The app provides solo practice games for MindSight development. All games are **
 | Color Game | `/color-game` | Live |
 | Shape Game | `/shape-game` | Live |
 | Number Game | `/number-game` | Live |
-| Card Game | `/card-game` | In progress — see `CARD_GAME_PLAN.md` |
+| Card Game | `/card-game` | Functional — hidden from home page pending polish/testing |
 | Object Game | `/object-game` | Planned |
 | Word Game | `/word-game` | Planned |
 | Scene Game | `/scene-game` | Planned |
@@ -208,12 +220,13 @@ Deepgram is much less prone to hallucinations than Whisper, but a small filter i
 BaseGame handles common commands centrally (stop/next/skip/help) and calls:
 ```js
 const matched = matchItem(transcript, speak)
-// matched: { item: string, isCorrect: true|false|null } | null
+// matched: { item: string, isCorrect: true|false|'partial'|null, revealText?, displayItem?, tryAgainText? } | null
 ```
 
 - `isCorrect === true` → BaseGame speaks a CORRECT_RESPONSES entry, then advances to next item and asks the next question.
-- `isCorrect === false` → BaseGame speaks a TRY_AGAIN_RESPONSES entry.
-- `isCorrect === null` → special command (show me / reveal). If result includes `revealText`, BaseGame speaks it (and advances if auto-advance is on, or appends the advance hint once if off). BaseGame resets the inactivity timer.
+- `isCorrect === false` → BaseGame speaks `matched.tryAgainText` if provided, otherwise a random TRY_AGAIN_RESPONSES entry.
+- `isCorrect === 'partial'` → BaseGame speaks `matched.revealText`, resets inactivity timer, does NOT advance (player must keep guessing or tap/say next).
+- `isCorrect === null` → reveal command (what/show/reveal). Speaks `revealText`; if auto-advance is on, advances after speech. BaseGame resets the inactivity timer.
 - `null` → nothing matched; inactivity timer is NOT reset.
 
 Game components pass `displayItem` for grammatical phrasing — e.g. ShapeGame returns `displayItem: "a circle"`, NumberGame returns `displayItem: "a nine"` or `displayItem: "an eight"`, so correct responses say "It IS a nine!" not "It IS 9!".
@@ -298,6 +311,35 @@ Note: `note` is confirmed Deepgram mishearing of "nine" and is intentionally NOT
 
 Both active and inactive digits are checked — saying any digit word triggers a response.
 
+### CardGame — sprite sheet & matching
+
+**Sprite sheet:** `public/cards/deck2.png` — 5001×2000px (logical 5000×2000), 14 cols × 4 rows.
+
+| | Col 0–9 | Col 10 | Col 11 | Col 12 | Col 13 |
+|---|---|---|---|---|---|
+| Row 0 (Hearts) | Ace–10 | Queen | King | Jack | Red joker |
+| Row 1 (Spades) | Ace–10 | Queen | King | Jack | Blue joker |
+| Row 2 (Diamonds) | Ace–10 | Queen | King | Jack | Back A |
+| Row 3 (Clubs) | Ace–10 | Queen | King | Jack | Back B ← used |
+
+Constants: `ORIGIN_X=3.5`, `ORIGIN_Y=4`, `COL_STEP=357.5`, `ROW_STEP=492`, `CARD_W=340`, `CARD_H=475`.
+Note the non-standard face card column order: queen=10, king=11, jack=12 (not the usual jack/queen/king).
+Max display size is capped at 80% of native (272px wide) to keep pixel art crisp.
+
+**Card key format:** `"rank_of_suit"` (e.g. `"king_of_spades"`) or `"red_joker"` / `"black_joker"`.
+
+**Reveal vs advance (manual mode):** Tapping an obscured card reveals it (flips + speaks full card text). Tapping a revealed card advances. `onScreenTap` prop in BaseGame handles this; `keepBackground` keeps CosmicBackground visible at all times.
+
+**Voice matching rules:**
+- Attribute questions (`what color/suit/rank is it?`) → answer only that dimension, use "It's ..." (no emphasis)
+- Guesses (`is it red?`) → on partial match, use "It IS ..." (capitals = TTS emphasis signals confirmation)
+- Full guess (rank + suit both correct) → correct, flip card, speak full card text
+- Partial guess (one dimension correct) → confirm only what was right; never reveal the rest
+- `"reject"` is a STT alias for `"red"` (Whisper/Deepgram mishearing)
+- Jokers require both color AND "joker" for full credit; color-only or joker-only → partial
+
+**SpeechHandler AbortController:** `speak()` now creates an AbortController per call. `cancelSpeech()` aborts any in-flight TTS fetch (not just playing audio), fixing audio overlap when reveal speech is cancelled before the fetch completes. The state-change cancel effect only fires on `'initial'` state — `'ending'` state is left alone so outro/timeout speech can complete.
+
 ### Outro responses (`gameConstants.js` — cycles with name)
 - `Thanks [name]! Let's practice again soon.` / `Thank you for playing!`
 - `Thanks [name]! I hope we play again soon.` / `Great session — thanks for playing!`
@@ -306,7 +348,7 @@ Both active and inactive digits are checked — saying any digit word triggers a
 **Timeout:** always says `"Goodbye!"`
 
 ### Timers
-- **2-min game inactivity** → ends game with timeout message (only resets on recognised items/commands, not background noise)
+- **Configurable inactivity timeout** (2 or 5 min, user preference `gameInactivityTimeout`, default 2 min) → ends game with timeout message (only resets on recognised items/commands, not background noise)
 - **30-sec no-recognition tip** → speaks single-word-answer tip once per session if no recognised interaction
 - **5-min VAD idle** → stops listening (restarts on next interaction)
 
@@ -385,10 +427,16 @@ At the start of every new agent session:
 - **UI color scheme**: deep indigo/violet palette — modals `#12122e`, indigo switches/buttons, `border-white/10` dividers
 - **Voice dropdown**: `bg-[#12122e]` with `[&>option]:bg-[#12122e]` to carry dark theme into native browser dropdown
 - **UI polish (2026-06-05)**: Removed decorative bottom gradient overlay (was obscuring buttons/text on all pages). Header renamed "MindSight Games" → "MindSight Training". Fixed mobile browser toolbar overlap using `h-dvh`. Home page "Hi there" text at 50% opacity. Floating icons updated (added moon, clubs ♣, eye-closed; explicit sizes per icon).
+- **Card Game** (`/card-game`): Sprite-based card display (deck2.png, 3D flip animation), full voice matching (rank/suit/color/joker combinations), attribute questions (what color/suit/rank), IS-emphasis on guess confirmations, partial-only reveals, `onScreenTap` tap-to-reveal / tap-to-advance, `keepBackground` keeps CosmicBackground during play. Hidden from home page pending final polish.
+- **SpeechHandler AbortController**: `cancelSpeech()` now aborts in-flight TTS fetches, fixing audio overlap on fast reveal→advance. State-change effect only cancels on `'initial'` (not `'ending'`), fixing silent timeout/outro.
+- **Configurable inactivity timeout**: User preference in UserPreferences panel — 2 min (default) or 5 min. Stored as `gameInactivityTimeout` in localStorage.
+- **Outro variety**: `outroIndex` persisted in localStorage so responses cycle across sessions.
 
 ### Remaining items before public launch
 
-- [ ] **Card Game** — fully designed, implementation plan in `CARD_GAME_PLAN.md`
+- [ ] **Card Game polish** — currently functional but hidden from home page. Remaining: custom gloss/sheen overlay PNG (user to supply), final STT alias tuning, audio cache generation for card phrases, then re-enable on home page
+- [ ] `CARD_GAME_PLAN.md` — now stale (game is implemented); safe to delete or archive
+- [ ] `debug-cards/page.js` — temporary sprite debug page; safe to delete before launch
 - [ ] Cross-browser testing: Chrome desktop, Safari iOS, Android Chrome
 - [ ] Rate limiting per-IP (Upstash Redis — see `VOICE_SETUP_INSTRUCTIONS.md`) — recommended before public launch to control API costs
 - [ ] Complete Mochahost deployment (see Deployment section below)
