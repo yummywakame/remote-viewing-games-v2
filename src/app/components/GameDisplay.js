@@ -31,7 +31,7 @@ const GameDisplay = React.memo(function GameDisplay({
     if (gameState === 'initial' || gameState === 'intro') {
       return 'transparent';
     }
-    if (isIntroComplete && gameState === 'playing') {
+    if (isIntroComplete && gameState === 'playing' && gameType !== 'Card') {
       return lightMode ? 'white' : 'black';
     }
     return 'transparent';

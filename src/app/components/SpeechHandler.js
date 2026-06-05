@@ -77,6 +77,7 @@ export default function useSpeech({
   // Playback
   const currentAudioRef = useRef(null)
   const currentAudioUrlRef = useRef(null)
+  const currentFetchControllerRef = useRef(null)
 
   // State mirror refs (avoids stale closures in intervals/callbacks)
   const isListeningRef = useRef(false)
@@ -270,6 +271,10 @@ export default function useSpeech({
   }, [setListening, startRecording, stopListening, rotateRecording])
 
   const cancelSpeech = useCallback(() => {
+    if (currentFetchControllerRef.current) {
+      currentFetchControllerRef.current.abort()
+      currentFetchControllerRef.current = null
+    }
     if (currentAudioRef.current) {
       currentAudioRef.current.pause()
       currentAudioRef.current = null
@@ -288,6 +293,9 @@ export default function useSpeech({
     stopListening()
     setSpeaking(true)
 
+    const controller = new AbortController()
+    currentFetchControllerRef.current = controller
+
     let success = false
     try {
       const cacheKey = DOMPurify.sanitize(text)
@@ -298,7 +306,7 @@ export default function useSpeech({
         const staticFilename = audioManifestRef.current?.[cacheKey]
         if (staticFilename) {
           try {
-            const res = await fetch(`/audio/${voiceNameRef.current}/${staticFilename}`)
+            const res = await fetch(`/audio/${voiceNameRef.current}/${staticFilename}`, { signal: controller.signal })
             if (res.ok) {
               blob = await res.blob()
               audioCacheRef.current.set(cacheKey, blob)
@@ -317,6 +325,7 @@ export default function useSpeech({
             text: cacheKey,
             voice: voiceNameRef.current,
           }),
+          signal: controller.signal,
         })
         if (!res.ok) throw new Error(`TTS ${res.status}`)
         const serverCache = res.headers.get('X-Cache')
@@ -324,6 +333,11 @@ export default function useSpeech({
         audioCacheRef.current.set(cacheKey, blob)
         console.log(`[TTS] ${serverCache === 'HIT' ? 'server-cached' : 'api'}:`, cacheKey)
       }
+
+      // Bail out if cancelled while fetching
+      if (controller.signal.aborted) { setSpeaking(false); return false }
+      currentFetchControllerRef.current = null
+
       const url = URL.createObjectURL(blob)
       currentAudioUrlRef.current = url
       const audio = new Audio(url)
@@ -343,12 +357,14 @@ export default function useSpeech({
       })
       success = true
     } catch (err) {
-      console.error('[TTS]', err)
+      if (err.name !== 'AbortError') console.error('[TTS]', err)
       setSpeaking(false)
     }
 
-    // Auto-restart listening after speech finishes
-    if (gameStateRef.current === 'playing') {
+    currentFetchControllerRef.current = null
+
+    // Restart listening unless this speak was actively aborted (another speak is taking over)
+    if (!controller.signal.aborted && gameStateRef.current === 'playing') {
       setTimeout(startListening, 300)
     }
 
