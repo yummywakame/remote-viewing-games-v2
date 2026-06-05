@@ -30,6 +30,7 @@ export default function BaseGame({
   selectNewItemProp,
   onCurrentItemUpdate,
   currentItem,           // reactive state from game component — used for display
+  onScreenTap,           // optional: overrides click-to-advance (receives { goNext, speak })
   gameDisplayProps = {},
 }) {
   const {
@@ -343,9 +344,13 @@ export default function BaseGame({
   const handleBackgroundClick = useCallback(() => {
     if (gameState === 'playing') {
       setLastInteraction(Date.now())
-      handleNextItem()
+      if (onScreenTap) {
+        onScreenTap({ goNext: handleNextItem, speak: speakRef.current })
+      } else {
+        handleNextItem()
+      }
     }
-  }, [gameState, handleNextItem])
+  }, [gameState, handleNextItem, onScreenTap])
 
   const handleSaveSettings = useCallback((newItems) => {
     onSaveSettings(newItems)

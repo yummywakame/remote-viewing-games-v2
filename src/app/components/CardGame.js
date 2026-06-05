@@ -139,18 +139,17 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
       return
     }
     const parsed = parseCardKey(newKey)
-    // If current card was NOT revealed before advancing, briefly flash the front
-    if (!isFlippedRef.current) {
-      setIsFlipped(true)
+    if (isFlippedRef.current) {
+      // Card was revealed — flip to back, swap content at the midpoint (card is edge-on)
+      setIsFlipped(false)
       setTimeout(() => {
         setCurrentCard(parsed)
         currentCardRef.current = parsed
-        setIsFlipped(false)
-      }, 600)
+      }, 200)
     } else {
+      // Card was already obscured — silently swap, no animation
       setCurrentCard(parsed)
       currentCardRef.current = parsed
-      setIsFlipped(false)
     }
   }, [])
 
@@ -237,6 +236,18 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
     localStorage.setItem('cardGameJokersEnabled', String(newJokersEnabled))
   }, [])
 
+  const handleScreenTap = useCallback(({ goNext, speak }) => {
+    if (isFlippedRef.current) {
+      // Card already revealed — advance
+      goNext()
+    } else if (currentCardRef.current) {
+      // Card obscured — reveal it
+      setIsFlipped(true)
+      isFlippedRef.current = true
+      speak(fullCardText(currentCardRef.current))
+    }
+  }, [])
+
   return (
     <BaseGame
       GameSettings={(props) => (
@@ -259,7 +270,8 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
       questionVariants={CARD_QUESTION_VARIANTS}
       currentItem={currentCard ? cardKey(currentCard) : null}
       onCurrentItemUpdate={updateCurrentItem}
-      gameDisplayProps={{ cardDisplay: <CardDisplay card={currentCard} isFlipped={isFlipped} /> }}
+      onScreenTap={handleScreenTap}
+      gameDisplayProps={{ cardDisplay: currentCard ? <CardDisplay card={currentCard} isFlipped={isFlipped} /> : null }}
     />
   )
 })

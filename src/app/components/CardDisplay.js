@@ -2,22 +2,25 @@
 
 import { motion } from 'framer-motion'
 
-// Sprite sheet constants
-const SHEET_W = 3762
-const SHEET_H = 1596
-const CARD_W = 241.882
-const CARD_H = 349.058
-const COL_STEP = 264
-const ROW_STEP = 390
-const ORIGIN_X = 48.2
-const ORIGIN_Y = 48.9
+// Sprite sheet constants for deck2.svg (5000x2000 viewBox)
+const SHEET_W = 5000
+const SHEET_H = 2000
+const CARD_W = 340
+const CARD_H = 475
+const COL_STEP = 357.5
+const ROW_STEP = 492
+const ORIGIN_X = 3.5
+const ORIGIN_Y = 4
 
-const SUIT_ROW = { clubs: 0, spades: 1, hearts: 2, diamonds: 3 }
+const SUIT_ROW = { hearts: 0, spades: 1, diamonds: 2, clubs: 3 }
 const RANK_COL = {
   ace: 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6,
-  '8': 7, '9': 8, '10': 9, jack: 10, queen: 11, king: 12,
+  '8': 7, '9': 8, '10': 9, queen: 10, king: 11, jack: 12,
 }
-const JOKER_POS = { black: { col: 13, row: 0 }, red: { col: 13, row: 3 } }
+// Col 13: row 0 = red joker, row 1 = blue joker, row 2 = back A, row 3 = back B (used)
+const JOKER_COL = 13
+const JOKER_POS = { red: { col: JOKER_COL, row: 0 }, black: { col: JOKER_COL, row: 1 } }
+const BACK_POS = { col: JOKER_COL, row: 3 }
 
 function getCardStyle(col, row, displayW, displayH) {
   const scaleX = displayW / CARD_W
@@ -27,7 +30,7 @@ function getCardStyle(col, row, displayW, displayH) {
   const offsetX = -(ORIGIN_X + col * COL_STEP) * scaleX
   const offsetY = -(ORIGIN_Y + row * ROW_STEP) * scaleY
   return {
-    backgroundImage: 'url(/cards/deck.svg)',
+    backgroundImage: 'url(/cards/deck2.png)',
     backgroundSize: `${bgW}px ${bgH}px`,
     backgroundPosition: `${offsetX}px ${offsetY}px`,
     backgroundRepeat: 'no-repeat',
@@ -35,19 +38,12 @@ function getCardStyle(col, row, displayW, displayH) {
 }
 
 function CardBack() {
-  return (
-    <div className="w-full h-full bg-indigo-900 rounded-2xl border-4 border-indigo-700 shadow-2xl relative overflow-hidden">
-      <div className="absolute inset-3 rounded-xl border border-indigo-500/30 flex items-center justify-center">
-        <div className="grid grid-cols-3 gap-3 opacity-20 text-indigo-300 text-xl select-none">
-          {Array(9).fill('✦').map((s, i) => <span key={i}>{s}</span>)}
-        </div>
-      </div>
-    </div>
-  )
+  const style = getCardStyle(BACK_POS.col, BACK_POS.row, 160, 232)
+  return <div className="w-full h-full rounded-2xl shadow-2xl overflow-hidden" style={style} />
 }
 
 function CardFront({ rank, suit, isJoker, jokerColor }) {
-  const col = isJoker ? 0 : RANK_COL[rank]
+  const col = isJoker ? JOKER_POS[jokerColor].col : RANK_COL[rank]
   const row = isJoker ? JOKER_POS[jokerColor].row : SUIT_ROW[suit]
   const style = getCardStyle(col, row, 160, 232)
 
