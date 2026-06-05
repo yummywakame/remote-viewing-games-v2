@@ -11,7 +11,7 @@ const GAMES = [
   { name: 'Color Game', href: '/color-game', icon: Eye, color: 'from-purple-600 to-blue-600', available: true },
   { name: 'Shape Game', href: '/shape-game', icon: Shapes, color: 'from-blue-600 to-green-500', available: true },
   { name: 'Number Game', href: '/number-game', icon: Hash, color: 'from-green-600 to-orange-600', available: true },
-  { name: 'Card Game', href: '/card-game', icon: Spade, color: 'from-red-600 to-yellow-500', available: true },
+  // { name: 'Card Game', href: '/card-game', icon: Spade, color: 'from-red-600 to-yellow-500', available: true },
 ]
 
 export default function Home() {
