@@ -39,21 +39,13 @@ function getCardStyle(col, row) {
 }
 
 const INNER_BORDER = { boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.85)' }
-const GLOSS = {
-  position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 'inherit', zIndex: 1,
-  background: [
-    'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 50%, transparent 70%)',
-    'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 30%)',
-  ].join(', '),
-}
+const MAX_DISPLAY_W = Math.round(CARD_W * 0.8)  // 272px — keeps pixel art crisp at 80% scale
 
 function CardFace({ col, row }) {
   return (
-    <div className="w-full h-full rounded-2xl overflow-hidden relative shadow-2xl"
+    <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl"
       style={{ ...getCardStyle(col, row), ...INNER_BORDER }}
-    >
-      <div style={GLOSS} />
-    </div>
+    />
   )
 }
 
@@ -66,7 +58,7 @@ export default function CardDisplay({ card, isFlipped }) {
     <div style={{
       perspective: '1000px',
       width: '100%',
-      maxWidth: CARD_W,
+      maxWidth: MAX_DISPLAY_W,
       aspectRatio: `${CARD_W} / ${CARD_H}`,
       position: 'relative',
     }}>

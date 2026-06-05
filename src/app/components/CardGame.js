@@ -58,7 +58,7 @@ function extractSuit(transcript) {
 }
 
 function extractColor(transcript) {
-  if (/\bred\b/i.test(transcript)) return 'red'
+  if (/\b(red|reject)\b/i.test(transcript)) return 'red'
   if (/\bblack\b/i.test(transcript)) return 'black'
   return null
 }
@@ -168,7 +168,24 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
     const card = currentCardRef.current
     if (!card) return null
 
-    // Reveal commands
+    // Attribute questions — answer only the asked dimension
+    if (/\b(what|which)\b/.test(transcript) && !card.joker) {
+      if (/\b(color|colour)\b/i.test(transcript)) {
+        const color = RED_SUITS.includes(card.suit) ? 'red' : 'black'
+        setIsFlipped(true)
+        return { item: cardBubble(card), isCorrect: null, revealText: `It is ${color}!` }
+      }
+      if (/\bsuit\b/i.test(transcript)) {
+        setIsFlipped(true)
+        return { item: cardBubble(card), isCorrect: null, revealText: `It is ${card.suit}!` }
+      }
+      if (/\b(rank|number|value)\b/i.test(transcript)) {
+        setIsFlipped(true)
+        return { item: cardBubble(card), isCorrect: null, revealText: `It is ${RANK_DISPLAY[card.rank]}!` }
+      }
+    }
+
+    // Full reveal commands
     if (/\b(what|which|reveal|show)\b/.test(transcript)) {
       setIsFlipped(true)
       return { item: cardBubble(card), isCorrect: null, revealText: fullCardText(card) }
@@ -176,13 +193,21 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
 
     // Joker card
     if (card.joker) {
-      if (/\bjoker\b/.test(transcript)) {
-        return { item: cardKey(card), isCorrect: true, displayItem: 'a joker' }
-      }
+      const hasJoker = /\bjoker\b/.test(transcript)
       const color = extractColor(transcript)
+      if (hasJoker && color) {
+        // Specific color+joker guess — only matches the right color
+        return color === card.joker
+          ? { item: cardBubble(card), isCorrect: true, displayItem: fullCardText(card) }
+          : { item: `${color} joker`, isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
+      }
+      if (hasJoker) {
+        // Generic "joker" — correct for any joker
+        return { item: cardBubble(card), isCorrect: true, displayItem: 'a joker' }
+      }
       if (color) {
         return color === card.joker
-          ? { item: color, isCorrect: 'partial', revealText: `It is ${color}!` }
+          ? { item: color, isCorrect: 'partial', revealText: `It is the ${card.joker} joker!` }
           : { item: color, isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
       }
       return { item: cardKey(card), isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
