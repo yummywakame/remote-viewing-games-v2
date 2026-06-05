@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Sparkles, Eye, Brain, Shapes, Hash } from 'lucide-react'
+import { Sparkles, Eye, EyeClosed, Brain, Shapes, Hash, Moon } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
@@ -40,7 +40,15 @@ export default function Home() {
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
       >
-        {[Eye, Brain, Shapes, Sparkles].map((Icon, index) => (
+        {[
+          { type: 'icon', Icon: Eye,      size: 36 },
+          { type: 'icon', Icon: Brain,    size: 32 },
+          { type: 'icon', Icon: Shapes,   size: 40 },
+          { type: 'icon', Icon: Sparkles, size: 48 },
+          { type: 'icon', Icon: Moon,     size: 28 },
+          { type: 'text', char: '♣',      size: 32 },
+          { type: 'icon', Icon: EyeClosed, size: 36 },
+        ].map((item, index) => (
           <motion.div
             key={index}
             className="absolute text-white/20"
@@ -55,11 +63,14 @@ export default function Home() {
               delay: index * 0.5,
             }}
             style={{
-              left: `${15 + index * 25}%`,
-              top: `${20 + (index % 3) * 20}%`,
+              left: `${5 + index * 14}%`,
+              top: `${15 + (index % 3) * 25}%`,
             }}
           >
-            <Icon size={24 + index * 8} />
+            {item.type === 'icon'
+              ? <item.Icon size={item.size} />
+              : <span style={{ fontSize: item.size }}>♣</span>
+            }
           </motion.div>
         ))}
       </motion.div>
