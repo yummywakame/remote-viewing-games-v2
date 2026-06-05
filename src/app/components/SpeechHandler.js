@@ -391,9 +391,10 @@ export default function useSpeech({
     }
   }, [gameState, startListening])
 
-  // Stop everything when game leaves playing state
+  // Stop everything when game returns to idle — leave 'intro' and 'ending' alone
+  // because those states own their own speech (intro narration, outro/timeout message)
   useEffect(() => {
-    if (gameState !== 'playing' && gameState !== 'intro') {
+    if (gameState === 'initial') {
       cancelSpeech()
       stopListening()
     }

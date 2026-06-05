@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 
-// Sprite sheet constants for deck2.svg (5000x2000 viewBox)
+// Sprite sheet constants for deck2.png (5000x2000 logical grid)
 const SHEET_W = 5000
 const SHEET_H = 2000
 const CARD_W = 340
@@ -22,61 +22,66 @@ const JOKER_COL = 13
 const JOKER_POS = { red: { col: JOKER_COL, row: 0 }, black: { col: JOKER_COL, row: 1 } }
 const BACK_POS = { col: JOKER_COL, row: 3 }
 
-function getCardStyle(col, row, displayW, displayH) {
-  const scaleX = displayW / CARD_W
-  const scaleY = displayH / CARD_H
-  const bgW = SHEET_W * scaleX
-  const bgH = SHEET_H * scaleY
-  const offsetX = -(ORIGIN_X + col * COL_STEP) * scaleX
-  const offsetY = -(ORIGIN_Y + row * ROW_STEP) * scaleY
+// Percentage-based sprite positioning — works at any display size
+function getCardStyle(col, row) {
+  const ox = ORIGIN_X + col * COL_STEP
+  const oy = ORIGIN_Y + row * ROW_STEP
+  const bgSizeX = (SHEET_W / CARD_W) * 100
+  const bgSizeY = (SHEET_H / CARD_H) * 100
+  const bgPosX = (ox / (SHEET_W - CARD_W)) * 100
+  const bgPosY = (oy / (SHEET_H - CARD_H)) * 100
   return {
     backgroundImage: 'url(/cards/deck2.png)',
-    backgroundSize: `${bgW}px ${bgH}px`,
-    backgroundPosition: `${offsetX}px ${offsetY}px`,
+    backgroundSize: `${bgSizeX}% ${bgSizeY}%`,
+    backgroundPosition: `${bgPosX}% ${bgPosY}%`,
     backgroundRepeat: 'no-repeat',
   }
 }
 
-function CardBack() {
-  const style = getCardStyle(BACK_POS.col, BACK_POS.row, 160, 232)
-  return <div className="w-full h-full rounded-2xl shadow-2xl overflow-hidden" style={style} />
+const INNER_BORDER = { boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.85)' }
+const GLOSS = {
+  position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 'inherit', zIndex: 1,
+  background: [
+    'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 50%, transparent 70%)',
+    'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 30%)',
+  ].join(', '),
 }
 
-function CardFront({ rank, suit, isJoker, jokerColor }) {
-  const col = isJoker ? JOKER_POS[jokerColor].col : RANK_COL[rank]
-  const row = isJoker ? JOKER_POS[jokerColor].row : SUIT_ROW[suit]
-  const style = getCardStyle(col, row, 160, 232)
-
+function CardFace({ col, row }) {
   return (
-    <div
-      className="w-full h-full rounded-2xl shadow-2xl overflow-hidden"
-      style={style}
-    />
+    <div className="w-full h-full rounded-2xl overflow-hidden relative shadow-2xl"
+      style={{ ...getCardStyle(col, row), ...INNER_BORDER }}
+    >
+      <div style={GLOSS} />
+    </div>
   )
 }
 
 export default function CardDisplay({ card, isFlipped }) {
   const isJoker = card?.joker != null
-  const jokerColor = card?.joker
-  const rank = card?.rank
-  const suit = card?.suit
+  const col = isJoker ? JOKER_POS[card.joker]?.col ?? JOKER_COL : (card ? RANK_COL[card.rank] : BACK_POS.col)
+  const row = isJoker ? JOKER_POS[card.joker]?.row ?? 0 : (card ? SUIT_ROW[card.suit] : BACK_POS.row)
 
   return (
-    <div style={{ perspective: '1000px', width: 160, height: 232 }}>
+    <div style={{
+      perspective: '1000px',
+      width: '100%',
+      maxWidth: CARD_W,
+      aspectRatio: `${CARD_W} / ${CARD_H}`,
+      position: 'relative',
+    }}>
       <motion.div
-        style={{ transformStyle: 'preserve-3d', width: '100%', height: '100%', position: 'relative' }}
+        style={{ transformStyle: 'preserve-3d', position: 'absolute', inset: 0 }}
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.4, ease: 'easeInOut' }}
       >
         {/* Back face */}
-        <div style={{ backfaceVisibility: 'hidden', position: 'absolute', width: '100%', height: '100%' }}>
-          <CardBack />
+        <div style={{ backfaceVisibility: 'hidden', position: 'absolute', inset: 0 }}>
+          <CardFace col={BACK_POS.col} row={BACK_POS.row} />
         </div>
         {/* Front face */}
-        <div style={{ backfaceVisibility: 'hidden', position: 'absolute', width: '100%', height: '100%', transform: 'rotateY(180deg)' }}>
-          {card && (
-            <CardFront rank={rank} suit={suit} isJoker={isJoker} jokerColor={jokerColor} />
-          )}
+        <div style={{ backfaceVisibility: 'hidden', position: 'absolute', inset: 0, transform: 'rotateY(180deg)' }}>
+          {card && <CardFace col={col} row={row} />}
         </div>
       </motion.div>
     </div>

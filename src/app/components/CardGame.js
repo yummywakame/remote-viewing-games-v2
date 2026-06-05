@@ -68,6 +68,10 @@ function cardKey(card) {
   return `${card.rank}_of_${card.suit}`
 }
 
+function cardBubble(card) {
+  return cardKey(card).replace(/_/g, ' ')
+}
+
 function fullCardText(card) {
   if (card.joker) return `It's the ${card.joker} joker!`
   return `It's ${RANK_DISPLAY[card.rank]} of ${card.suit}!`
@@ -167,7 +171,7 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
     // Reveal commands
     if (/\b(what|which|reveal|show)\b/.test(transcript)) {
       setIsFlipped(true)
-      return { item: cardKey(card), isCorrect: null, revealText: fullCardText(card) }
+      return { item: cardBubble(card), isCorrect: null, revealText: fullCardText(card) }
     }
 
     // Joker card
@@ -189,17 +193,45 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
     const guessedSuit = extractSuit(transcript)
     const guessedColor = extractColor(transcript)
 
+    const cardColor = RED_SUITS.includes(card.suit) ? 'red' : 'black'
+
     // Full guess: rank + suit
     if (guessedRank && guessedSuit) {
       if (guessedRank === card.rank && guessedSuit === card.suit) {
         setIsFlipped(true)
-        return { item: cardKey(card), isCorrect: true, displayItem: fullCardText(card) }
+        return { item: cardBubble(card), isCorrect: true, displayItem: fullCardText(card) }
       }
       if (guessedRank === card.rank)
         return { item: guessedRank, isCorrect: 'partial', revealText: `It is ${RANK_DISPLAY[card.rank]}!` }
       if (guessedSuit === card.suit)
         return { item: guessedSuit, isCorrect: 'partial', revealText: `It is ${card.suit}!` }
       return { item: `${guessedRank} ${guessedSuit}`, isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
+    }
+
+    // Color + rank (no suit)
+    if (guessedRank && guessedColor) {
+      const rankMatch = guessedRank === card.rank
+      const colorMatch = guessedColor === cardColor
+      if (rankMatch && colorMatch)
+        return { item: `${guessedColor} ${guessedRank}`, isCorrect: 'partial', revealText: `It is the ${cardColor} ${guessedRank}!` }
+      if (colorMatch)
+        return { item: guessedColor, isCorrect: 'partial', revealText: `It is a ${cardColor} card!` }
+      if (rankMatch)
+        return { item: guessedRank, isCorrect: 'partial', revealText: `It is ${RANK_DISPLAY[card.rank]}!` }
+      return { item: `${guessedColor} ${guessedRank}`, isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
+    }
+
+    // Color + suit (no rank)
+    if (guessedSuit && guessedColor) {
+      const suitMatch = guessedSuit === card.suit
+      const colorMatch = guessedColor === cardColor
+      if (suitMatch && colorMatch)
+        return { item: `${guessedColor} ${guessedSuit}`, isCorrect: 'partial', revealText: `It is a ${cardColor} ${card.suit}!` }
+      if (colorMatch)
+        return { item: guessedColor, isCorrect: 'partial', revealText: `It is a ${cardColor} card!` }
+      if (suitMatch)
+        return { item: guessedSuit, isCorrect: 'partial', revealText: `It is ${card.suit}!` }
+      return { item: `${guessedColor} ${guessedSuit}`, isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
     }
 
     // Rank only
@@ -218,9 +250,8 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
 
     // Colour only
     if (guessedColor) {
-      const cardColor = RED_SUITS.includes(card.suit) ? 'red' : 'black'
       return guessedColor === cardColor
-        ? { item: guessedColor, isCorrect: 'partial', revealText: `It is ${guessedColor}!` }
+        ? { item: guessedColor, isCorrect: 'partial', revealText: `It is a ${cardColor} card!` }
         : { item: guessedColor, isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
     }
 
@@ -261,6 +292,7 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
       )}
       gameType="Card"
       accentColor="from-red-600 to-yellow-500"
+      keepBackground
       onGameStateChange={onGameStateChange}
       matchItem={matchItem}
       selectNewItemProp={selectNewItem}
