@@ -64,7 +64,7 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en" className={andika.variable}>
-      <body className={`font-sans h-screen overflow-hidden bg-[#0a0a1a] relative`}>
+      <body className={`font-sans h-dvh overflow-hidden bg-[#0a0a1a] relative`}>
         <GameStateContext.Provider value={{ 
           isListening: isListeningState, 
           setIsListening, 
@@ -85,10 +85,7 @@ export default function RootLayout({ children }) {
             isGamePlaying={isGamePlayingState}
             onExitGame={handleExitGame}
           />
-          <div className="fixed-full pointer-events-none">
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#0a0a1a] to-transparent" />
-          </div>
-          <main className="h-screen relative z-10 pt-16">
+<main className="h-dvh relative z-10 pt-16">
             {children}
           </main>
           <UserPreferences

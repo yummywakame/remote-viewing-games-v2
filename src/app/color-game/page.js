@@ -45,9 +45,6 @@ export default function ColorGamePage() {
       <div className="relative min-h-screen flex items-center justify-center">
         <ColorGame onGameStateChange={handleGameStateChange} />
       </div>
-
-      {/* Decorative bottom gradient */}
-      <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a1a] to-transparent pointer-events-none"></div>
     </>
   )
 }

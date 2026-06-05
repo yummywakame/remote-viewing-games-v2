@@ -65,15 +65,15 @@ export default function Home() {
       </motion.div>
 
       {/* Main content */}
-      <div className="relative min-h-full flex items-start min-[480px]:items-center justify-center px-4 sm:px-6 md:px-10">
+      <div className="relative min-h-full flex flex-col px-4 sm:px-6 md:px-10">
         <motion.div
-          className="text-center max-w-4xl mx-auto pt-8 pb-10 min-[480px]:pt-0 min-[480px]:pb-0"
+          className="text-center max-w-4xl mx-auto w-full my-auto pt-8 pb-20 min-[480px]:pb-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
           <motion.h2
-            className="text-3xl min-[480px]:text-5xl md:text-6xl font-bold text-white mb-3 min-[480px]:mb-8"
+            className="text-3xl min-[480px]:text-5xl md:text-6xl font-bold text-white/50 mb-3 min-[480px]:mb-8"
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.5 }}
@@ -139,9 +139,6 @@ export default function Home() {
           </motion.div>
         </motion.div>
       </div>
-
-      {/* Decorative bottom gradient */}
-      <div className="fixed-bottom h-32 bg-gradient-to-t from-[#0a0a1a] to-transparent pointer-events-none"></div>
     </div>
   )
 }

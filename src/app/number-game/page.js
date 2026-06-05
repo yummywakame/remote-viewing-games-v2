@@ -42,9 +42,6 @@ export default function NumberGamePage() {
       <div className="relative min-h-screen">
         <NumberGame />
       </div>
-
-      {/* Decorative bottom gradient */}
-      <div className="fixed-bottom h-32 bg-gradient-to-t from-[#0a0a1a] to-transparent pointer-events-none"></div>
     </>
   )
 }

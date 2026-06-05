@@ -38,7 +38,7 @@ const Header = ({ isListening, isSpeaking, onOpenUserPreferences, onOpenGameSett
               }
             }}
           >
-            MindSight Games
+            MindSight Training
           </Link>
 
           {/* Right side */}
