@@ -207,7 +207,7 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
       }
       if (color) {
         return color === card.joker
-          ? { item: color, isCorrect: 'partial', revealText: `It is the ${card.joker} joker!` }
+          ? { item: color, isCorrect: 'partial', revealText: `It is ${color}!` }
           : { item: color, isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
       }
       return { item: cardKey(card), isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
