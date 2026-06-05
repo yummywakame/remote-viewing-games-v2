@@ -173,15 +173,15 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
       if (/\b(color|colour)\b/i.test(transcript)) {
         const color = RED_SUITS.includes(card.suit) ? 'red' : 'black'
         setIsFlipped(true)
-        return { item: cardBubble(card), isCorrect: null, revealText: `It is ${color}!` }
+        return { item: cardBubble(card), isCorrect: null, revealText: `It's ${color}!` }
       }
       if (/\bsuit\b/i.test(transcript)) {
         setIsFlipped(true)
-        return { item: cardBubble(card), isCorrect: null, revealText: `It is ${card.suit}!` }
+        return { item: cardBubble(card), isCorrect: null, revealText: `It's ${card.suit}!` }
       }
       if (/\b(rank|number|value)\b/i.test(transcript)) {
         setIsFlipped(true)
-        return { item: cardBubble(card), isCorrect: null, revealText: `It is ${RANK_DISPLAY[card.rank]}!` }
+        return { item: cardBubble(card), isCorrect: null, revealText: `It's ${RANK_DISPLAY[card.rank]}!` }
       }
     }
 
