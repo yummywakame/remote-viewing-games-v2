@@ -120,12 +120,16 @@ The app provides solo practice games for MindSight development. All games are **
 | `shapeGameLightMode` | `"true"` / `"false"` — light background (white bg, black shape) vs dark (default) |
 | `numberGameSelectedItems` | JSON array of active digits (e.g. `["0","1","2",...]`) |
 | `numberGameLightMode` | `"true"` / `"false"` — light background (white bg, black number) vs dark (default) |
+| `cardGameSelectedRanks` | JSON array of active ranks (e.g. `["ace","2","3",...]`) |
+| `cardGameSelectedSuits` | JSON array of active suits (e.g. `["spades","hearts","diamonds","clubs"]`) |
+| `cardGameJokersEnabled` | `"true"` / `"false"` — include red/black jokers in deck (default `"false"`) |
 
 | Game | Route | Status |
 |---|---|---|
 | Color Game | `/color-game` | Live |
 | Shape Game | `/shape-game` | Live |
 | Number Game | `/number-game` | Live |
+| Card Game | `/card-game` | In progress — see `CARD_GAME_PLAN.md` |
 | Object Game | `/object-game` | Planned |
 | Word Game | `/word-game` | Planned |
 | Scene Game | `/scene-game` | Planned |
@@ -149,7 +153,8 @@ npm run audio:sync   # Generate/update static TTS audio files (requires .env.loc
 **Key conventions:**
 - App Router only — all routes live under `src/app/`
 - **`UserPreferences.js` — stale closure trap:** `handleSave` is a `useCallback`. Every preference state variable it writes to localStorage (`name`, `speed`, `voice`, `longIntroEnabled`, `autoAdvance`, and any future additions) **must** appear in the dependency array, or `handleSave` will capture a stale initial value and silently save the wrong thing. This has caused bugs multiple times. When adding a new preference, always add it to both the `localStorage.setItem` block AND the `useCallback` dep array in the same commit.
-- Tailwind for all styling — avoid inline styles and CSS modules
+- **Mobile viewport height**: use `h-dvh` not `h-screen` on `body` and `main`. `100vh` includes the mobile browser toolbar in its calculation, causing content to be hidden behind it. `dvh` (dynamic viewport height) adjusts in real time as the toolbar shows/hides. Already applied in `layout.js`.
+- Tailwind for all styling — avoid inline styles and CSS modules (exception: CSS 3D transform properties like `transformStyle`, `backfaceVisibility`, `perspective` which have no Tailwind equivalents)
 - Radix UI primitives in `src/components/ui/` — use these as the base for new interactive components
 - CVA (`class-variance-authority`) for component variant patterns
 - Framer Motion for any animations beyond Tailwind's built-ins
@@ -379,9 +384,11 @@ At the start of every new agent session:
 - **Smooth fade transitions**: color bg 700ms CSS; shape/number crossfade 400ms Framer Motion AnimatePresence
 - **UI color scheme**: deep indigo/violet palette — modals `#12122e`, indigo switches/buttons, `border-white/10` dividers
 - **Voice dropdown**: `bg-[#12122e]` with `[&>option]:bg-[#12122e]` to carry dark theme into native browser dropdown
+- **UI polish (2026-06-05)**: Removed decorative bottom gradient overlay (was obscuring buttons/text on all pages). Header renamed "MindSight Games" → "MindSight Training". Fixed mobile browser toolbar overlap using `h-dvh`. Home page "Hi there" text at 50% opacity. Floating icons updated (added moon, clubs ♣, eye-closed; explicit sizes per icon).
 
 ### Remaining items before public launch
 
+- [ ] **Card Game** — fully designed, implementation plan in `CARD_GAME_PLAN.md`
 - [ ] Cross-browser testing: Chrome desktop, Safari iOS, Android Chrome
 - [ ] Rate limiting per-IP (Upstash Redis — see `VOICE_SETUP_INSTRUCTIONS.md`) — recommended before public launch to control API costs
 - [ ] Complete Mochahost deployment (see Deployment section below)
