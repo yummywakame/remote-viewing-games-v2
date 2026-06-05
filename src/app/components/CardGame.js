@@ -196,14 +196,14 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
       const hasJoker = /\bjoker\b/.test(transcript)
       const color = extractColor(transcript)
       if (hasJoker && color) {
-        // Specific color+joker guess — only matches the right color
+        // Color+joker: right color = correct; wrong color = partial (joker is right)
         return color === card.joker
           ? { item: cardBubble(card), isCorrect: true, displayItem: fullCardText(card) }
-          : { item: `${color} joker`, isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
+          : { item: 'joker', isCorrect: 'partial', revealText: 'It is a joker!' }
       }
       if (hasJoker) {
-        // Generic "joker" — correct for any joker
-        return { item: cardBubble(card), isCorrect: true, displayItem: 'a joker' }
+        // "joker" without color — partial, needs the color too
+        return { item: 'joker', isCorrect: 'partial', revealText: 'It is a joker!' }
       }
       if (color) {
         return color === card.joker
