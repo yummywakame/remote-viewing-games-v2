@@ -27,6 +27,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
   const [voice, setVoice] = useState(voiceName || DEFAULT_VOICE)
   const [longIntroEnabled, setLongIntroEnabled] = useState(true)
   const [autoAdvance, setAutoAdvance] = useState(true)
+  const [inactivityTimeout, setInactivityTimeout] = useState(2)
   const [isPreviewing, setIsPreviewing] = useState(false)
   const previewAudioRef = useRef(null)
   const modalRef = useRef(null)
@@ -38,6 +39,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
     setVoice(localStorage.getItem('userPreferencesVoiceName') || DEFAULT_VOICE)
     setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
     setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
+    setInactivityTimeout(parseInt(localStorage.getItem('gameInactivityTimeout') || '2'))
   }, [isOpen])
 
   const handleSave = useCallback(() => {
@@ -47,6 +49,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
     localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(voice))
     localStorage.setItem('gameLongIntro', DOMPurify.sanitize(longIntroEnabled.toString()))
     localStorage.setItem('gameAutoAdvance', DOMPurify.sanitize(autoAdvance.toString()))
+    localStorage.setItem('gameInactivityTimeout', DOMPurify.sanitize(inactivityTimeout.toString()))
     onUpdatePreferences(name, speed, voice)
     onClose()
   }, [name, speed, voice, longIntroEnabled, autoAdvance, onUpdatePreferences, onClose])
@@ -57,6 +60,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
     setVoice(DEFAULT_VOICE)
     setLongIntroEnabled(true)
     setAutoAdvance(true)
+    setInactivityTimeout(2)
   }, [])
 
   const handleOutsideClick = useCallback((e) => {
@@ -203,6 +207,19 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
                   className="bg-white/20 data-[state=checked]:bg-indigo-500"
                 />
                 <span className={`text-xs ${autoAdvance ? 'text-white' : 'text-gray-400'}`}>Auto-advance</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className="block text-sm font-medium">No response timeout</span>
+              <div className="flex items-center space-x-2">
+                <span className={`text-xs ${inactivityTimeout === 2 ? 'text-white' : 'text-gray-400'}`}>2 min</span>
+                <Switch
+                  checked={inactivityTimeout === 5}
+                  onCheckedChange={(v) => setInactivityTimeout(v ? 5 : 2)}
+                  className="bg-white/20 data-[state=checked]:bg-indigo-500"
+                />
+                <span className={`text-xs ${inactivityTimeout === 5 ? 'text-white' : 'text-gray-400'}`}>5 min</span>
               </div>
             </div>
           </div>

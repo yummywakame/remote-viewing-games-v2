@@ -31,6 +31,7 @@ export default function BaseGame({
   onCurrentItemUpdate,
   currentItem,           // reactive state from game component — used for display
   onScreenTap,           // optional: overrides click-to-advance (receives { goNext, speak })
+  keepBackground = false, // keep CosmicBackground visible during playing state
   gameDisplayProps = {},
 }) {
   const {
@@ -43,7 +44,7 @@ export default function BaseGame({
   const router = useRouter()
 
   const currentItemRef = useRef(null)
-  const outroIndexRef = useRef(0)
+  const outroIndexRef = useRef(parseInt(typeof window !== 'undefined' ? localStorage.getItem('outroIndex') || '0' : '0'))
   const correctIndexRef = useRef(0)
   const updateCurrentItemRef = useRef(null)
   const gameStateRef = useRef('initial')
@@ -58,6 +59,7 @@ export default function BaseGame({
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
   const [longIntroEnabled, setLongIntroEnabled] = useState(true)
   const [autoAdvance, setAutoAdvance] = useState(true)
+  const [inactivityTimeout, setInactivityTimeout] = useState(2)
   const [isIntroComplete, setIsIntroComplete] = useState(false)
   const [userName, setUserName] = useState('')
   const [voiceSpeed, setVoiceSpeed] = useState(1.1)
@@ -73,6 +75,7 @@ export default function BaseGame({
   useEffect(() => {
     setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
     setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
+    setInactivityTimeout(parseInt(localStorage.getItem('gameInactivityTimeout') || '2'))
     setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
     setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.1)
     setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
@@ -83,6 +86,7 @@ export default function BaseGame({
     const sync = () => {
       setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
       setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
+      setInactivityTimeout(parseInt(localStorage.getItem('gameInactivityTimeout') || '2'))
       setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
       setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.1)
       setVoiceName(localStorage.getItem('userPreferencesVoiceName') || 'echo')
@@ -96,6 +100,7 @@ export default function BaseGame({
     setVoiceSpeed(newVoiceSpeed)
     setVoiceName(newVoiceName)
     setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
+    setInactivityTimeout(parseInt(localStorage.getItem('gameInactivityTimeout') || '2'))
     localStorage.setItem('userPreferencesName', sanitizeInput(newName))
     localStorage.setItem('userPreferencesVoiceSpeed', sanitizeInput(newVoiceSpeed.toString()))
     localStorage.setItem('userPreferencesVoiceName', sanitizeInput(newVoiceName))
@@ -147,7 +152,7 @@ export default function BaseGame({
 
       if (autoAdvanceRef.current) {
         speakRef.current?.(correctText).then(async () => {
-          const next = selectItemFunc(selectedItems, matched.item)
+          const next = selectItemFunc(selectedItems, currentItemRef.current)
           if (next) {
             updateCurrentItemRef.current?.(next)
             const variants = questionVariants?.length ? questionVariants : [`What ${gameType.toLowerCase()} is this?`]
@@ -261,6 +266,7 @@ export default function BaseGame({
     } else {
       const idx = outroIndexRef.current
       outroIndexRef.current = (idx + 1) % OUTRO_RESPONSES.length
+      if (typeof window !== 'undefined') localStorage.setItem('outroIndex', String(outroIndexRef.current))
       const outroOk = await speak(OUTRO_RESPONSES[idx](userName))
       if (!outroOk && userName) {
         await speak(OUTRO_RESPONSES[idx](null))
@@ -323,6 +329,12 @@ export default function BaseGame({
       await speak(getLongIntroNoName(gameType))
     }
 
+    // If game was exited during intro, bail out
+    if (gameStateRef.current !== 'intro') {
+      lockStateChangeRef.current = false
+      return
+    }
+
     setAndLogGameState('playing', 'intro complete')
     setIsIntroComplete(true)
 
@@ -367,14 +379,14 @@ export default function BaseGame({
 
   // ----- Lifecycle -----
 
-  // End game after 2 minutes of inactivity (no voice or tap)
+  // End game after configured inactivity period (no voice or tap)
   useEffect(() => {
     if (gameState !== 'playing') return
     const timer = setTimeout(() => {
       endGameRef.current?.(true)
-    }, 2 * 60 * 1000)
+    }, inactivityTimeout * 60 * 1000)
     return () => clearTimeout(timer)
-  }, [gameState, lastInteraction])
+  }, [gameState, lastInteraction, inactivityTimeout])
 
   // Prompt tip after 30s of no recognised interaction — once per session
   useEffect(() => {
@@ -407,7 +419,7 @@ export default function BaseGame({
 
   return (
     <div className="relative h-screen overflow-hidden">
-      {gameState === 'initial' && (
+      {(gameState === 'initial' || keepBackground) && (
         <div className="fixed-full">
           <CosmicBackground />
         </div>
