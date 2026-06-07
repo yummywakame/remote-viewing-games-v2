@@ -20,6 +20,21 @@ export const CORRECT_RESPONSES = [
   (item, display) => `${cap(display ?? item)} it is!`,
 ]
 
+// Used instead of CORRECT_RESPONSES when the "Correct-answer feedback" preference
+// is set to "Confirms only" — confirms the guess without naming the item, so
+// players who are sensing visually/intuitively aren't pulled back into verbal
+// processing by hearing the answer spoken aloud.
+export const CONFIRM_ONLY_RESPONSES = [
+  'Correct!',
+  "Yes, that's right!",
+  'You got it!',
+  "That's it!",
+  'Nailed it!',
+  'Yes!',
+  'Spot on!',
+  'Exactly right!',
+]
+
 export const TRY_AGAIN_RESPONSES = [
   'Not this time — keep sensing!',
   'Almost! Give it another go.',

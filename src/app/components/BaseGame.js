@@ -13,7 +13,7 @@ import { GameStateContext } from '../layout'
 import DOMPurify from 'isomorphic-dompurify'
 import { selectNewItem, sanitizeInput } from '@/utils/gameUtils'
 import {
-  CORRECT_RESPONSES, TRY_AGAIN_RESPONSES, OUTRO_RESPONSES, TIMEOUT_MESSAGE,
+  CORRECT_RESPONSES, CONFIRM_ONLY_RESPONSES, TRY_AGAIN_RESPONSES, OUTRO_RESPONSES, TIMEOUT_MESSAGE,
   getHelpText, getTipText, getAdvanceHint, getFirstQuestion, getBriefIntro, getLongIntroNoName,
 } from '@/lib/gameConstants'
 import useSpeech from './SpeechHandler'
@@ -60,6 +60,7 @@ export default function BaseGame({
   const [isUserPreferencesOpen, setIsUserPreferencesOpen] = useState(false)
   const [longIntroEnabled, setLongIntroEnabled] = useState(true)
   const [autoAdvance, setAutoAdvance] = useState(true)
+  const [namesCorrectAnswer, setNamesCorrectAnswer] = useState(true)
   const [inactivityTimeout, setInactivityTimeout] = useState(2)
   const [isIntroComplete, setIsIntroComplete] = useState(false)
   const [userName, setUserName] = useState('')
@@ -67,15 +68,18 @@ export default function BaseGame({
   const [voiceName, setVoiceName] = useState('echo')
 
   const autoAdvanceRef = useRef(true)
+  const namesCorrectAnswerRef = useRef(true)
   const hintShownRef = useRef(false)
   const tipShownRef = useRef(false)
 
   useEffect(() => { autoAdvanceRef.current = autoAdvance }, [autoAdvance])
+  useEffect(() => { namesCorrectAnswerRef.current = namesCorrectAnswer }, [namesCorrectAnswer])
 
   // Load preferences from localStorage on mount
   useEffect(() => {
     setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
     setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
+    setNamesCorrectAnswer(localStorage.getItem('gameNamesCorrectAnswer') !== 'false')
     setInactivityTimeout(parseInt(localStorage.getItem('gameInactivityTimeout') || '2'))
     setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
     setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.1)
@@ -87,6 +91,7 @@ export default function BaseGame({
     const sync = () => {
       setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
       setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
+      setNamesCorrectAnswer(localStorage.getItem('gameNamesCorrectAnswer') !== 'false')
       setInactivityTimeout(parseInt(localStorage.getItem('gameInactivityTimeout') || '2'))
       setUserName(sanitizeInput(localStorage.getItem('userPreferencesName') || ''))
       setVoiceSpeed(parseFloat(localStorage.getItem('userPreferencesVoiceSpeed')) || 1.1)
@@ -101,6 +106,7 @@ export default function BaseGame({
     setVoiceSpeed(newVoiceSpeed)
     setVoiceName(newVoiceName)
     setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
+    setNamesCorrectAnswer(localStorage.getItem('gameNamesCorrectAnswer') !== 'false')
     setInactivityTimeout(parseInt(localStorage.getItem('gameInactivityTimeout') || '2'))
     localStorage.setItem('userPreferencesName', sanitizeInput(newName))
     localStorage.setItem('userPreferencesVoiceSpeed', sanitizeInput(newVoiceSpeed.toString()))
@@ -147,8 +153,15 @@ export default function BaseGame({
     if (matched?.isCorrect === true) {
       setLastHeardWord(matched.item)
       setLastInteraction(Date.now())
-      const correctText = CORRECT_RESPONSES[correctIndexRef.current](matched.item, matched.displayItem)
-      correctIndexRef.current = (correctIndexRef.current + 1) % CORRECT_RESPONSES.length
+      // "Correct-answer feedback" preference: speak the item's name, or just confirm
+      // the guess without naming it (keeps players in visual/intuitive sensing mode)
+      const namesAnswer = namesCorrectAnswerRef.current
+      const correctResponses = namesAnswer ? CORRECT_RESPONSES : CONFIRM_ONLY_RESPONSES
+      const responseIdx = correctIndexRef.current % correctResponses.length
+      const correctText = namesAnswer
+        ? correctResponses[responseIdx](matched.item, matched.displayItem)
+        : correctResponses[responseIdx]
+      correctIndexRef.current = responseIdx + 1
       const selectItemFunc = selectNewItemProp || selectNewItem
 
       if (autoAdvanceRef.current) {

@@ -27,6 +27,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
   const [voice, setVoice] = useState(voiceName || DEFAULT_VOICE)
   const [longIntroEnabled, setLongIntroEnabled] = useState(true)
   const [autoAdvance, setAutoAdvance] = useState(true)
+  const [namesCorrectAnswer, setNamesCorrectAnswer] = useState(true)
   const [inactivityTimeout, setInactivityTimeout] = useState(2)
   const [isPreviewing, setIsPreviewing] = useState(false)
   const previewAudioRef = useRef(null)
@@ -39,6 +40,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
     setVoice(localStorage.getItem('userPreferencesVoiceName') || DEFAULT_VOICE)
     setLongIntroEnabled(localStorage.getItem('gameLongIntro') !== 'false')
     setAutoAdvance(localStorage.getItem('gameAutoAdvance') !== 'false')
+    setNamesCorrectAnswer(localStorage.getItem('gameNamesCorrectAnswer') !== 'false')
     setInactivityTimeout(parseInt(localStorage.getItem('gameInactivityTimeout') || '2'))
   }, [isOpen])
 
@@ -49,10 +51,11 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
     localStorage.setItem('userPreferencesVoiceName', DOMPurify.sanitize(voice))
     localStorage.setItem('gameLongIntro', DOMPurify.sanitize(longIntroEnabled.toString()))
     localStorage.setItem('gameAutoAdvance', DOMPurify.sanitize(autoAdvance.toString()))
+    localStorage.setItem('gameNamesCorrectAnswer', DOMPurify.sanitize(namesCorrectAnswer.toString()))
     localStorage.setItem('gameInactivityTimeout', DOMPurify.sanitize(inactivityTimeout.toString()))
     onUpdatePreferences(name, speed, voice)
     onClose()
-  }, [name, speed, voice, longIntroEnabled, autoAdvance, onUpdatePreferences, onClose])
+  }, [name, speed, voice, longIntroEnabled, autoAdvance, namesCorrectAnswer, inactivityTimeout, onUpdatePreferences, onClose])
 
   const handleReset = useCallback(() => {
     setName('')
@@ -60,6 +63,7 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
     setVoice(DEFAULT_VOICE)
     setLongIntroEnabled(true)
     setAutoAdvance(true)
+    setNamesCorrectAnswer(true)
     setInactivityTimeout(2)
   }, [])
 
@@ -193,6 +197,20 @@ const UserPreferences = ({ isOpen, onClose, userName, voiceSpeed, voiceName, onU
                   className="bg-white/20 data-[state=checked]:bg-indigo-500"
                 />
                 <span className={`text-xs ${longIntroEnabled ? 'text-white' : 'text-gray-400'}`}>Full explanation</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className="block text-sm font-medium">Correct-answer feedback</span>
+              <div className="flex items-center space-x-2">
+                <span className={`text-xs ${!namesCorrectAnswer ? 'text-white' : 'text-gray-400'}`}>Confirms only</span>
+                <Switch
+                  checked={namesCorrectAnswer}
+                  onCheckedChange={setNamesCorrectAnswer}
+                  defaultChecked={true}
+                  className="bg-white/20 data-[state=checked]:bg-indigo-500"
+                />
+                <span className={`text-xs ${namesCorrectAnswer ? 'text-white' : 'text-gray-400'}`}>Names it</span>
               </div>
             </div>
 
