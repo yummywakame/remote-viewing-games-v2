@@ -82,6 +82,10 @@ export default function useSpeech({
   const currentAudioRef = useRef(null)
   const currentAudioUrlRef = useRef(null)
   const currentFetchControllerRef = useRef(null)
+  // Bumped on every speak() call — lets a call detect it's been superseded by a
+  // later one (e.g. two endGame() flows racing) and bail out before it ever
+  // creates an <audio> element, so two phrases can never play over each other.
+  const speakGenerationRef = useRef(0)
 
   // State mirror refs (avoids stale closures in intervals/callbacks)
   const isListeningRef = useRef(false)
@@ -294,6 +298,7 @@ export default function useSpeech({
   const speak = useCallback(async (text) => {
     if (!text) return false
 
+    const generation = ++speakGenerationRef.current
     cancelSpeech()
     stopListening()
     setSpeaking(true)
@@ -340,8 +345,12 @@ export default function useSpeech({
         console.log(`[TTS] ${serverCache === 'HIT' ? 'server-cached' : 'api'}:`, cacheKey)
       }
 
-      // Bail out if cancelled while fetching
-      if (controller.signal.aborted) { setSpeaking(false); setIsPreparingSpeech(false); return false }
+      // Bail out if cancelled while fetching, or if a newer speak() call has
+      // already taken over (race between e.g. two endGame() flows) — never
+      // create/play audio for a superseded call, or it'd overlap the new one
+      if (controller.signal.aborted || generation !== speakGenerationRef.current) {
+        setSpeaking(false); setIsPreparingSpeech(false); return false
+      }
       currentFetchControllerRef.current = null
 
       const url = URL.createObjectURL(blob)

@@ -28,10 +28,14 @@ export default function RootLayout({ children }) {
 
   const handleExitGame = useCallback(() => {
     if (exitGameState) {
+      // endGame() speaks a goodbye message and navigates home itself once it
+      // finishes — pushing here too would unmount the page mid-speech and let
+      // the in-flight endGame() keep running, causing it to speak (and
+      // navigate) again on top of itself.
       exitGameState();
+    } else {
+      router.push('/', { scroll: false });
     }
-    setIsGamePlayingState(false);
-    router.push('/', { scroll: false });
   }, [exitGameState, router]);
 
   const handleOpenUserPreferences = useCallback(() => {
