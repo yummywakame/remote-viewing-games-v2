@@ -125,7 +125,7 @@ export default function useSpeech({
     lastSpeechSentRef.current = Date.now()
 
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 8000)
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
 
     try {
       const fd = new FormData()

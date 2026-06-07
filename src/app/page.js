@@ -1,17 +1,25 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Sparkles, Eye, EyeClosed, Brain, Shapes, Hash, Moon, Spade } from 'lucide-react'
+import { Sparkles, Eye, EyeClosed, Brain, Shapes, Hash, Moon } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
 import CosmicBackground from './components/CosmicBackground'
 
+// Renders the same suit glyph used by the floating background icons — looks
+// more like a real card suit than lucide's line-art Spade icon did.
+const SpadeIcon = ({ className = '' }) => (
+  <span className={`${className} inline-flex items-center justify-center text-6xl leading-none`} aria-hidden="true">
+    ♠
+  </span>
+)
+
 const GAMES = [
   { name: 'Color Game', href: '/color-game', icon: Eye, color: 'from-purple-600 to-blue-600', available: true },
   { name: 'Shape Game', href: '/shape-game', icon: Shapes, color: 'from-blue-600 to-green-500', available: true },
   { name: 'Number Game', href: '/number-game', icon: Hash, color: 'from-green-600 to-orange-600', available: true },
-  { name: 'Card Game', href: '/card-game', icon: Spade, color: 'from-orange-600 to-pink-800', available: true },
+  { name: 'Card Game', href: '/card-game', icon: SpadeIcon, color: 'from-orange-600 to-pink-800', available: true },
 ]
 
 export default function Home() {
