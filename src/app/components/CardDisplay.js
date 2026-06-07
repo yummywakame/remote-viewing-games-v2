@@ -19,6 +19,8 @@ export const CARD_DECKS = {
     jokerCol: 13,
     jokerPos: { red: { col: 13, row: 0 }, black: { col: 13, row: 1 } },
     backPos: { col: 13, row: 2 },
+    // Custom card-back artwork (standalone SVG) — used instead of cropping backPos from the sheet
+    backImage: '/cards/card-back-3.svg',
   },
   deck2: {
     label: 'Deck 2',
@@ -67,16 +69,30 @@ function getCardStyle(deck, col, row) {
   }
 }
 
-// Crop style for a deck's card-back design — used for small previews (e.g. deck picker thumbnails)
-export function getDeckBackStyle(deckId) {
-  const deck = CARD_DECKS[deckId] ?? CARD_DECKS[DEFAULT_DECK]
+// Style for a deck's card-back design — either a standalone image (backImage)
+// or a crop from the sprite sheet (backPos). Used for both gameplay and small
+// previews (e.g. deck picker thumbnails).
+function getCardBackStyle(deck) {
+  if (deck.backImage) {
+    return {
+      backgroundImage: `url(${deck.backImage})`,
+      backgroundSize: '100% 100%',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }
+  }
   return getCardStyle(deck, deck.backPos.col, deck.backPos.row)
 }
 
-function CardFace({ deck, col, row }) {
+export function getDeckBackStyle(deckId) {
+  const deck = CARD_DECKS[deckId] ?? CARD_DECKS[DEFAULT_DECK]
+  return getCardBackStyle(deck)
+}
+
+function CardFace({ style }) {
   return (
     <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl"
-      style={getCardStyle(deck, col, row)}
+      style={style}
     />
   )
 }
@@ -107,11 +123,11 @@ export default function CardDisplay({ card, isFlipped, deckId = DEFAULT_DECK }) 
       >
         {/* Back face */}
         <div style={{ backfaceVisibility: 'hidden', position: 'absolute', inset: 0 }}>
-          <CardFace deck={deck} col={deck.backPos.col} row={deck.backPos.row} />
+          <CardFace style={getCardBackStyle(deck)} />
         </div>
         {/* Front face */}
         <div style={{ backfaceVisibility: 'hidden', position: 'absolute', inset: 0, transform: 'rotateY(180deg)' }}>
-          {card && <CardFace deck={deck} col={col} row={row} />}
+          {card && <CardFace style={getCardStyle(deck, col, row)} />}
         </div>
       </motion.div>
     </div>

@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import FloatingBubble from './FloatingBubble'
+import LoadingIndicator from './LoadingIndicator'
 import CosmicBackground from './CosmicBackground'
 import UserPreferences from './UserPreferences'
 import GameDisplay from './GameDisplay'
@@ -205,7 +206,7 @@ export default function BaseGame({
     endGameRef.current?.(true)
   }, [])
 
-  const { speak, stopListening, cancelSpeech } = useSpeech({
+  const { speak, stopListening, cancelSpeech, isPreparingSpeech } = useSpeech({
     gameState,
     voiceName,
     voiceSpeed,
@@ -466,6 +467,12 @@ export default function BaseGame({
           </motion.div>
         </div>
       )}
+
+      <AnimatePresence>
+        {gameState === 'intro' && isPreparingSpeech && (
+          <LoadingIndicator key="loading" label="Tune into your senses…" />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {(gameState === 'intro' || gameState === 'playing') && (

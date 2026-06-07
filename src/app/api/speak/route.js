@@ -15,7 +15,7 @@ const ttsCache = new Map()
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { text, voice = DEFAULT_VOICE, speed = 1.1 } = body
+    const { text, voice = DEFAULT_VOICE } = body
 
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return NextResponse.json({ error: 'Text required' }, { status: 400 })
@@ -26,7 +26,6 @@ export async function POST(request) {
     }
 
     const safeVoice = VALID_VOICES.has(voice) ? voice : DEFAULT_VOICE
-    const safeSpeed = Math.max(0.25, Math.min(4.0, Number(speed) || 1.0))
     const cacheKey = `${safeVoice}:${text.trim()}`
 
     let buffer = ttsCache.get(cacheKey)
@@ -37,7 +36,6 @@ export async function POST(request) {
         model: 'gpt-4o-mini-tts',
         voice: safeVoice,
         input: text.trim(),
-        speed: safeSpeed,
         response_format: 'mp3',
         instructions:
           'Speak in a jovial, upbeat, and playful tone — like an enthusiastic friend ' +

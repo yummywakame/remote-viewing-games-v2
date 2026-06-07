@@ -34,6 +34,10 @@ export default function useSpeech({
 }) {
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  // True only while the audio is being fetched/generated — false once playback actually begins.
+  // Lets callers show a "loading" state for the (sometimes lengthy) TTS fetch without it
+  // lingering for the whole, possibly long, duration of the spoken phrase.
+  const [isPreparingSpeech, setIsPreparingSpeech] = useState(false)
 
   // Stable refs for callbacks so effects don't need to re-run when they change
   const onTranscriptRef = useRef(onTranscript)
@@ -284,6 +288,7 @@ export default function useSpeech({
       currentAudioUrlRef.current = null
     }
     setSpeaking(false)
+    setIsPreparingSpeech(false)
   }, [setSpeaking])
 
   const speak = useCallback(async (text) => {
@@ -292,6 +297,7 @@ export default function useSpeech({
     cancelSpeech()
     stopListening()
     setSpeaking(true)
+    setIsPreparingSpeech(true)
 
     const controller = new AbortController()
     currentFetchControllerRef.current = controller
@@ -335,7 +341,7 @@ export default function useSpeech({
       }
 
       // Bail out if cancelled while fetching
-      if (controller.signal.aborted) { setSpeaking(false); return false }
+      if (controller.signal.aborted) { setSpeaking(false); setIsPreparingSpeech(false); return false }
       currentFetchControllerRef.current = null
 
       const url = URL.createObjectURL(blob)
@@ -343,6 +349,7 @@ export default function useSpeech({
       const audio = new Audio(url)
       audio.playbackRate = voiceSpeedRef.current
       currentAudioRef.current = audio
+      setIsPreparingSpeech(false)
 
       await new Promise((resolve) => {
         const finish = () => {
@@ -359,6 +366,7 @@ export default function useSpeech({
     } catch (err) {
       if (err.name !== 'AbortError') console.error('[TTS]', err)
       setSpeaking(false)
+      setIsPreparingSpeech(false)
     }
 
     currentFetchControllerRef.current = null
@@ -414,5 +422,5 @@ export default function useSpeech({
     }
   }, [cancelSpeech, stopListening])
 
-  return { speak, startListening, stopListening, cancelSpeech, isListening, isSpeaking }
+  return { speak, startListening, stopListening, cancelSpeech, isListening, isSpeaking, isPreparingSpeech }
 }
