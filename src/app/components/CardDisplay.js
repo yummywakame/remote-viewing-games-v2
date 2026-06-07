@@ -1,6 +1,7 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
 
 // Sprite sheet registry — each deck has its own grid layout and suit/rank positions.
 // 'deck1' (deck3.png) is the current default deck; 'deck2' (deck2.png) is the previous one, kept as an alternative.
@@ -101,35 +102,115 @@ function CardFace({ style }) {
 // so both decks render at a consistent on-screen size regardless of native sprite resolution.
 const MAX_DISPLAY_W = Math.round(CARD_DECKS.deck2.cardW * 0.8)
 
+// Faux "deck of cards" the active card sits on — a thick stack of card-back layers
+// peeking out from behind it by ~1px each (like real stacked cards), dimmed with
+// distance to suggest depth. Offsets are in pixels (not %) so each layer reveals a
+// consistent sliver regardless of display size.
+const STACK_LAYER_COUNT = 20
+const STACK_LAYERS = Array.from({ length: STACK_LAYER_COUNT }, (_, i) => {
+  const depthFromFront = STACK_LAYER_COUNT - i
+  return {
+    offsetPx: depthFromFront,
+    brightness: 0.4 + 0.5 * (i / (STACK_LAYER_COUNT - 1)),
+  }
+})
+
+// Identity used to detect when the displayed card changes (for the "next card" animation)
+function cardIdentity(card) {
+  if (!card) return null
+  if (card.joker) return `${card.joker}_joker`
+  return `${card.rank}_of_${card.suit}`
+}
+
 export default function CardDisplay({ card, isFlipped, deckId = DEFAULT_DECK }) {
   const deck = CARD_DECKS[deckId] ?? CARD_DECKS[DEFAULT_DECK]
 
   const isJoker = card?.joker != null
   const col = isJoker ? deck.jokerPos[card.joker]?.col ?? deck.jokerCol : (card ? deck.rankCol[card.rank] : deck.backPos.col)
   const row = isJoker ? deck.jokerPos[card.joker]?.row ?? 0 : (card ? deck.suitRow[card.suit] : deck.backPos.row)
+  const backStyle = getCardBackStyle(deck)
+
+  // "Next card" flourish — when the displayed card changes, spawn a ghost copy of the
+  // card-back that rises above the deck, then descends and slides behind it, coming to
+  // rest exactly where the bottom card of the stack sits (so it appears to join the deck).
+  const GHOST_DURATION = 0.95
+  const [ghosts, setGhosts] = useState([])
+  const prevIdentityRef = useRef(cardIdentity(card))
+  const ghostIdRef = useRef(0)
+  useEffect(() => {
+    const identity = cardIdentity(card)
+    const prev = prevIdentityRef.current
+    prevIdentityRef.current = identity
+    if (prev !== null && identity !== prev) {
+      const id = ++ghostIdRef.current
+      setGhosts((g) => [...g, id])
+      const t = setTimeout(() => setGhosts((g) => g.filter((x) => x !== id)), GHOST_DURATION * 1000 + 50)
+      return () => clearTimeout(t)
+    }
+  }, [card])
 
   return (
     <div style={{
-      perspective: '1000px',
       width: '100%',
       maxWidth: MAX_DISPLAY_W,
       aspectRatio: `${deck.cardW} / ${deck.cardH}`,
       position: 'relative',
+      zIndex: 0, // establish a stacking context so the ghost's negative z-index stays local
     }}>
-      <motion.div
-        style={{ transformStyle: 'preserve-3d', position: 'absolute', inset: 0 }}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.4, ease: 'easeInOut' }}
-      >
-        {/* Back face */}
-        <div style={{ backfaceVisibility: 'hidden', position: 'absolute', inset: 0 }}>
-          <CardFace style={getCardBackStyle(deck)} />
+      {/* "Next card" flourish — ghost of the outgoing card rising above the deck, then
+          sliding down behind it to settle into the bottom-of-stack position */}
+      <AnimatePresence>
+        {ghosts.map((id) => (
+          <motion.div
+            key={id}
+            className="absolute rounded-2xl overflow-hidden shadow-xl"
+            style={{ inset: 0 }}
+            initial={{ x: 0, y: 0, zIndex: STACK_LAYERS.length + 1 }}
+            animate={{
+              x: [0, 0, STACK_LAYER_COUNT],
+              y: [0, -46, STACK_LAYER_COUNT],
+              zIndex: [STACK_LAYERS.length + 1, STACK_LAYERS.length + 1, -1],
+            }}
+            transition={{ duration: GHOST_DURATION, times: [0, 0.4, 1], ease: ['easeOut', 'easeInOut'] }}
+          >
+            <div className="w-full h-full" style={backStyle} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+
+      {/* Stack of cards peeking out from behind the active card */}
+      {STACK_LAYERS.map(({ offsetPx, brightness }, i) => (
+        <div
+          key={i}
+          className="absolute rounded-2xl overflow-hidden shadow-xl"
+          style={{
+            inset: 0,
+            transform: `translate(${offsetPx}px, ${offsetPx}px)`,
+            filter: `brightness(${brightness})`,
+            zIndex: i,
+          }}
+        >
+          <div className="w-full h-full" style={backStyle} />
         </div>
-        {/* Front face */}
-        <div style={{ backfaceVisibility: 'hidden', position: 'absolute', inset: 0, transform: 'rotateY(180deg)' }}>
-          {card && <CardFace style={getCardStyle(deck, col, row)} />}
-        </div>
-      </motion.div>
+      ))}
+
+      {/* Active card */}
+      <div style={{ perspective: '1000px', position: 'absolute', inset: 0, zIndex: STACK_LAYERS.length }}>
+        <motion.div
+          style={{ transformStyle: 'preserve-3d', position: 'absolute', inset: 0 }}
+          animate={{ rotateY: isFlipped ? 180 : 0 }}
+          transition={{ duration: 0.4, ease: 'easeInOut' }}
+        >
+          {/* Back face */}
+          <div style={{ backfaceVisibility: 'hidden', position: 'absolute', inset: 0 }}>
+            <CardFace style={backStyle} />
+          </div>
+          {/* Front face */}
+          <div style={{ backfaceVisibility: 'hidden', position: 'absolute', inset: 0, transform: 'rotateY(180deg)' }}>
+            {card && <CardFace style={getCardStyle(deck, col, row)} />}
+          </div>
+        </motion.div>
+      </div>
     </div>
   )
 }
