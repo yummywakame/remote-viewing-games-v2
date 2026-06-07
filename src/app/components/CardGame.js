@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef, memo } from 'react'
 import BaseGame from './BaseGame'
-import CardDisplay from './CardDisplay'
+import CardDisplay, { CARD_DECKS, DEFAULT_DECK } from './CardDisplay'
 import CardGameSettings from './CardGameSettings'
 import { CARD_QUESTION_VARIANTS, CARD_TRY_AGAIN } from '@/lib/gameConstants'
 
@@ -103,6 +103,7 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
   const [selectedRanks, setSelectedRanks] = useState(RANKS)
   const [selectedSuits, setSelectedSuits] = useState(SUITS)
   const [jokersEnabled, setJokersEnabled] = useState(false)
+  const [selectedDeck, setSelectedDeck] = useState(DEFAULT_DECK)
 
   const currentCardRef = useRef(null)
   const isFlippedRef = useRef(false)
@@ -128,6 +129,8 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
       } catch { /* use default */ }
     }
     setJokersEnabled(localStorage.getItem('cardGameJokersEnabled') === 'true')
+    const savedDeck = localStorage.getItem('cardGameSelectedDeck')
+    if (savedDeck && CARD_DECKS[savedDeck]) setSelectedDeck(savedDeck)
   }, [])
 
   const selectedItems = buildDeck(selectedRanks, selectedSuits, jokersEnabled)
@@ -288,13 +291,15 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
     return null
   }, [])
 
-  const handleSaveSettings = useCallback((newRanks, newSuits, newJokersEnabled) => {
+  const handleSaveSettings = useCallback((newRanks, newSuits, newJokersEnabled, newDeck) => {
     setSelectedRanks(newRanks)
     setSelectedSuits(newSuits)
     setJokersEnabled(newJokersEnabled)
+    setSelectedDeck(newDeck)
     localStorage.setItem('cardGameSelectedRanks', JSON.stringify(newRanks))
     localStorage.setItem('cardGameSelectedSuits', JSON.stringify(newSuits))
     localStorage.setItem('cardGameJokersEnabled', String(newJokersEnabled))
+    localStorage.setItem('cardGameSelectedDeck', newDeck)
   }, [])
 
   const handleScreenTap = useCallback(({ goNext, speak }) => {
@@ -317,6 +322,7 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
           selectedRanks={selectedRanks}
           selectedSuits={selectedSuits}
           jokersEnabled={jokersEnabled}
+          selectedDeck={selectedDeck}
           onSave={handleSaveSettings}
         />
       )}
@@ -333,7 +339,7 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
       currentItem={currentCard ? cardKey(currentCard) : null}
       onCurrentItemUpdate={updateCurrentItem}
       onScreenTap={handleScreenTap}
-      gameDisplayProps={{ cardDisplay: currentCard ? <CardDisplay card={currentCard} isFlipped={isFlipped} /> : null }}
+      gameDisplayProps={{ cardDisplay: currentCard ? <CardDisplay card={currentCard} isFlipped={isFlipped} deckId={selectedDeck} /> : null }}
     />
   )
 })

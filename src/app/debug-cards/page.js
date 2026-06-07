@@ -1,36 +1,36 @@
 'use client'
 
-// Temporary debug page to verify deck2.png sprite positions — DELETE AFTER USE
+// Temporary debug page to verify deck3.png sprite positions — DELETE AFTER USE
 
-const SHEET_W = 5000, SHEET_H = 2000, CARD_W = 340, CARD_H = 475
-const COL_STEP = 357.5, ROW_STEP = 492, ORIGIN_X = 3.5, ORIGIN_Y = 4
+const SHEET_W = 3120, SHEET_H = 1220, CARD_W = 217, CARD_H = 297
+const COL_STEP = 221.69, ROW_STEP = 302, ORIGIN_X = 10, ORIGIN_Y = 7
 
 function getCardStyle(col, row, dW = 80, dH = 112) {
   const sx = dW / CARD_W, sy = dH / CARD_H
   return {
-    backgroundImage: 'url(/cards/deck2.png)',
+    backgroundImage: 'url(/cards/deck3.png)',
     backgroundSize: `${SHEET_W * sx}px ${SHEET_H * sy}px`,
     backgroundPosition: `${-(ORIGIN_X + col * COL_STEP) * sx}px ${-(ORIGIN_Y + row * ROW_STEP) * sy}px`,
     backgroundRepeat: 'no-repeat',
   }
 }
 
-const SUITS = ['hearts', 'spades', 'diamonds', 'clubs']
+const SUITS = ['diamonds', 'clubs', 'hearts', 'spades']
 const RANKS = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king']
-const SUIT_ROW = { hearts: 0, spades: 1, diamonds: 2, clubs: 3 }
-const RANK_COL = { ace: 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8, '10': 9, queen: 10, king: 11, jack: 12 }
+const SUIT_ROW = { diamonds: 0, clubs: 1, hearts: 2, spades: 3 }
+const RANK_COL = { ace: 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8, '10': 9, jack: 10, queen: 11, king: 12 }
 
 export default function DebugCards() {
   return (
     <div style={{ padding: 16, background: '#111', color: '#fff', minHeight: '100vh' }}>
-      <h1 style={{ marginBottom: 8 }}>Sprite Debug — deck2.png</h1>
+      <h1 style={{ marginBottom: 8 }}>Sprite Debug — deck3.png</h1>
       <p style={{ marginBottom: 16, fontSize: 12, color: '#aaa' }}>
         ORIGIN_X={ORIGIN_X} ORIGIN_Y={ORIGIN_Y} COL_STEP={COL_STEP} ROW_STEP={ROW_STEP} CARD_W={CARD_W} CARD_H={CARD_H}
       </p>
 
       {/* Col 13 special cards */}
       <div style={{ marginBottom: 20 }}>
-        <b>Col 13 (special) — row 0=red joker, row 1=blue joker, row 2=back A, row 3=back B (used)</b>
+        <b>Col 13 (special) — row 0=red joker, row 1=black joker, rows 2 &amp; 3=identical blank/back design</b>
         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           {[0, 1, 2, 3].map(row => (
             <div key={row} style={{ textAlign: 'center' }}>

@@ -86,8 +86,9 @@ www/                          # Repo root
 │   ├── audio/                # Per-voice static TTS files (gitignored MP3s + committed manifests)
 │   │   └── {voice}/manifest.json
 │   └── cards/
-│       ├── deck2.png         # Card sprite sheet — 5001×2000px, 14 cols × 4 rows (gitignored? check)
-│       └── deck2.svg         # Source SVG (reference only — PNG is used for CSS backgrounds)
+│       ├── deck3.png         # Active card sprite sheet — 3120×1220px, 14 cols × 4 rows
+│       ├── deck3.svg         # Source SVG (reference only — PNG is used for CSS backgrounds)
+│       └── deck2.png/.svg    # Previous deck — superseded by deck3, safe to delete once deck3 is confirmed
 ├── server.js                 # Phusion Passenger entry point (required for Mochahost)
 ├── source/                   # Source/reference assets
 ├── .github/
@@ -135,6 +136,7 @@ The app provides solo practice games for MindSight development. All games are **
 | `cardGameSelectedRanks` | JSON array of active ranks (e.g. `["ace","2","3",...]`) |
 | `cardGameSelectedSuits` | JSON array of active suits (e.g. `["spades","hearts","diamonds","clubs"]`) |
 | `cardGameJokersEnabled` | `"true"` / `"false"` — include red/black jokers in deck (default `"false"`) |
+| `cardGameSelectedDeck` | `"deck1"` / `"deck2"` — which sprite sheet to display (`deck1` = `deck3.png`, current default; `deck2` = `deck2.png`, previous deck) |
 
 | Game | Route | Status |
 |---|---|---|
@@ -313,18 +315,18 @@ Both active and inactive digits are checked — saying any digit word triggers a
 
 ### CardGame — sprite sheet & matching
 
-**Sprite sheet:** `public/cards/deck2.png` — 5001×2000px (logical 5000×2000), 14 cols × 4 rows.
+**Sprite sheet:** `public/cards/deck3.png` — 3120×1220px, 14 cols × 4 rows. (Replaced `deck2.png` — 2026-06-07.)
 
 | | Col 0–9 | Col 10 | Col 11 | Col 12 | Col 13 |
 |---|---|---|---|---|---|
-| Row 0 (Hearts) | Ace–10 | Queen | King | Jack | Red joker |
-| Row 1 (Spades) | Ace–10 | Queen | King | Jack | Blue joker |
-| Row 2 (Diamonds) | Ace–10 | Queen | King | Jack | Back A |
-| Row 3 (Clubs) | Ace–10 | Queen | King | Jack | Back B ← used |
+| Row 0 (Diamonds) | Ace–10 | Jack | Queen | King | Red joker |
+| Row 1 (Clubs) | Ace–10 | Jack | Queen | King | Black joker |
+| Row 2 (Hearts) | Ace–10 | Jack | Queen | King | Blank/back design A |
+| Row 3 (Spades) | Ace–10 | Jack | Queen | King | Blank/back design B (identical to A) ← used |
 
-Constants: `ORIGIN_X=3.5`, `ORIGIN_Y=4`, `COL_STEP=357.5`, `ROW_STEP=492`, `CARD_W=340`, `CARD_H=475`.
-Note the non-standard face card column order: queen=10, king=11, jack=12 (not the usual jack/queen/king).
-Max display size is capped at 80% of native (272px wide) to keep pixel art crisp.
+Constants: `ORIGIN_X=10`, `ORIGIN_Y=7`, `COL_STEP=221.69`, `ROW_STEP=302`, `CARD_W=217`, `CARD_H=297`.
+Standard face card column order: jack=10, queen=11, king=12.
+Max display size is capped at 80% of native (~174px wide) to keep pixel art crisp.
 
 **Card key format:** `"rank_of_suit"` (e.g. `"king_of_spades"`) or `"red_joker"` / `"black_joker"`.
 

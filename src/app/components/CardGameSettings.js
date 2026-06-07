@@ -4,6 +4,9 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Switch } from '@/components/ui/switch'
+import { CARD_DECKS, DEFAULT_DECK, getDeckBackStyle } from './CardDisplay'
+
+const DECK_IDS = Object.keys(CARD_DECKS)
 
 const SUITS = ['spades', 'hearts', 'diamonds', 'clubs']
 const RANKS = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king']
@@ -23,15 +26,18 @@ export default function CardGameSettings({
   selectedRanks: committedRanks,
   selectedSuits: committedSuits,
   jokersEnabled: committedJokers,
+  selectedDeck: committedDeck,
 }) {
   const [localRanks, setLocalRanks] = useState(committedRanks)
   const [localSuits, setLocalSuits] = useState(committedSuits)
   const [localJokers, setLocalJokers] = useState(committedJokers)
+  const [localDeck, setLocalDeck] = useState(committedDeck)
   const modalRef = useRef(null)
 
   useEffect(() => { setLocalRanks(committedRanks) }, [committedRanks])
   useEffect(() => { setLocalSuits(committedSuits) }, [committedSuits])
   useEffect(() => { setLocalJokers(committedJokers) }, [committedJokers])
+  useEffect(() => { setLocalDeck(committedDeck) }, [committedDeck])
 
   const toggleRank = useCallback((rank) => {
     setLocalRanks(prev => {
@@ -52,14 +58,15 @@ export default function CardGameSettings({
   }, [])
 
   const handleSave = useCallback(() => {
-    onSaveExternal(localRanks, localSuits, localJokers)
+    onSaveExternal(localRanks, localSuits, localJokers, localDeck)
     onClose()
-  }, [onSaveExternal, onClose, localRanks, localSuits, localJokers])
+  }, [onSaveExternal, onClose, localRanks, localSuits, localJokers, localDeck])
 
   const handleReset = useCallback(() => {
     setLocalRanks(RANKS)
     setLocalSuits(SUITS)
     setLocalJokers(false)
+    setLocalDeck(DEFAULT_DECK)
   }, [])
 
   const handleOutsideClick = useCallback((e) => {
@@ -103,6 +110,34 @@ export default function CardGameSettings({
               <X className="h-4 w-4" />
             </button>
           </div>
+
+          {/* Deck section */}
+          <div className="mb-5">
+            <p className="text-sm text-gray-400 mb-3">Deck</p>
+            <div className="grid grid-cols-2 gap-2">
+              {DECK_IDS.map(deckId => (
+                <button
+                  key={deckId}
+                  onClick={() => setLocalDeck(deckId)}
+                  className={`
+                    p-3 rounded-lg flex items-center gap-3 transition-all duration-200
+                    ${localDeck === deckId
+                      ? 'ring-2 ring-offset-1 ring-offset-[#12122e] ring-indigo-400 bg-white/10'
+                      : 'ring-1 ring-white/20 hover:ring-white/40'}
+                  `}
+                  aria-label={`Select ${CARD_DECKS[deckId].label}`}
+                >
+                  <span
+                    className="w-8 h-11 rounded-md shrink-0 shadow-inner"
+                    style={getDeckBackStyle(deckId)}
+                  />
+                  <span className="text-sm font-medium text-gray-200">{CARD_DECKS[deckId].label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 my-4" />
 
           {/* Ranks section */}
           <div className="mb-5">
