@@ -218,7 +218,15 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
           ? { item: color, isCorrect: 'partial', revealText: c(`It is ${color}!`) }
           : { item: color, isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
       }
-      return { item: cardKey(card), isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
+      // Wrong guess that wasn't "joker" or a colour (e.g. a rank or suit) — echo
+      // back what the player actually said, never the card's identity, so the
+      // bubble can't spoil the joker reveal.
+      const guessedRank = extractRank(transcript)
+      const guessedSuit = extractSuit(transcript)
+      const guessedItem = guessedRank && guessedSuit
+        ? `${guessedRank} ${guessedSuit}`
+        : guessedRank || guessedSuit || 'something else'
+      return { item: guessedItem, isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
     }
 
     // Standard card
