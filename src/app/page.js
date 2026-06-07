@@ -112,7 +112,7 @@ export default function Home() {
             </p>
 
             <motion.div
-              className="mt-12 grid grid-cols-1 min-[480px]:grid-cols-3 gap-4 md:gap-8"
+              className="mt-12 grid grid-cols-1 min-[480px]:grid-cols-2 gap-4 md:gap-8"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
