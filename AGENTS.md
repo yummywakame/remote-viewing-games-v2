@@ -48,7 +48,7 @@ www/                          # Repo root
 │   │   ├── color-game/       # Color perception training game
 │   │   ├── shape-game/       # Shape perception training game
 │   │   ├── number-game/      # Number perception training game (digits 0–9)
-│   │   ├── card-game/        # Card perception training game (hidden from home page — WIP)
+│   │   ├── card-game/        # Card perception training game
 │   │   ├── debug-cards/      # Temporary sprite debug page — safe to delete when card game ships
 │   │   ├── components/       # App-level shared components
 │   │   ├── fonts/            # Custom font files
@@ -63,9 +63,9 @@ www/                          # Repo root
 │   │   ├── ColorGame.js          # Color game — provides matchItem, COLOR_ALIASES; imports itemTable/variants from gameConstants
 │   │   ├── ShapeGame.js          # Shape game — provides matchItem, SHAPE_ALIASES; imports itemTable/variants from gameConstants
 │   │   ├── NumberGame.js         # Number game — spoken-word + alias matching; NUMBER_DISPLAY_WORDS + NUMBER_ARTICLES for TTS
-│   │   ├── CardGame.js           # Card game — sprite-based deck, voice matching for rank/suit/color/joker combos; hidden from home page (WIP)
-│   │   ├── CardDisplay.js        # Card sprite renderer using deck2.png; 3D flip animation (Framer Motion rotateY); inner white border shadow
-│   │   ├── CardGameSettings.js   # Settings: rank/suit checkboxes + jokers toggle
+│   │   ├── CardGame.js           # Card game — sprite-based deck, voice matching for rank/suit/color/joker combos; accentColor from-orange-600 to-pink-800
+│   │   ├── CardDisplay.js        # Card sprite renderer; CARD_DECKS registry (3 decks: #1=deck3.png, #2=deck2.png, #3=deck4@2x.png); 3D flip animation; getCardStyle() percentage-based crop with EDGE_INSET_FRAC=0.006
+│   │   ├── CardGameSettings.js   # Settings: rank/suit checkboxes, jokers toggle, deck picker (3-column, #1/#2/#3 labels); accentColor forwarded from BaseGame to Save button
 │   │   ├── GameDisplay.js        # Full-screen display: color bg fade, shape SVG, number SVG crossfade via AnimatePresence.
 │   │   │                         # Responsive sizing: ITEM_SIZE = min(85vw, calc(100vh - 160px), 900px)
 │   │   │                         # Card game: transparent background (keepBackground renders CosmicBackground instead)
@@ -75,10 +75,10 @@ www/                          # Repo root
 │   │   ├── NumberGameSettings.js # Calculator keypad layout (3-col 1–9, 0 full-width below via extraItems); Dark/Light toggle
 │   │   └── ui/                   # Radix UI-based primitive components
 │   ├── lib/
-│   │   └── gameConstants.js  # Single source of truth for ALL phrases, item tables, phrase builders
+│   │   └── gameConstants.js  # Single source of truth for ALL phrases, item tables, phrase builders, and Card domain constants (CARD_SUITS/RANKS/COLORS/RANK_DISPLAY, getFullCardText, getCardDisplayPhrase)
 │   └── utils/                # Utility/helper functions (sanitizeInput, getArticle, selectNewItem, etc.)
 ├── scripts/
-│   ├── phraseList.mjs        # Shared phrase list builder (derives 249 phrases from gameConstants)
+│   ├── phraseList.mjs        # Shared phrase list builder (derives 876 phrases from gameConstants — includes dedicated buildCardPhraseList() mirroring all CardGame matchItem templates)
 │   ├── generate-audio.mjs    # Generates static MP3s for all voices — run with audio:sync
 │   ├── check-audio.mjs       # Audits manifests vs phrase list — run with audio:check
 │   └── delete-phrase.mjs     # Finds and deletes a phrase's MP3(s) by text search so generate-audio re-fetches it; supports --voice <name|all>, fuzzy/case-insensitive matching, and suggests close matches on no-match
@@ -88,7 +88,7 @@ www/                          # Repo root
 │   └── cards/
 │       ├── deck3.png         # Active card sprite sheet (deck1 option) — 3120×1220px, 14 cols × 4 rows
 │       ├── deck3.svg         # Source SVG (reference only — PNG is used for CSS backgrounds)
-│       ├── deck4@2x.png      # Newest deck (deck3 option) — 7938×3120px, 14 cols × 4 rows; shadows baked into each sprite
+│       ├── deck4@2x.png      # Newest deck (deck3 option) — 6681×2761px, 14 cols × 4 rows; uniform 429×617px crop on 460×642 step; no baked-in shadows
 │       ├── deck4.png/.svg    # 1x export + source SVG for deck4@2x.png
 │       └── deck2.png/.svg    # Previous deck (deck2 option) — superseded by deck3.png, safe to delete once confirmed unused
 ├── server.js                 # Phusion Passenger entry point (required for Mochahost)
@@ -145,7 +145,7 @@ The app provides solo practice games for MindSight development. All games are **
 | Color Game | `/color-game` | Live |
 | Shape Game | `/shape-game` | Live |
 | Number Game | `/number-game` | Live |
-| Card Game | `/card-game` | Functional — hidden from home page pending polish/testing |
+| Card Game | `/card-game` | Live |
 | Object Game | `/object-game` | Planned |
 | Word Game | `/word-game` | Planned |
 | Scene Game | `/scene-game` | Planned |
@@ -198,7 +198,7 @@ All voice logic lives in these files:
 
 **STT:** Deepgram Nova-2 via batch REST. Browser VAD (AudioContext + AnalyserNode) detects speech onset; 800ms of silence triggers clip send to `/api/transcribe`, which proxies to Deepgram. No browser WebSocket — all API calls are server-side. Transcription latency ~300ms (vs ~1.5s with Whisper).
 **TTS:** OpenAI `gpt-4o-mini-tts`. Default voice: `echo`. Speed default: 1.1. Available voices: `alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `nova`, `onyx`, `sage`, `shimmer`. Speed range 0.25–4.0. Tone: jovial, upbeat, playful — emphasises ALL CAPS words.
-**TTS cache:** `speak()` resolves audio in three steps: (1) check in-memory client cache (`audioCacheRef`), (2) check static pre-generated file via the voice's `manifest.json` in `public/audio/{voice}/`, (3) fall back to the `/api/speak` API. Static files cover all known game phrases (249 per voice, pre-generated with `audio:sync`). Only dynamic phrases (name-bearing intro/outro) hit the API. Client cache is cleared when voice or speed changes. The `/api/speak` route also has a server-side in-memory cache (keyed by `voice:text`) so repeated API calls within a server session never hit OpenAI twice. The response includes an `X-Cache: HIT|MISS` header which the client logs as `[TTS] server-cached:` or `[TTS] api:`.
+**TTS cache:** `speak()` resolves audio in three steps: (1) check in-memory client cache (`audioCacheRef`), (2) check static pre-generated file via the voice's `manifest.json` in `public/audio/{voice}/`, (3) fall back to the `/api/speak` API. Static files cover all known game phrases (876 per voice, pre-generated with `audio:sync`). Only dynamic phrases (name-bearing intro/outro) hit the API. Client cache is cleared when voice or speed changes. The `/api/speak` route also has a server-side in-memory cache (keyed by `voice:text`) so repeated API calls within a server session never hit OpenAI twice. The response includes an `X-Cache: HIT|MISS` header which the client logs as `[TTS] server-cached:` or `[TTS] api:`.
 **Security:** `OPENAI_API_KEY` and `DEEPGRAM_API_KEY` in `.env.local`, used only server-side — never in client code or `NEXT_PUBLIC_` vars.
 **Expected latency:** ~800ms VAD silence wait + ~300ms Deepgram transcription = ~1.1s total (down from ~2.3s with Whisper).
 
@@ -315,20 +315,23 @@ Note: `note` is confirmed Deepgram mishearing of "nine" and is intentionally NOT
 
 Both active and inactive digits are checked — saying any digit word triggers a response.
 
-### CardGame — sprite sheet & matching
+### CardGame — sprite sheets & matching
 
-**Sprite sheet:** `public/cards/deck3.png` — 3120×1220px, 14 cols × 4 rows. (Replaced `deck2.png` — 2026-06-07.)
+Three decks are available, selectable in settings (#1 is the default):
 
-| | Col 0–9 | Col 10 | Col 11 | Col 12 | Col 13 |
-|---|---|---|---|---|---|
-| Row 0 (Diamonds) | Ace–10 | Jack | Queen | King | Red joker |
-| Row 1 (Clubs) | Ace–10 | Jack | Queen | King | Black joker |
-| Row 2 (Hearts) | Ace–10 | Jack | Queen | King | Blank/back design A |
-| Row 3 (Spades) | Ace–10 | Jack | Queen | King | Blank/back design B (identical to A) ← used |
+| Deck | File | Sheet size | Card size | colStep | rowStep | originX/Y |
+|---|---|---|---|---|---|---|
+| #1 (default) | `deck3.png` | 3120×1220 | 217×297 | 221.69 | 302 | 10/7 |
+| #2 | `deck2.png` | 5000×2000 | 340×475 | 357.5 | 492 | 3.5/4 |
+| #3 | `deck4@2x.png` | 6681×2761 | 429×617 | 460 | 642 | 81/81 |
 
-Constants: `ORIGIN_X=10`, `ORIGIN_Y=7`, `COL_STEP=221.69`, `ROW_STEP=302`, `CARD_W=217`, `CARD_H=297`.
-Standard face card column order: jack=10, queen=11, king=12.
-Max display size is capped at 80% of native (~174px wide) to keep pixel art crisp.
+All decks use 14 cols × 4 rows. Column 13 holds jokers (rows 0–1) and the card back (row 2). Face card column order: jack=10, queen=11, king=12 (decks #1 and #3); queen=10, king=11, jack=12 (deck #2 — non-standard).
+
+**Deck #1 suit rows:** diamonds=0, clubs=1, hearts=2, spades=3 (joker: red=row0, black=row1; back: row2, standalone `card-back-3.svg` override)
+**Deck #2 suit rows:** hearts=0, spades=1, diamonds=2, clubs=3 (joker: red=row0, black=row1; back: row3)
+**Deck #3 suit rows:** clubs=0, diamonds=1, spades=2, hearts=3 (joker: black=row0, red=row1; back: row2)
+
+`getCardStyle()` in `CardDisplay.js` computes percentage-based `background-size`/`background-position` for any display size. `EDGE_INSET_FRAC = 0.006` trims a ~2-3px sliver from each cell edge to hide seam bleed — applied symmetrically to all four sides.
 
 **Card key format:** `"rank_of_suit"` (e.g. `"king_of_spades"`) or `"red_joker"` / `"black_joker"`.
 
@@ -371,7 +374,7 @@ Max display size is capped at 80% of native (~174px wide) to keep pixel art cris
 - `body` has `h-screen overflow-hidden` (needed for game pages which are all fixed-positioned)
 - `layout.js` `main` has `h-screen pt-16` — children render directly (no width wrapper)
 - Home page outer div is `h-full overflow-y-auto` — makes it the scroll container within the fixed shell
-- **Responsive grid:** `grid-cols-1 min-[480px]:grid-cols-3` — 3 columns from 480px
+- **Responsive grid:** `grid-cols-1 min-[480px]:grid-cols-2` — 2 columns from 480px
 - **Responsive padding:** `px-4 sm:px-6 md:px-10` on outer, `p-4 sm:p-5 md:p-6` on cards
 - **Text scales down below 480px:** heading `text-3xl`, tagline `text-base`, footer note `text-sm`
 - **Scroll fix:** `items-start` below 480px prevents flex-center from clipping overflowed content above scroll origin; `items-center` at 480px+ for visual centering when content fits
@@ -413,7 +416,7 @@ At the start of every new agent session:
 ### Completed work
 - Hybrid voice stack (Deepgram Nova-2 STT + OpenAI gpt-4o-mini-tts)
 - Full game logic refactor — all shared logic in BaseGame (`matchItem` interface, speak→advance loop, prefs state)
-- Static TTS audio cache: 249 phrases × 10 voices pre-generated; manifest-based lookup; API fallback for dynamic (name-bearing) phrases only
+- Static TTS audio cache: 876 phrases × 10 voices pre-generated; manifest-based lookup; API fallback for dynamic (name-bearing) phrases only
 - Server-side TTS in-memory cache in `/api/speak`; `X-Cache` response header for client-side logging
 - STT/TTS error handling: 8s timeout, 2-strike failure detection, pre-generated error message, graceful game-end on connectivity loss
 - TTS fallback: name-bearing intro/outro falls back to no-name static version if API unreachable
@@ -424,7 +427,11 @@ At the start of every new agent session:
 - **Number game TTS safety**: displayItem uses NUMBER_DISPLAY_WORDS + NUMBER_ARTICLES ("a nine", "an eight") — never raw digit chars next to punctuation
 - **Responsive game display**: `ITEM_SIZE = min(85vw, calc(100vh - 160px), 900px)` for shapes and numbers; numbers rendered as inline SVG
 - **Stop button repositioned**: `fixed bottom-8` — maximises screen space for display during gameplay
-- **Responsive home page**: 3-column grid from 480px, scrollable on small screens, text scales down below 480px
+- **Responsive home page**: 2-column grid from 480px, scrollable on small screens, text scales down below 480px
+- **Card Game** live on home page — voice matching for rank/suit/color/joker combos, 3-deck sprite picker (#1/#2/#3), full audio cache (876 phrases × 10 voices), attribute questions, IS-emphasis on guess confirmations, tap-to-reveal/tap-to-advance
+- **Card game audio pre-generation**: `buildCardPhraseList()` in `phraseList.mjs` mirrors all `matchItem` response templates; 876 total phrases covers all Card + shared responses; 6270 audio files generated
+- **BaseGame**: forwards `accentColor` to `GameSettings` — settings Save button always matches the game's Start/Stop button color
+- **Outro speech fix**: `endGame()` only speaks a goodbye if the player reached the `'playing'` state — avoids spurious farewell when exiting from the start/intro screen
 - **Cosmic background**: `CosmicBackground` component — 5 pulsing nebula glow orbs + 160-star twinkling field
 - **Shape/Number game Dark/Light toggle**: saves on Save; Reset reverts to dark; indigo Switch styling consistent across all settings
 - **Smooth fade transitions**: color bg 700ms CSS; shape/number crossfade 400ms Framer Motion AnimatePresence
@@ -438,7 +445,7 @@ At the start of every new agent session:
 
 ### Remaining items before public launch
 
-- [ ] **Card Game polish** — currently functional but hidden from home page. Remaining: custom gloss/sheen overlay PNG (user to supply), final STT alias tuning, audio cache generation for card phrases, then re-enable on home page
+- [ ] **Card game STT alias tuning** — aliases in `CardGame.js` are initial guesses; refine through real play
 - [ ] `CARD_GAME_PLAN.md` — now stale (game is implemented); safe to delete or archive
 - [ ] `debug-cards/page.js` — temporary sprite debug page; safe to delete before launch
 - [ ] Cross-browser testing: Chrome desktop, Safari iOS, Android Chrome
