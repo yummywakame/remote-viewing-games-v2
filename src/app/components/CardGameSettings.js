@@ -27,6 +27,7 @@ export default function CardGameSettings({
   selectedSuits: committedSuits,
   jokersEnabled: committedJokers,
   selectedDeck: committedDeck,
+  accentColor = 'from-purple-600 to-blue-600',
 }) {
   const [localRanks, setLocalRanks] = useState(committedRanks)
   const [localSuits, setLocalSuits] = useState(committedSuits)
@@ -247,7 +248,7 @@ export default function CardGameSettings({
               <button
                 onClick={handleSave}
                 disabled={!canSave}
-                className="px-4 py-2 rounded-full bg-gradient-to-r from-red-800 to-rose-400 text-white hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`px-4 py-2 rounded-full bg-gradient-to-r ${accentColor} text-white hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 Save
               </button>

@@ -522,6 +522,7 @@ export default function BaseGame({
             onSave={handleSaveSettings}
             itemTable={itemTable}
             selectedItems={selectedItems}
+            accentColor={accentColor}
           />
         )}
       </AnimatePresence>
