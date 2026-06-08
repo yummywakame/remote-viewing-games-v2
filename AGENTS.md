@@ -86,9 +86,11 @@ www/                          # Repo root
 │   ├── audio/                # Per-voice static TTS files (gitignored MP3s + committed manifests)
 │   │   └── {voice}/manifest.json
 │   └── cards/
-│       ├── deck3.png         # Active card sprite sheet — 3120×1220px, 14 cols × 4 rows
+│       ├── deck3.png         # Active card sprite sheet (deck1 option) — 3120×1220px, 14 cols × 4 rows
 │       ├── deck3.svg         # Source SVG (reference only — PNG is used for CSS backgrounds)
-│       └── deck2.png/.svg    # Previous deck — superseded by deck3, safe to delete once deck3 is confirmed
+│       ├── deck4@2x.png      # Newest deck (deck3 option) — 7938×3120px, 14 cols × 4 rows; shadows baked into each sprite
+│       ├── deck4.png/.svg    # 1x export + source SVG for deck4@2x.png
+│       └── deck2.png/.svg    # Previous deck (deck2 option) — superseded by deck3.png, safe to delete once confirmed unused
 ├── server.js                 # Phusion Passenger entry point (required for Mochahost)
 ├── source/                   # Source/reference assets
 ├── .github/
@@ -136,7 +138,7 @@ The app provides solo practice games for MindSight development. All games are **
 | `cardGameSelectedRanks` | JSON array of active ranks (e.g. `["ace","2","3",...]`) |
 | `cardGameSelectedSuits` | JSON array of active suits (e.g. `["spades","hearts","diamonds","clubs"]`) |
 | `cardGameJokersEnabled` | `"true"` / `"false"` — include red/black jokers in deck (default `"false"`) |
-| `cardGameSelectedDeck` | `"deck1"` / `"deck2"` — which sprite sheet to display (`deck1` = `deck3.png`, current default; `deck2` = `deck2.png`, previous deck) |
+| `cardGameSelectedDeck` | `"deck1"` / `"deck2"` / `"deck3"` — which sprite sheet to display (`deck1` = `deck3.png`, current default; `deck2` = `deck2.png`, previous deck; `deck3` = `deck4@2x.png`, newest deck — shadows baked into sprites, cropped tight to match) |
 
 | Game | Route | Status |
 |---|---|---|

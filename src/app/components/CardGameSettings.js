@@ -114,7 +114,7 @@ export default function CardGameSettings({
           {/* Deck section */}
           <div className="mb-5">
             <p className="text-sm text-gray-400 mb-3">Deck</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {DECK_IDS.map(deckId => (
                 <button
                   key={deckId}

@@ -4,17 +4,11 @@ import React, { useState, useCallback, useEffect, useRef, memo } from 'react'
 import BaseGame from './BaseGame'
 import CardDisplay, { CARD_DECKS, DEFAULT_DECK } from './CardDisplay'
 import CardGameSettings from './CardGameSettings'
-import { CARD_QUESTION_VARIANTS, CARD_TRY_AGAIN } from '@/lib/gameConstants'
-
-const SUITS = ['spades', 'hearts', 'diamonds', 'clubs']
-const RANKS = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king']
-const RED_SUITS = ['hearts', 'diamonds']
-
-const RANK_DISPLAY = {
-  ace: 'an ace', '2': 'a two', '3': 'a three', '4': 'a four', '5': 'a five',
-  '6': 'a six', '7': 'a seven', '8': 'an eight', '9': 'a nine', '10': 'a ten',
-  jack: 'a jack', queen: 'a queen', king: 'a king',
-}
+import {
+  CARD_QUESTION_VARIANTS, CARD_TRY_AGAIN,
+  CARD_SUITS as SUITS, CARD_RANKS as RANKS, CARD_RED_SUITS as RED_SUITS, CARD_RANK_DISPLAY as RANK_DISPLAY,
+  getFullCardText, getCardDisplayPhrase,
+} from '@/lib/gameConstants'
 
 const RANK_WORDS = {
   ace: 'ace', two: '2', three: '3', four: '4', five: '5',
@@ -70,11 +64,6 @@ function cardKey(card) {
 
 function cardBubble(card) {
   return cardKey(card).replace(/_/g, ' ')
-}
-
-function fullCardText(card) {
-  if (card.joker) return `It's the ${card.joker} joker!`
-  return `It's ${RANK_DISPLAY[card.rank]} of ${card.suit}!`
 }
 
 function parseCardKey(key) {
@@ -196,7 +185,7 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
     // Full reveal commands
     if (/\b(what|which|reveal|show)\b/.test(transcript)) {
       setIsFlipped(true)
-      return { item: cardBubble(card), isCorrect: null, revealText: fullCardText(card) }
+      return { item: cardBubble(card), isCorrect: null, revealText: getFullCardText(card) }
     }
 
     // Joker card
@@ -205,9 +194,11 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
       const color = extractColor(transcript)
       if (hasJoker && color) {
         // Color+joker: right color = correct; wrong color = partial (joker is right)
-        return color === card.joker
-          ? { item: cardBubble(card), isCorrect: true, displayItem: fullCardText(card) }
-          : { item: 'joker', isCorrect: 'partial', revealText: c('It is a joker!') }
+        if (color === card.joker) {
+          setIsFlipped(true)
+          return { item: cardBubble(card), isCorrect: true, displayItem: getCardDisplayPhrase(card) }
+        }
+        return { item: 'joker', isCorrect: 'partial', revealText: c('It is a joker!') }
       }
       if (hasJoker) {
         // "joker" without color — partial, needs the color too
@@ -229,7 +220,13 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
       return { item: guessedItem, isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
     }
 
-    // Standard card
+    // Standard card — guessing "joker" when the card isn't one is a wrong guess,
+    // not an unrecognised utterance (so it gets a try-again response and resets
+    // the inactivity timer instead of being silently ignored)
+    if (/\bjoker\b/.test(transcript)) {
+      return { item: 'joker', isCorrect: false, tryAgainText: CARD_TRY_AGAIN }
+    }
+
     const guessedRank = extractRank(transcript)
     const guessedSuit = extractSuit(transcript)
     const guessedColor = extractColor(transcript)
@@ -240,7 +237,7 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
     if (guessedRank && guessedSuit) {
       if (guessedRank === card.rank && guessedSuit === card.suit) {
         setIsFlipped(true)
-        return { item: cardBubble(card), isCorrect: true, displayItem: fullCardText(card) }
+        return { item: cardBubble(card), isCorrect: true, displayItem: getCardDisplayPhrase(card) }
       }
       if (guessedRank === card.rank)
         return { item: guessedRank, isCorrect: 'partial', revealText: c(`It is ${RANK_DISPLAY[card.rank]}!`) }
@@ -318,7 +315,7 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
       // Card obscured — reveal it
       setIsFlipped(true)
       isFlippedRef.current = true
-      speak(fullCardText(currentCardRef.current))
+      speak(getFullCardText(currentCardRef.current))
     }
   }, [])
 
@@ -335,7 +332,7 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
         />
       )}
       gameType="Card"
-      accentColor="from-red-600 to-yellow-500"
+      accentColor="from-orange-600 to-pink-800"
       keepBackground
       onGameStateChange={onGameStateChange}
       matchItem={matchItem}

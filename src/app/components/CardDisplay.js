@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 // 'deck1' (deck3.png) is the current default deck; 'deck2' (deck2.png) is the previous one, kept as an alternative.
 export const CARD_DECKS = {
   deck1: {
-    label: 'Deck 1',
+    label: '#1',
     file: '/cards/deck3.png',
     sheetW: 3120, sheetH: 1220, cardW: 217, cardH: 297,
     colStep: 221.69, rowStep: 302, originX: 10, originY: 7,
@@ -24,7 +24,7 @@ export const CARD_DECKS = {
     backImage: '/cards/card-back-3.svg',
   },
   deck2: {
-    label: 'Deck 2',
+    label: '#2',
     file: '/cards/deck2.png',
     sheetW: 5000, sheetH: 2000, cardW: 340, cardH: 475,
     colStep: 357.5, rowStep: 492, originX: 3.5, originY: 4,
@@ -38,6 +38,23 @@ export const CARD_DECKS = {
     jokerCol: 13,
     jokerPos: { red: { col: 13, row: 0 }, black: { col: 13, row: 1 } },
     backPos: { col: 13, row: 3 },
+  },
+  deck3: {
+    label: '#3',
+    file: '/cards/deck4@2x.png',
+    // Re-exported with a uniform grid (every card is exactly 429×620px on a 460×642 step) —
+    // measured directly from the sheet via row/column white-pixel projection.
+    sheetW: 6681, sheetH: 2761, cardW: 429, cardH: 617,
+    colStep: 460, rowStep: 642, originX: 81, originY: 81,
+    suitRow: { clubs: 0, diamonds: 1, spades: 2, hearts: 3 },
+    rankCol: {
+      ace: 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6,
+      '8': 7, '9': 8, '10': 9, jack: 10, queen: 11, king: 12,
+    },
+    // Col 14: row 0 = black joker, row 1 = red joker, rows 2 & 3 = identical card-back design
+    jokerCol: 13,
+    jokerPos: { black: { col: 13, row: 0 }, red: { col: 13, row: 1 } },
+    backPos: { col: 13, row: 2 },
   },
 }
 

@@ -178,6 +178,27 @@ export const CARD_QUESTION_VARIANTS = [
 
 export const CARD_TRY_AGAIN = 'Try again.'
 
+export const CARD_SUITS = ['spades', 'hearts', 'diamonds', 'clubs']
+export const CARD_RANKS = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king']
+export const CARD_RED_SUITS = ['hearts', 'diamonds']
+// Both joker colours and a card's colour (derived from its suit) live in this domain
+export const CARD_COLORS = ['red', 'black']
+
+export const CARD_RANK_DISPLAY = {
+  ace: 'an ace', '2': 'a two', '3': 'a three', '4': 'a four', '5': 'a five',
+  '6': 'a six', '7': 'a seven', '8': 'an eight', '9': 'a nine', '10': 'a ten',
+  jack: 'a jack', queen: 'a queen', king: 'a king',
+}
+
+// Complete sentence — spoken standalone (full reveal, screen-tap reveal)
+export const getFullCardText = (card) =>
+  card.joker ? `It's the ${card.joker} joker!` : `It's ${CARD_RANK_DISPLAY[card.rank]} of ${card.suit}!`
+
+// Plain noun phrase — embedded inside CORRECT_RESPONSES templates, which
+// already wrap it in their own sentence (unlike getFullCardText)
+export const getCardDisplayPhrase = (card) =>
+  card.joker ? `the ${card.joker} joker` : `${CARD_RANK_DISPLAY[card.rank]} of ${card.suit}`
+
 // ---------- Game configs (used by audio generation script) ----------
 
 export const GAMES = [

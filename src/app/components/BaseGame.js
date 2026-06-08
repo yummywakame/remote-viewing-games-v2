@@ -269,21 +269,26 @@ export default function BaseGame({
   // ----- Game flow -----
 
   const endGame = useCallback(async (isTimeout = false) => {
+    const didPlay = gameStateRef.current === 'playing'
     cancelSpeech()
     stopListening()
     setAndLogGameState('ending', 'end game')
     updateCurrentItem(null)
     setLastHeardWord('')
 
-    if (isTimeout) {
-      await speak(TIMEOUT_MESSAGE)
-    } else {
-      const idx = outroIndexRef.current
-      outroIndexRef.current = (idx + 1) % OUTRO_RESPONSES.length
-      if (typeof window !== 'undefined') localStorage.setItem('outroIndex', String(outroIndexRef.current))
-      const outroOk = await speak(OUTRO_RESPONSES[idx](userName))
-      if (!outroOk && userName) {
-        await speak(OUTRO_RESPONSES[idx](null))
+    // Only speak a goodbye if the player actually got into the game — exiting
+    // from the start screen or mid-intro has nothing to say goodbye to yet.
+    if (didPlay) {
+      if (isTimeout) {
+        await speak(TIMEOUT_MESSAGE)
+      } else {
+        const idx = outroIndexRef.current
+        outroIndexRef.current = (idx + 1) % OUTRO_RESPONSES.length
+        if (typeof window !== 'undefined') localStorage.setItem('outroIndex', String(outroIndexRef.current))
+        const outroOk = await speak(OUTRO_RESPONSES[idx](userName))
+        if (!outroOk && userName) {
+          await speak(OUTRO_RESPONSES[idx](null))
+        }
       }
     }
 
