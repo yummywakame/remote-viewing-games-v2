@@ -108,7 +108,7 @@ export default function Home() {
             transition={{ delay: 0.3 }}
           >
             <p className="text-base min-[480px]:text-xl md:text-2xl text-gray-300 leading-relaxed">
-              Challenge Your Perception,<br />Sharpen Your Mind's Eye!
+              Challenge Your Perception,<br />Sharpen Your Mind&apos;s Eye!
             </p>
 
             <motion.div

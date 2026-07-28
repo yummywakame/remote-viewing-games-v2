@@ -156,7 +156,7 @@ const CardGame = memo(function CardGame({ onGameStateChange = () => {} }) {
     return pool[Math.floor(Math.random() * pool.length)]
   }, [])
 
-  const matchItem = useCallback((transcript, speak) => {
+  const matchItem = useCallback((transcript) => {
     const card = currentCardRef.current
     if (!card) return null
 
